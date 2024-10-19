@@ -5,15 +5,15 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { loginOrganizationDto } from './dto/login-org.dto';
-import { RegisterOrgDto } from './dto/register-org.dto';
-import { MembersService } from '../members/members.service';
-import { CreateMemberDto } from '../members/dto/create-member.dto';
-import { DataSource, Repository } from 'typeorm';
+import { CreateRootUser } from './dto/register-org.dto';
+import { Repository } from 'typeorm';
 import { Organization } from '../organizations/entities/organization.entity';
 import { Member } from '../members/entities/member.entity';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Roles } from '@/security/user.decorator';
+import { CreateOrganizationDto } from '../organizations/dto/create-organization.dto';
 
 @Injectable()
 export class AuthService {
@@ -55,21 +55,55 @@ export class AuthService {
   }
 
   // register org
-  async registerOrganization(registerOrgDto: RegisterOrgDto) {
-    const { email } = registerOrgDto;
+  async createRootUser(createRootUser: CreateRootUser) {
+    const { email } = createRootUser;
     const member = await this.memberRepository.findOneBy({ email });
     if (member) throw new ConflictException('Email already taken');
     const newMember = this.memberRepository.create({
-      ...registerOrgDto,
-      role: 'owner',
+      ...createRootUser,
+      role: Roles.org,
       type: 'self-employed',
     });
     const user = await this.memberRepository.save(newMember);
     const jwtPayload = {
-      user: { id: member.id, role: member.role },
-      sub: member.organization.id,
+      user: { id: user.id, role: user.role },
     };
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
+    return {
+      messsage: 'Register successfully',
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async createOrganization(
+    createOrganization: CreateOrganizationDto,
+    userId: number,
+  ) {
+    const newOrg = this.organizationRepository.create(createOrganization);
+    const organization = await this.organizationRepository.save(newOrg);
+    await this.memberRepository.save({ id: userId, organization });
+    const jwtPayload = {
+      user: { id: userId, role: Roles.org },
+      org: organization.id,
+    };
+    const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
+    return {
+      message: 'Create organization successfully',
+      accessToken,
+      refreshToken,
+      organization,
+    };
+  }
+
+  getNewAccessToken(token: string) {
+    try {
+      const { exp, iat, ...rest } = this.jwtService.verify(token);
+      const { accessToken, refreshToken } = this.generateTokens(rest);
+      return { accessToken, refreshToken };
+    } catch (error) {
+      throw new UnauthorizedException(error.message);
+    }
   }
 
   private generateTokens(payload: any) {
@@ -80,6 +114,7 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(
       { data: payload },
       // { expiresIn: '7d' },
+      // {secret: }
     );
     return { accessToken, refreshToken };
   }

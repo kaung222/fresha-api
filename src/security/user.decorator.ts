@@ -8,12 +8,20 @@ export class SignedUserDto {
 export enum Roles {
   user = 'user',
   org = 'organisation',
+  member = 'member',
 }
 
-export const SignedUser = createParamDecorator(
+export const User = createParamDecorator(
   (data: string, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
     const user = request.user;
     return data ? user?.[data] : user;
+  },
+);
+
+export const Org = createParamDecorator(
+  (data: string, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest();
+    const org = request.org;
   },
 );

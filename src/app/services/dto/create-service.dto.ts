@@ -9,6 +9,12 @@ import {
   Min,
 } from 'class-validator';
 
+export enum ServiceGender {
+  maleOnly = 'Male Only',
+  femaleOnly = 'Female Only',
+  all = 'All',
+}
+
 export class CreateServiceDto {
   @IsNotEmpty()
   name: string;
@@ -27,8 +33,8 @@ export class CreateServiceDto {
   @IsNotEmpty()
   duration: number; //in minutes
 
-  @ApiProperty({ default: 'all', enum: ['all', 'female', 'female'] })
-  gender: 'all' | 'male only' | 'female';
+  @ApiProperty({ default: ServiceGender.all, enum: ServiceGender })
+  gender: ServiceGender;
 
   @IsOptional()
   @MaxLength(255)

@@ -1,6 +1,7 @@
+import { Category } from '@/app/categories/entities/category.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { IncrementEntity } from '@/utils/base.entity';
-import { Entity, Column, ManyToOne, ManyToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, ManyToMany, JoinColumn } from 'typeorm';
 
 @Entity()
 export class Service extends IncrementEntity {
@@ -24,4 +25,11 @@ export class Service extends IncrementEntity {
 
   @ManyToMany(() => Member, (member) => member.services)
   members: Member[];
+
+  @Column({ nullable: true })
+  categoryId: number;
+
+  @ManyToOne(() => Category, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'categoryId' })
+  category: Category;
 }

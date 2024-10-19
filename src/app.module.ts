@@ -19,6 +19,7 @@ import { Organization } from './app/organizations/entities/organization.entity';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './security/role.guard';
 import { AuthModule } from './app/auth/auth.module';
+import { Category } from './app/categories/entities/category.entity';
 
 @Module({
   imports: [
@@ -33,7 +34,7 @@ import { AuthModule } from './app/auth/auth.module';
       synchronize: true,
       logging: true,
       // autoLoadEntities: true,
-      entities: [Member, Service, Organization],
+      entities: [Member, Service, Organization,Category],
     }),
 
     GlobalModule,

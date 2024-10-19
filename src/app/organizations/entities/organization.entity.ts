@@ -20,4 +20,7 @@ export class Organization extends IncrementEntity {
 
   @Column({ nullable: true })
   profilePictureUrl: string;
+
+  @Column('simple-array')
+  types: string[];
 }

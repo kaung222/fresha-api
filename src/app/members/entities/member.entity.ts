@@ -71,7 +71,7 @@ export class Member extends IncrementEntity {
   password: string;
 
   @Column({ default: 'member' })
-  role: 'member' | 'owner';
+  role: 'member' | 'organisation';
 
   //   @OneToMany(() => Review, (review) => review.doctor)
   //   reviews: Review[];

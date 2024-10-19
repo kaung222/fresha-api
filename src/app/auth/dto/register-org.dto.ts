@@ -1,6 +1,13 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  IsStrongPassword,
+} from 'class-validator';
 
-export class RegisterOrgDto {
+export class CreateRootUser {
   @IsNotEmpty()
   @IsString()
   firstName: string;
@@ -14,5 +21,10 @@ export class RegisterOrgDto {
   email: string;
 
   @IsNotEmpty()
+  @IsPhoneNumber()
   phone: string;
+
+  @IsNotEmpty()
+  @IsStrongPassword()
+  password: string;
 }
