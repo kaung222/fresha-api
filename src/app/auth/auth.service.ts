@@ -18,12 +18,17 @@ import { CreateOrganizationDto } from '../organizations/dto/create-organization.
 import { ConfigService } from '@nestjs/config';
 import { CreatePasswordDto } from './dto/create-password.dto';
 import { Response } from 'express';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
+import { SendEmailDto } from '@/global/email.service';
+import { generateOpt } from '@/utils';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
+    @InjectQueue('send-email') private readonly emailQueue: Queue,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
     @InjectRepository(Organization)
@@ -101,6 +106,15 @@ export class AuthService {
       refreshToken,
       organization,
     };
+  }
+
+  async getOTP(email: string) {
+    const emailPayload: SendEmailDto = {
+      to: email,
+      subject: 'OTP',
+      text: generateOpt(),
+    };
+    return this.emailQueue.add('sendEmail', emailPayload);
   }
 
   // create password for new member added

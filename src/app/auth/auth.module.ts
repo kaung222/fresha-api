@@ -8,9 +8,15 @@ import { Member } from '../members/entities/member.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { EmailService } from '@/global/email.service';
 import { User } from '../users/entities/user.entity';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Member, Organization, User])],
+  imports: [
+    TypeOrmModule.forFeature([Member, Organization, User]),
+    BullModule.registerQueue({
+      name: 'send-email',
+    }),
+  ],
   controllers: [AuthController, UserAuthController],
   providers: [AuthService, UserAuthService, EmailService],
 })
