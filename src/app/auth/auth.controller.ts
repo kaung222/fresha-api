@@ -27,30 +27,35 @@ export class AuthController {
     const { refreshToken, ...rest } =
       await this.authService.loginOrganization(loginOrgDto);
     this.authService.setCookieHeaders(res, refreshToken);
-    return { rest };
+    res.send({ ...rest }).status(200);
   }
 
   @Post('root-user')
   @Role(Roles.org)
   @ApiOperation({ summary: 'create root user' })
-  register(
+  async register(
     @Body() createRootUser: CreateRootUser,
     @User('orgId') orgId: number,
+    @Res() res: Response,
   ) {
-    return this.authService.createRootUser(createRootUser, orgId);
+    const { refreshToken, ...rest } = await this.authService.createRootUser(
+      createRootUser,
+      orgId,
+    );
+    this.authService.setCookieHeaders(res, refreshToken);
+    res.send({ ...rest }).status(200);
   }
 
   @Post('organization')
   @ApiOperation({ summary: 'create organization' })
-  @Role(Roles.org)
   async createOrganization(
-    createOrganization: CreateOrganizationDto,
+    @Body() createOrganization: CreateOrganizationDto,
     @Res() res: Response,
   ) {
     const { refreshToken, ...rest } =
       await this.authService.createOrganization(createOrganization);
     this.authService.setCookieHeaders(res, refreshToken);
-    return { rest };
+    res.send({ ...rest }).status(200);
   }
 
   @Get('refresh')
