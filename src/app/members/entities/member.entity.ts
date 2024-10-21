@@ -67,7 +67,7 @@ export class Member extends IncrementEntity {
   @Column('float', { default: 0, nullable: true })
   averageRating: number;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   password: string;
 
   @Column({ default: 'member' })

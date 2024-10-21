@@ -1,6 +1,5 @@
 import { Module, Global } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { EmailService } from './email.service';
 
 @Global()
 @Module({
@@ -16,7 +15,7 @@ import { EmailService } from './email.service';
       },
     ]),
   ],
+  providers: [],
   exports: [ClientsModule],
-  providers: [EmailService],
 })
 export class GlobalModule {}

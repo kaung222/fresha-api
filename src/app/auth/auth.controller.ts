@@ -21,29 +21,33 @@ import { Request, Response } from 'express';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('organization-login')
+  @Post('member-login')
   @ApiOperation({ summary: 'Login as member or root user' })
-  login(@Body() loginOrgDto: loginOrganizationDto) {
-    return this.authService.loginOrganization(loginOrgDto);
+  async login(@Body() loginOrgDto: loginOrganizationDto, @Res() res: Response) {
+    const { refreshToken, ...rest } =
+      await this.authService.loginOrganization(loginOrgDto);
+    this.authService.setCookieHeaders(res, refreshToken);
+    return { rest };
   }
 
-  @Post('organization-register')
+  @Post('root-user')
+  @Role(Roles.org)
   @ApiOperation({ summary: 'create root user' })
-  register(@Body() createRootUser: CreateRootUser) {
-    return this.authService.createRootUser(createRootUser);
+  register(@Body() createRootUser: CreateRootUser, @Org() orgId: number) {
+    return this.authService.createRootUser(createRootUser, orgId);
   }
 
-  @Post()
+  @Post('organization')
   @ApiOperation({ summary: 'create organization' })
   @Role(Roles.org)
   async createOrganization(
     createOrganization: CreateOrganizationDto,
-    @Org() orgId: number,
+    @Res() res: Response,
   ) {
-    const { refreshToken } = await this.authService.createOrganization(
-      createOrganization,
-      orgId,
-    );
+    const { refreshToken, ...rest } =
+      await this.authService.createOrganization(createOrganization);
+    this.authService.setCookieHeaders(res, refreshToken);
+    return { rest };
   }
 
   @Get('refresh')
@@ -53,25 +57,9 @@ export class AuthController {
     const cookie = req.headers.cookie;
     if (!cookie)
       throw new UnauthorizedException('Session expires, login again!');
-    const token = this.getRefreshTokenFromCookie(cookie);
+    const token = this.authService.getRefreshTokenFromCookie(cookie);
     const tokens = this.authService.getNewAccessToken(token);
-    this.setCookieHeaders(res, tokens.refreshToken);
+    this.authService.setCookieHeaders(res, tokens.refreshToken);
     res.send({ accessToken: tokens.accessToken });
-  }
-
-  //set refresh token cookie in response headers
-  private setCookieHeaders(res: Response, refreshToken: string) {
-    res.cookie('refreshToken', refreshToken, {
-      secure: true,
-      httpOnly: true,
-      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    });
-  }
-  // Helper function to extract the refresh token from the cookie
-  private getRefreshTokenFromCookie(cookie: string): string | null {
-    const refreshTokenMatch = cookie
-      .split(';')
-      .find((c) => c.trim().startsWith('refreshToken='));
-    return refreshTokenMatch ? refreshTokenMatch.split('=')[1] : null;
   }
 }

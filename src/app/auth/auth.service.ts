@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -14,26 +15,34 @@ import * as bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Roles } from '@/security/user.decorator';
 import { CreateOrganizationDto } from '../organizations/dto/create-organization.dto';
+import { ConfigService } from '@nestjs/config';
+import { CreatePasswordDto } from './dto/create-password.dto';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
+    private configService: ConfigService,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
     @InjectRepository(Organization)
     private readonly organizationRepository: Repository<Organization>,
   ) {}
 
-  // login organization
+  // login organization and member
   async loginOrganization(loginOrgDto: loginOrganizationDto) {
     const member = await this.memberRepository
       .createQueryBuilder('member')
-      .addSelect('member.password', 'password')
+      .addSelect('member.password')
       .where('member.email=:email', { email: loginOrgDto.email })
       .getOne();
     if (!member) throw new NotFoundException('email not found');
-    const isAuthenticated = await bcrypt.compare(
+    if (member && member.password == null)
+      throw new ForbiddenException(
+        'Please accept the invitation in your email',
+      );
+    const isAuthenticated = await this.checkPassword(
       loginOrgDto.password,
       member.password,
     );
@@ -54,19 +63,23 @@ export class AuthService {
     };
   }
 
-  // register org
-  async createRootUser(createRootUser: CreateRootUser) {
+  // create root user
+  async createRootUser(createRootUser: CreateRootUser, orgId: number) {
     const { email } = createRootUser;
     const member = await this.memberRepository.findOneBy({ email });
     if (member) throw new ConflictException('Email already taken');
+    const password = await this.hashPassword(createRootUser.password);
     const newMember = this.memberRepository.create({
       ...createRootUser,
       role: Roles.org,
       type: 'self-employed',
+      organization: { id: orgId },
+      password,
     });
     const user = await this.memberRepository.save(newMember);
     const jwtPayload = {
       user: { id: user.id, role: user.role },
+      org: orgId,
     };
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
     return {
@@ -76,16 +89,13 @@ export class AuthService {
     };
   }
 
-  async createOrganization(
-    createOrganization: CreateOrganizationDto,
-    userId: number,
-  ) {
+  // register new organization
+  async createOrganization(createOrganization: CreateOrganizationDto) {
     const newOrg = this.organizationRepository.create(createOrganization);
     const organization = await this.organizationRepository.save(newOrg);
-    await this.memberRepository.save({ id: userId, organization });
     const jwtPayload = {
-      user: { id: userId, role: Roles.org },
       org: organization.id,
+      user: { role: Roles.org },
     };
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
     return {
@@ -96,9 +106,32 @@ export class AuthService {
     };
   }
 
+  // create password for new member added
+  async createPassword(createPasswordDto: CreatePasswordDto) {
+    const { email } = createPasswordDto;
+    const member = await this.memberRepository.findOneByOrFail({
+      email,
+      password: null,
+    });
+    if (!member) throw new NotFoundException();
+    const password = await this.hashPassword(createPasswordDto.password);
+    await this.memberRepository.update(member.id, { password });
+    const { accessToken, refreshToken } = this.generateTokens({
+      org: member.organization.id,
+      user: { role: Roles.member, id: member.id },
+    });
+    return {
+      message: 'Create password successfully please login',
+      accessToken,
+      refreshToken,
+    };
+  }
+
   getNewAccessToken(token: string) {
     try {
-      const { exp, iat, ...rest } = this.jwtService.verify(token);
+      const { exp, iat, ...rest } = this.jwtService.verify(token, {
+        secret: this.configService.get('JWT_REFRESH_SECRET'),
+      });
       const { accessToken, refreshToken } = this.generateTokens(rest);
       return { accessToken, refreshToken };
     } catch (error) {
@@ -106,7 +139,8 @@ export class AuthService {
     }
   }
 
-  private generateTokens(payload: any) {
+  // generate accessToken and refreshToken
+  generateTokens(payload: any) {
     const accessToken = this.jwtService.sign(
       payload,
       //  { expiresIn: '1h' }
@@ -114,15 +148,40 @@ export class AuthService {
     const refreshToken = this.jwtService.sign(
       { data: payload },
       // { expiresIn: '7d' },
-      // {secret: }
+      { secret: this.configService.get('JWT_REFRESH_SECRET') },
     );
     return { accessToken, refreshToken };
   }
 
-  private async hashPassword(payload: string): Promise<string> {
+  // hash password
+  async hashPassword(payload: string): Promise<string> {
     // const salt = bcrypt.genSalt()
     const hash = await bcrypt.hash(payload, 10);
     console.log(hash);
     return hash;
+  }
+
+  // check correct password
+  async checkPassword(
+    password: string,
+    password_stored: string,
+  ): Promise<boolean> {
+    return await bcrypt.compare(password, password_stored);
+  }
+
+  //set refresh token cookie in response headers
+  setCookieHeaders(res: Response, refreshToken: string) {
+    res.cookie('refreshToken', refreshToken, {
+      secure: true,
+      httpOnly: true,
+      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    });
+  }
+  // Helper function to extract the refresh token from the cookie
+  getRefreshTokenFromCookie(cookie: string): string | null {
+    const refreshTokenMatch = cookie
+      .split(';')
+      .find((c) => c.trim().startsWith('refreshToken='));
+    return refreshTokenMatch ? refreshTokenMatch.split('=')[1] : null;
   }
 }

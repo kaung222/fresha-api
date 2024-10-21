@@ -20,6 +20,9 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './security/role.guard';
 import { AuthModule } from './app/auth/auth.module';
 import { Category } from './app/categories/entities/category.entity';
+import { FilesModule } from './app/files/files.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { User } from './app/users/entities/user.entity';
 
 @Module({
   imports: [
@@ -34,7 +37,7 @@ import { Category } from './app/categories/entities/category.entity';
       synchronize: true,
       logging: true,
       // autoLoadEntities: true,
-      entities: [Member, Service, Organization,Category],
+      entities: [Member, Service, Organization, Category, User],
     }),
 
     GlobalModule,
@@ -46,6 +49,15 @@ import { Category } from './app/categories/entities/category.entity';
         limit: 10,
       },
     ]),
+    MailerModule.forRoot({
+      transport: {
+        service: 'Gmail',
+        auth: {
+          user: process.env.SHOP_GMAIL,
+          pass: process.env.SHOP_GMAIL_PASSWORD,
+        },
+      },
+    }),
     CacheModule.register({ isGlobal: true }),
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
@@ -55,6 +67,7 @@ import { Category } from './app/categories/entities/category.entity';
     AppointmentsModule,
     CategoriesModule,
     AuthModule,
+    FilesModule,
   ],
   controllers: [],
   providers: [

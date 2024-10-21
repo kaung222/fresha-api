@@ -1,22 +1,19 @@
 import {
-  IsDate,
   IsEmail,
-  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsPhoneNumber,
   IsString,
-  IsUrl,
+  IsStrongPassword,
 } from 'class-validator';
-import { Gender } from '../entities/user.entity';
 
-export class CreateUserDto {
-  @IsNotEmpty()
+export class RegisterUserDto {
   @IsString()
+  @IsNotEmpty()
   firstName: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   lastName?: string;
 
   @IsEmail()
@@ -27,19 +24,7 @@ export class CreateUserDto {
   @IsNotEmpty()
   phone: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsStrongPassword()
   password: string;
-
-  @IsOptional()
-  @IsUrl()
-  profilePicture?: string;
-
-  @IsOptional()
-  @IsEnum(Gender)
-  gender?: Gender;
-
-  @IsDate()
-  @IsOptional()
-  dob: Date;
 }

@@ -8,7 +8,7 @@ export class Category extends IncrementEntity {
 
   @Index('creatorId')
   @Column()
-  creatorId: string;
+  creatorId: number;
 
   @Column({ nullable: true })
   notes: string;

@@ -5,9 +5,6 @@ export class CreateCategoryDto {
   @IsString()
   name: string;
 
-  @IsNotEmpty()
-  creatorId: string;
-
   @IsString()
   @IsOptional()
   @Max(255)
