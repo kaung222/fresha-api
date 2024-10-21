@@ -1,10 +1,12 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-export class SignedUserDto {
+export class SignedUser {
   id: string;
-  role: string;
+  role: Roles;
   status: string;
   type: string;
+  orgId: number;
 }
+
 export enum Roles {
   user = 'user',
   org = 'organisation',
@@ -12,9 +14,9 @@ export enum Roles {
 }
 
 export const User = createParamDecorator(
-  (data: string, ctx: ExecutionContext) => {
+  (data: 'id' | 'role' | 'orgId', ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
-    const user = request.user;
+    const user: SignedUser = request.user;
     return data ? user?.[data] : user;
   },
 );
@@ -23,5 +25,6 @@ export const Org = createParamDecorator(
   (data: string, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
     const org = request.org;
+    return org;
   },
 );

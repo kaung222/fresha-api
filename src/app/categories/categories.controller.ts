@@ -21,13 +21,16 @@ export class CategoriesController {
 
   @Post()
   @Role(Roles.member, Roles.org)
-  create(@Body() createCategoryDto: CreateCategoryDto, @Org() orgId: number) {
+  create(
+    @Body() createCategoryDto: CreateCategoryDto,
+    @User('orgId') orgId: number,
+  ) {
     return this.categoriesService.create(createCategoryDto, orgId);
   }
 
   @Get()
   @Role(Roles.member, Roles.org)
-  findAll(@Org() orgId: number) {
+  findAll(@User('orgId') orgId: number) {
     return this.categoriesService.findAll(orgId);
   }
 
@@ -40,14 +43,14 @@ export class CategoriesController {
   async update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
-    @Org() orgId: number,
+    @User('orgId') orgId: number,
   ) {
     await this.categoriesService.checkOwnership(+id, orgId);
     return this.categoriesService.update(+id, updateCategoryDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @Org() orgId: number) {
+  async remove(@Param('id') id: string, @User('orgId') orgId: number) {
     await this.categoriesService.checkOwnership(+id, orgId);
     return this.categoriesService.remove(+id);
   }

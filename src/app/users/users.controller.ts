@@ -11,6 +11,8 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { Role } from '@/security/role.decorator';
+import { Roles, User } from '@/security/user.decorator';
 
 @Controller('users')
 @ApiTags('User')
@@ -23,6 +25,7 @@ export class UsersController {
   }
 
   @Get()
+  @Role(Roles.member, Roles.org)
   findAll() {
     return this.usersService.findAll();
   }

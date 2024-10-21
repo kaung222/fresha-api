@@ -51,8 +51,7 @@ export class AuthService {
     }
     const { password, ...rest } = member;
     const jwtPayload = {
-      user: { id: member.id, role: member.role },
-      sub: member.organization.id,
+      user: { id: member.id, role: member.role, orgId: member.organization.id },
     };
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
     return {
@@ -78,8 +77,7 @@ export class AuthService {
     });
     const user = await this.memberRepository.save(newMember);
     const jwtPayload = {
-      user: { id: user.id, role: user.role },
-      org: orgId,
+      user: { id: user.id, role: user.role, orgId },
     };
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
     return {
@@ -94,8 +92,7 @@ export class AuthService {
     const newOrg = this.organizationRepository.create(createOrganization);
     const organization = await this.organizationRepository.save(newOrg);
     const jwtPayload = {
-      org: organization.id,
-      user: { role: Roles.org },
+      user: { role: Roles.org, orgId: organization.id },
     };
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
     return {

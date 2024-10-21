@@ -13,7 +13,7 @@ import { loginOrganizationDto } from './dto/login-org.dto';
 import { CreateRootUser } from './dto/register-org.dto';
 import { CreateOrganizationDto } from '../organizations/dto/create-organization.dto';
 import { Role } from '@/security/role.decorator';
-import { Org, Roles } from '@/security/user.decorator';
+import { Org, Roles, User } from '@/security/user.decorator';
 import { Request, Response } from 'express';
 
 @Controller('auth')
@@ -33,7 +33,10 @@ export class AuthController {
   @Post('root-user')
   @Role(Roles.org)
   @ApiOperation({ summary: 'create root user' })
-  register(@Body() createRootUser: CreateRootUser, @Org() orgId: number) {
+  register(
+    @Body() createRootUser: CreateRootUser,
+    @User('orgId') orgId: number,
+  ) {
     return this.authService.createRootUser(createRootUser, orgId);
   }
 

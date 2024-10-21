@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLE_KEY } from './role.decorator';
-import { Roles } from './user.decorator';
+import { Roles, SignedUser } from './user.decorator';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -27,8 +27,8 @@ export class RolesGuard implements CanActivate {
       }
       const request = context.switchToHttp().getRequest();
       const accessToken = request.headers?.authorization?.split(' ')[1];
-      const { sub, user } = this.jwtService.verify(accessToken);
-      request.org = sub;
+      const { user }: { user: SignedUser } =
+        this.jwtService.verify(accessToken);
       request.user = user;
       // return requiredRoles.some((role) => user.roles?.includes(role));
       return Array.from(requiredRoles).includes(user.role);
