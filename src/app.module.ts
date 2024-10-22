@@ -26,6 +26,7 @@ import { User } from './app/users/entities/user.entity';
 import { ProductsModule } from './app/products/products.module';
 import { TestModule } from './app/test/test.module';
 import { OTP } from './app/auth/entities/otp.entity';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -59,6 +60,13 @@ import { OTP } from './app/auth/entities/otp.entity';
           user: process.env.SHOP_GMAIL,
           pass: process.env.SHOP_GMAIL_PASSWORD,
         },
+      },
+    }),
+    BullModule.forRoot({
+      redis: {
+        port: parseInt(process.env.REDIS_PORT),
+        host: process.env.REDIS_HOST,
+        password: process.env.REDIS_PASSWORD,
       },
     }),
     CacheModule.register({ isGlobal: true }),
