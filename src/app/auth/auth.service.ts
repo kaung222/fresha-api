@@ -85,6 +85,8 @@ export class AuthService {
       firstName,
       lastName,
       password,
+      role: Roles.org,
+      type: 'employee',
     });
     const member = await this.memberRepository.save(newMember);
 
