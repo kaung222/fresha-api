@@ -27,6 +27,7 @@ import { ProductsModule } from './app/products/products.module';
 import { TestModule } from './app/test/test.module';
 import { OTP } from './app/auth/entities/otp.entity';
 import { BullModule } from '@nestjs/bull';
+import { File } from './app/files/entities/file.entity';
 
 @Module({
   imports: [
@@ -41,7 +42,7 @@ import { BullModule } from '@nestjs/bull';
       synchronize: true,
       logging: true,
       // autoLoadEntities: true,
-      entities: [Member, Service, Organization, Category, User, OTP],
+      entities: [Member, Service, Organization, Category, User, OTP, File],
     }),
 
     GlobalModule,

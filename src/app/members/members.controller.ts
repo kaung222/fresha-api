@@ -11,6 +11,8 @@ import { MembersService } from './members.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { Role } from '@/security/role.decorator';
+import { Roles, User } from '@/security/user.decorator';
 
 @Controller('members')
 @ApiTags('Member')
@@ -18,8 +20,12 @@ export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 
   @Post()
-  create(@Body() createMemberDto: CreateMemberDto) {
-    return this.membersService.create(createMemberDto);
+  @Role(Roles.org)
+  create(
+    @Body() createMemberDto: CreateMemberDto,
+    @User('orgId') orgId: number,
+  ) {
+    return this.membersService.create(createMemberDto, orgId);
   }
 
   @Get()
@@ -39,6 +45,11 @@ export class MembersController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
+    return this.membersService.remove(+id);
+  }
+
+  @Get(':id/restore')
+  restore(@Param('id') id: string) {
     return this.membersService.remove(+id);
   }
 }

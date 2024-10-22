@@ -57,7 +57,9 @@ export class CreateMemberDto {
   experience: number;
 
   @ApiProperty({ example: '[english, burmese]' })
-  languageProficiency: string[];
+  @IsOptional()
+  @IsString({ each: true })
+  languageProficiency?: string[];
 
   @ApiProperty({ example: '[id1, id2]' })
   @IsOptional()

@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, Min } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Min } from 'class-validator';
 
 export class ConfirmOTPDto {
   @IsNotEmpty()

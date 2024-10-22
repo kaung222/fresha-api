@@ -2,10 +2,16 @@ import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
 import { IncrementEntity } from '@/utils/base.entity';
 import { Service } from '@/app/services/entities/service.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
+import { Roles } from '@/security/user.decorator';
 
 export enum Gender {
   male = 'male',
   female = 'female',
+}
+
+export enum MemberRole {
+  org = 'organization',
+  member = 'member',
 }
 
 @Entity()
@@ -70,8 +76,11 @@ export class Member extends IncrementEntity {
   @Column({ nullable: true, select: false })
   password: string;
 
-  @Column({ default: 'member' })
-  role: 'member' | 'organisation';
+  @Column({ enum: MemberRole, default: MemberRole.member })
+  role: MemberRole;
+
+  @Column({ nullable: true })
+  country: string;
 
   //   @OneToMany(() => Review, (review) => review.doctor)
   //   reviews: Review[];

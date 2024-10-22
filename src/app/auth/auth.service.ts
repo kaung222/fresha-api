@@ -72,13 +72,14 @@ export class AuthService {
   }
   // register new organization
   async createOrganization(createOrganization: RegisterOrganizationDto) {
-    const { name, types, address, email, firstName, lastName, password } =
+    const { name, types, address, email, firstName, lastName } =
       createOrganization;
     const isConfirmedOTP = await this.otpRepository.findOneBy({ email });
     if (!isConfirmedOTP || !isConfirmedOTP.isConfirmed)
       throw new ForbiddenException('Confirm OTP first');
     const newOrg = this.organizationRepository.create({ name, types, address });
     const organization = await this.organizationRepository.save(newOrg);
+    const password = await this.hashPassword(createOrganization.password);
     const newMember = this.memberRepository.create({
       email,
       firstName,
@@ -86,17 +87,19 @@ export class AuthService {
       password,
     });
     const member = await this.memberRepository.save(newMember);
+
     const jwtPayload = {
       id: member.id,
       role: Roles.org,
       orgId: organization.id,
     };
+    delete member.password;
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
     return {
       message: 'Create organization successfully',
       accessToken,
       refreshToken,
-      member,
+      user: member,
     };
   }
 
