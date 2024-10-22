@@ -39,6 +39,7 @@ export class AuthService {
   async loginOrganization(loginOrgDto: loginOrganizationDto) {
     const member = await this.memberRepository
       .createQueryBuilder('member')
+      .leftJoinAndSelect('member.organization', 'organization')
       .addSelect('member.password')
       .where('member.email=:email', { email: loginOrgDto.email })
       .getOne();

@@ -13,7 +13,7 @@ import { loginOrganizationDto } from './dto/login-org.dto';
 import { CreateRootUser } from './dto/register-org.dto';
 import { CreateOrganizationDto } from '../organizations/dto/create-organization.dto';
 import { Role } from '@/security/role.decorator';
-import { Org, Roles, User } from '@/security/user.decorator';
+import { Roles, User } from '@/security/user.decorator';
 import { Request, Response } from 'express';
 
 @Controller('auth')

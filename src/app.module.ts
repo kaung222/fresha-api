@@ -23,6 +23,8 @@ import { Category } from './app/categories/entities/category.entity';
 import { FilesModule } from './app/files/files.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { User } from './app/users/entities/user.entity';
+import { ProductsModule } from './app/products/products.module';
+import { TestModule } from './app/test/test.module';
 
 @Module({
   imports: [
@@ -68,6 +70,8 @@ import { User } from './app/users/entities/user.entity';
     CategoriesModule,
     AuthModule,
     FilesModule,
+    ProductsModule,
+    TestModule,
   ],
   controllers: [],
   providers: [
