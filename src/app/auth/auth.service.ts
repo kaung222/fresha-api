@@ -72,7 +72,7 @@ export class AuthService {
   }
   // register new organization
   async createOrganization(createOrganization: RegisterOrganizationDto) {
-    const { name, types, address, email, firstName, lastName } =
+    const { name, types, address, email, firstName, lastName, password } =
       createOrganization;
     const isConfirmedOTP = await this.otpRepository.findOneBy({ email });
     if (!isConfirmedOTP || !isConfirmedOTP.isConfirmed)
@@ -83,6 +83,7 @@ export class AuthService {
       email,
       firstName,
       lastName,
+      password,
     });
     const member = await this.memberRepository.save(newMember);
     const jwtPayload = {

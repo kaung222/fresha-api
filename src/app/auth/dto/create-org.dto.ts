@@ -7,6 +7,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsStrongPassword,
 } from 'class-validator';
 
 export class RegisterOrganizationDto {
@@ -36,4 +37,8 @@ export class RegisterOrganizationDto {
   @ArrayMaxSize(3)
   @IsString({ each: true })
   types: string[];
+
+  @IsNotEmpty()
+  @IsStrongPassword()
+  password: string;
 }

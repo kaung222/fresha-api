@@ -6,9 +6,6 @@ export class Organization extends IncrementEntity {
   @Column()
   name: string;
 
-  @Column({ unique: true })
-  email: string;
-
   @Column('simple-array', { nullable: true })
   phones: string[];
 
@@ -21,6 +18,6 @@ export class Organization extends IncrementEntity {
   @Column({ nullable: true })
   profilePictureUrl: string;
 
-  @Column('simple-array')
+  @Column('simple-array', { nullable: true })
   types: string[];
 }
