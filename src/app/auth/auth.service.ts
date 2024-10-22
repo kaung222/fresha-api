@@ -6,7 +6,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { loginOrganizationDto } from './dto/login-org.dto';
-import { CreateRootUser } from './dto/register-org.dto';
 import { Repository } from 'typeorm';
 import { Organization } from '../organizations/entities/organization.entity';
 import { Member } from '../members/entities/member.entity';
@@ -14,7 +13,6 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Roles } from '@/security/user.decorator';
-import { CreateOrganizationDto } from '../organizations/dto/create-organization.dto';
 import { ConfigService } from '@nestjs/config';
 import { CreatePasswordDto } from './dto/create-password.dto';
 import { Response } from 'express';
@@ -22,6 +20,9 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { SendEmailDto } from '@/global/email.service';
 import { generateOpt } from '@/utils';
+import { OTP } from './entities/otp.entity';
+import { ConfirmOTPDto } from './dto/confirm-otp.dto';
+import { RegisterOrganizationDto } from './dto/create-org.dto';
 
 @Injectable()
 export class AuthService {
@@ -33,9 +34,11 @@ export class AuthService {
     private readonly memberRepository: Repository<Member>,
     @InjectRepository(Organization)
     private readonly organizationRepository: Repository<Organization>,
+    @InjectRepository(OTP) private otpRepository: Repository<OTP>,
   ) {}
 
   // login organization and member
+
   async loginOrganization(loginOrgDto: loginOrganizationDto) {
     const member = await this.memberRepository
       .createQueryBuilder('member')
@@ -67,55 +70,78 @@ export class AuthService {
       user: rest,
     };
   }
-
-  // create root user
-  async createRootUser(createRootUser: CreateRootUser, orgId: number) {
-    const { email } = createRootUser;
-    const member = await this.memberRepository.findOneBy({ email });
-    if (member) throw new ConflictException('Email already taken');
-    const password = await this.hashPassword(createRootUser.password);
-    const newMember = this.memberRepository.create({
-      ...createRootUser,
-      role: Roles.org,
-      type: 'self-employed',
-      organization: { id: orgId },
-      password,
-    });
-    const user = await this.memberRepository.save(newMember);
-    const jwtPayload = {
-      user: { id: user.id, role: user.role, orgId },
-    };
-    const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
-    return {
-      messsage: 'Register successfully',
-      accessToken,
-      refreshToken,
-    };
-  }
-
   // register new organization
-  async createOrganization(createOrganization: CreateOrganizationDto) {
-    const newOrg = this.organizationRepository.create(createOrganization);
+  async createOrganization(createOrganization: RegisterOrganizationDto) {
+    const { name, types, address, email, firstName, lastName } =
+      createOrganization;
+    const isConfirmedOTP = await this.otpRepository.findOneBy({ email });
+    if (!isConfirmedOTP || !isConfirmedOTP.isConfirmed)
+      throw new ForbiddenException('Confirm OTP first');
+    const newOrg = this.organizationRepository.create({ name, types, address });
     const organization = await this.organizationRepository.save(newOrg);
+    const newMember = this.memberRepository.create({
+      email,
+      firstName,
+      lastName,
+    });
+    const member = await this.memberRepository.save(newMember);
     const jwtPayload = {
-      user: { role: Roles.org, orgId: organization.id },
+      id: member.id,
+      role: Roles.org,
+      orgId: organization.id,
     };
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
     return {
       message: 'Create organization successfully',
       accessToken,
       refreshToken,
-      organization,
+      member,
     };
   }
 
+  // get OTP
   async getOTP(email: string) {
+    const otp = generateOpt();
+    const otpPayload = {
+      otp,
+      expiredAt: (Date.now() + 300000).toString(),
+      email,
+      isConfirmed: false,
+    };
+    const isExistOtp = await this.otpRepository.findOneBy({
+      email,
+    });
+    if (isExistOtp) {
+      await this.otpRepository.update(isExistOtp.id, otpPayload);
+    } else await this.otpRepository.insert(otpPayload);
     const emailPayload: SendEmailDto = {
       to: email,
+      text: otp,
       subject: 'OTP',
-      text: generateOpt(),
     };
-    return this.emailQueue.add('sendEmail', emailPayload);
+    await this.emailQueue.add('sendEmail', emailPayload);
+    return {
+      message: `Send OTP to ${email} successfully`,
+      email,
+    };
+  }
+
+  // confirmOTP
+  async confirmOTP(confirmOTPDto: ConfirmOTPDto) {
+    const { email, otp } = confirmOTPDto;
+    const storedOtp = await this.otpRepository.findOneBy({ email });
+
+    if (
+      !storedOtp ||
+      storedOtp.otp !== otp.toString() ||
+      parseInt(storedOtp.expiredAt) <= Date.now()
+    ) {
+      throw new UnauthorizedException('Invalid OTP or expired!');
+    }
+    await this.otpRepository.update(storedOtp.id, { isConfirmed: true });
+    return {
+      message: 'Confirm OTP successfully',
+    };
   }
 
   // create password for new member added

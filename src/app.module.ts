@@ -25,6 +25,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { User } from './app/users/entities/user.entity';
 import { ProductsModule } from './app/products/products.module';
 import { TestModule } from './app/test/test.module';
+import { OTP } from './app/auth/entities/otp.entity';
 
 @Module({
   imports: [
@@ -39,7 +40,7 @@ import { TestModule } from './app/test/test.module';
       synchronize: true,
       logging: true,
       // autoLoadEntities: true,
-      entities: [Member, Service, Organization, Category, User],
+      entities: [Member, Service, Organization, Category, User, OTP],
     }),
 
     GlobalModule,
