@@ -6,6 +6,5 @@ export class ConfirmOTPDto {
   email: string;
 
   @IsNotEmpty()
-  @Min(6)
   otp: string;
 }

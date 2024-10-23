@@ -28,6 +28,8 @@ import { TestModule } from './app/test/test.module';
 import { OTP } from './app/auth/entities/otp.entity';
 import { BullModule } from '@nestjs/bull';
 import { File } from './app/files/entities/file.entity';
+import { MemberReviewsModule } from './app/member-reviews/member-reviews.module';
+import { OrgReviewsModule } from './app/org-reviews/org-reviews.module';
 
 @Module({
   imports: [
@@ -82,6 +84,8 @@ import { File } from './app/files/entities/file.entity';
     FilesModule,
     ProductsModule,
     TestModule,
+    MemberReviewsModule,
+    OrgReviewsModule,
   ],
   controllers: [],
   providers: [
