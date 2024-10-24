@@ -21,12 +21,13 @@ export class MembersService {
     const member = this.memberRepository.create({
       ...createMemberDto,
       services,
+      organization: { id: orgId },
     });
     return await this.memberRepository.save(member);
   }
 
   // find many
-  async findAll() {
+  async findAll(orgId: number) {
     let page = 1;
     const response = await this.memberRepository.find({
       skip: 10 * (page - 1),
@@ -34,12 +35,18 @@ export class MembersService {
       order: {
         firstName: 'ASC',
       },
+      where: {
+        organization: { id: orgId },
+      },
     });
     return response;
   }
 
   findOne(id: number) {
-    return this.memberRepository.findOneBy({ id });
+    return this.memberRepository.findOne({
+      where: { id },
+      relations: { services: true },
+    });
   }
 
   async update(id: number, updateMemberDto: UpdateMemberDto) {

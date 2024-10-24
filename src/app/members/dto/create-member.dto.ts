@@ -9,7 +9,7 @@ import {
   IsString,
   IsUrl,
 } from 'class-validator';
-import { Gender } from '../entities/member.entity';
+import { Gender, MemberType } from '../entities/member.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateMemberDto {
@@ -63,10 +63,19 @@ export class CreateMemberDto {
 
   @ApiProperty({ example: '[id1, id2]' })
   @IsOptional()
-  @IsString({ each: true })
-  serviceIds: string[];
+  serviceIds: number[];
 
   @IsOptional()
   @IsString()
   memberId: string;
+
+  @IsOptional()
+  @IsEnum(MemberType)
+  type?: MemberType;
+
+  @IsOptional()
+  address?: string;
+
+  @IsOptional()
+  country?: string;
 }

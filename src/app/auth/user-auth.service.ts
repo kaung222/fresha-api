@@ -22,7 +22,7 @@ export class UserAuthService {
   async loginUser(loginUserDto: LoginUserDto) {
     const { email, password } = loginUserDto;
     const user = await this.userRepository.findOne({
-      where: { email: loginUserDto.email },
+      where: { email },
       select: ['id', 'password', 'firstName'],
     });
     if (!user) throw new NotFoundException('User not found');

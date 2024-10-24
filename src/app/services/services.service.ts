@@ -23,7 +23,7 @@ export class ServicesService {
     return `This action returns a #${id} service`;
   }
 
-  findByIds(ids: string[]) {
+  findByIds(ids: number[]) {
     return this.serviceRepository.findBy({ id: In(ids) });
   }
 

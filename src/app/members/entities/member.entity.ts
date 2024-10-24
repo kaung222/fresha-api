@@ -14,6 +14,11 @@ export enum MemberRole {
   member = 'member',
 }
 
+export enum MemberType {
+  employee = 'employee',
+  self_employed = 'self-employed',
+}
+
 @Entity()
 export class Member extends IncrementEntity {
   @Column()
@@ -66,8 +71,8 @@ export class Member extends IncrementEntity {
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   organization: Organization;
 
-  @Column({ nullable: true, default: 'employee' })
-  type: 'employee' | 'self-employed';
+  @Column({ enum: MemberType, default: MemberType.employee })
+  type: MemberType;
 
   // rating
   @Column('float', { default: 0, nullable: true })
@@ -78,6 +83,9 @@ export class Member extends IncrementEntity {
 
   @Column({ enum: Roles, default: Roles.member })
   role: Roles;
+
+  @Column({ nullable: true })
+  address: string;
 
   @Column({ nullable: true })
   country: string;

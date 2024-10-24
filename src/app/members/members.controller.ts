@@ -29,8 +29,9 @@ export class MembersController {
   }
 
   @Get()
-  findAll() {
-    return this.membersService.findAll();
+  @Role(Roles.org)
+  findAll(@User('orgId') orgId: number) {
+    return this.membersService.findAll(orgId);
   }
 
   @Get(':id')
