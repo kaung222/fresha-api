@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -50,6 +50,7 @@ export class MembersService {
   }
 
   async update(id: number, updateMemberDto: UpdateMemberDto) {
+    // Find the member with the relations (services)
     const member = await this.memberRepository.findOne({
       where: { id },
       relations: {
@@ -57,19 +58,26 @@ export class MembersService {
       },
     });
 
+    // Handle the case where the member does not exist
+    if (!member) {
+      throw new NotFoundException(`Member with ID ${id} not found`);
+    }
+
+    // Fetch the services based on the provided service IDs
     const services = await this.serviceService.findByIds(
       updateMemberDto.serviceIds,
     );
-    const updateMember = this.memberRepository.create({
-      services,
-      ...updateMemberDto,
-      id,
-    });
-    return await this.memberRepository.save(updateMember);
+
+    // Update the member's services and other fields
+    member.services = services;
+    Object.assign(member, updateMemberDto);
+
+    // Save the updated member entity
+    return await this.memberRepository.save(member);
   }
 
   remove(id: number) {
-    return this.memberRepository.softDelete(id);
+    return this.memberRepository.delete(id);
   }
 
   restore(id: number) {

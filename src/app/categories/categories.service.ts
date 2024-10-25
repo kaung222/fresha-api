@@ -29,6 +29,13 @@ export class CategoriesService {
     return this.categoryRepository.findOneBy({ id });
   }
 
+  findManyWithServices(orgId: number) {
+    return this.categoryRepository.findOne({
+      relations: { services: true },
+      where: { organization: { id: orgId } },
+    });
+  }
+
   update(id: number, updateCategoryDto: UpdateCategoryDto) {
     return this.categoryRepository.update(id, updateCategoryDto);
   }

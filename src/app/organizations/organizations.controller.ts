@@ -6,13 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
-import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { Role } from '@/security/role.decorator';
-import { Roles, User } from '@/security/user.decorator';
+import { PaginateQuery } from '@/utils/paginate-query.dto';
 
 @Controller('organizations')
 @ApiTags('Organization')
@@ -20,8 +19,8 @@ export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 
   @Get()
-  findAll() {
-    return this.organizationsService.findAll();
+  findAll(@Query() paginateQuery: PaginateQuery) {
+    return this.organizationsService.findAll(paginateQuery);
   }
 
   @Get(':id')

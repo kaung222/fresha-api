@@ -11,6 +11,7 @@ import { ServicesService } from './services.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { User } from '@/security/user.decorator';
 
 @Controller('services')
 @ApiTags('Service')
@@ -18,13 +19,16 @@ export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
   @Post()
-  create(@Body() createServiceDto: CreateServiceDto) {
-    return this.servicesService.create(createServiceDto);
+  create(
+    @Body() createServiceDto: CreateServiceDto,
+    @User('orgId') orgId: number,
+  ) {
+    return this.servicesService.create(createServiceDto, orgId);
   }
 
   @Get()
-  findAll() {
-    return this.servicesService.findAll();
+  findAll(@User('orgId') orgId: number) {
+    return this.servicesService.findAll(orgId);
   }
 
   @Get(':id')

@@ -8,7 +8,7 @@ import {
 import { loginOrganizationDto } from './dto/login-org.dto';
 import { Repository } from 'typeorm';
 import { Organization } from '../organizations/entities/organization.entity';
-import { Member } from '../members/entities/member.entity';
+import { Member, MemberType } from '../members/entities/member.entity';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -86,7 +86,7 @@ export class AuthService {
       lastName,
       password,
       role: Roles.org,
-      type: 'employee',
+      type: MemberType.employee,
       organization,
     });
     const member = await this.memberRepository.save(newMember);

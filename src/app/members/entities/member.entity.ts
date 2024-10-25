@@ -61,7 +61,7 @@ export class Member extends IncrementEntity {
   @Column('simple-array', { nullable: true })
   languageProficiency: string[];
 
-  @ManyToMany(() => Service, (service) => service.members)
+  @ManyToMany(() => Service, (service) => service.members, { cascade: true })
   @JoinTable()
   services: Service[];
 
@@ -71,7 +71,7 @@ export class Member extends IncrementEntity {
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   organization: Organization;
 
-  @Column({ enum: MemberType, default: MemberType.employee })
+  @Column({ type: 'enum', enum: MemberType, default: MemberType.employee })
   type: MemberType;
 
   // rating

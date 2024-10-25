@@ -1,19 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   ArrayMinSize,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
-  IsString,
   Max,
   MaxLength,
   Min,
 } from 'class-validator';
-
-export enum ServiceGender {
-  maleOnly = 'Male Only',
-  femaleOnly = 'Female Only',
-  all = 'All',
-}
+import { PriceType, TargetGender } from '../entities/service.entity';
 
 export class CreateServiceDto {
   @IsNotEmpty()
@@ -23,7 +18,7 @@ export class CreateServiceDto {
   type: string;
 
   @IsNotEmpty()
-  categoryId: string;
+  categoryId: number;
 
   @IsNotEmpty()
   @Min(0)
@@ -33,8 +28,9 @@ export class CreateServiceDto {
   @IsNotEmpty()
   duration: number; //in minutes
 
-  @ApiProperty({ default: ServiceGender.all, enum: ServiceGender })
-  gender: ServiceGender;
+  @ApiProperty({ default: TargetGender.all, enum: TargetGender })
+  @IsEnum(TargetGender)
+  targerGender: TargetGender;
 
   @IsOptional()
   @MaxLength(255)
@@ -43,6 +39,9 @@ export class CreateServiceDto {
   @ApiProperty({ example: '[memberId1,memberId2]' })
   @IsNotEmpty()
   @ArrayMinSize(1)
-  @IsString()
-  members: string[];
+  memberIds: number[];
+
+  @IsNotEmpty()
+  @IsEnum(PriceType)
+  priceType: PriceType;
 }

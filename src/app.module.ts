@@ -30,6 +30,7 @@ import { BullModule } from '@nestjs/bull';
 import { File } from './app/files/entities/file.entity';
 import { MemberReviewsModule } from './app/member-reviews/member-reviews.module';
 import { OrgReviewsModule } from './app/org-reviews/org-reviews.module';
+import { BranchModule } from './app/branch/branch.module';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { OrgReviewsModule } from './app/org-reviews/org-reviews.module';
     TestModule,
     MemberReviewsModule,
     OrgReviewsModule,
+    BranchModule,
   ],
   controllers: [],
   providers: [
