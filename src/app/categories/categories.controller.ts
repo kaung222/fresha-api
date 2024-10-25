@@ -39,11 +39,6 @@ export class CategoriesController {
     return this.categoriesService.findOne(+id);
   }
 
-  @Get(':orgId/services')
-  findOneWithServices(@Param('orgId') orgId: string) {
-    return this.categoriesService.findManyWithServices(+orgId);
-  }
-
   @Patch(':id')
   async update(
     @Param('id') id: string,

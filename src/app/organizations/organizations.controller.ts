@@ -28,6 +28,21 @@ export class OrganizationsController {
     return this.organizationsService.findOne(+id);
   }
 
+  @Get(':id/categories')
+  findCategories(@Param('id') id: string) {
+    return this.organizationsService.findCategories(+id);
+  }
+
+  @Get(':id/team')
+  findTeam(@Param('id') id: string) {
+    return this.organizationsService.findTeam(+id);
+  }
+
+  @Get(':id/reviews')
+  findReviews(@Param('id') id: string, @Query() paginateQuery: PaginateQuery) {
+    return this.organizationsService.findReviews(+id, paginateQuery);
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,

@@ -11,29 +11,23 @@ export class CategoriesService {
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
   ) {}
-  create(createCategoryDto: CreateCategoryDto, creatorId: number) {
+  create(createCategoryDto: CreateCategoryDto, orgId: number) {
     const createCategory = this.categoryRepository.create({
       ...createCategoryDto,
-      creatorId,
+      organization: { id: orgId },
     });
     return this.categoryRepository.save(createCategory);
   }
 
-  findAll(creatorId: number) {
-    return this.categoryRepository.find({
-      where: { creatorId },
+  findAll(orgId: number) {
+    return this.categoryRepository.findOne({
+      relations: { services: true },
+      where: { organization: { id: orgId } },
     });
   }
 
   findOne(id: number) {
     return this.categoryRepository.findOneBy({ id });
-  }
-
-  findManyWithServices(orgId: number) {
-    return this.categoryRepository.findOne({
-      relations: { services: true },
-      where: { organization: { id: orgId } },
-    });
   }
 
   update(id: number, updateCategoryDto: UpdateCategoryDto) {

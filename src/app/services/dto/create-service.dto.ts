@@ -5,7 +5,6 @@ import {
   IsNotEmpty,
   IsOptional,
   Max,
-  MaxLength,
   Min,
 } from 'class-validator';
 import { PriceType, TargetGender } from '../entities/service.entity';
@@ -30,11 +29,10 @@ export class CreateServiceDto {
 
   @ApiProperty({ default: TargetGender.all, enum: TargetGender })
   @IsEnum(TargetGender)
-  targerGender: TargetGender;
+  targetGender: TargetGender;
 
   @IsOptional()
-  @MaxLength(255)
-  notes: string;
+  description: string;
 
   @ApiProperty({ example: '[memberId1,memberId2]' })
   @IsNotEmpty()

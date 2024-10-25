@@ -3,11 +3,13 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Organization } from './entities/organization.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, Repository, TableInheritance } from 'typeorm';
 import { Service } from '../services/entities/service.entity';
 import { Member } from '../members/entities/member.entity';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
+import { Category } from '../categories/entities/category.entity';
+import { OrgReview } from '../org-reviews/entities/org-review.entity';
 
 @Injectable()
 export class OrganizationsService {
@@ -57,8 +59,33 @@ export class OrganizationsService {
     return this.orgRepository.findOneBy({ id });
   }
 
+  findCategories(orgId: number) {
+    return this.dataSource.getRepository(Category).find({
+      where: { organization: { id: orgId } },
+      relations: { services: true },
+    });
+  }
+
+  findTeam(orgId: number) {
+    return this.dataSource.getRepository(Member).find({
+      where: { organization: { id: orgId } },
+    });
+  }
+
+  async findReviews(orgId: number, paginateQuery: PaginateQuery) {
+    const { page } = paginateQuery;
+    const [data, totalCount] = await this.dataSource
+      .getRepository(OrgReview)
+      .findAndCount({
+        skip: 10 * (page - 1),
+        take: 10,
+        where: { organization: { id: orgId } },
+      });
+    return new PaginationResponse({ data, page, totalCount }).toResponse();
+  }
+
   update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
-    return `This action updates a #${id} organization`;
+    return this.orgRepository.update(id, updateOrganizationDto);
   }
 
   remove(id: number) {
