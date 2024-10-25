@@ -1,9 +1,9 @@
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import { User } from '@/app/users/entities/user.entity';
-import { UUIDEntity } from '@/utils';
+import { IncrementEntity } from '@/utils';
 import { Column, ManyToOne } from 'typeorm';
 
-export class OrgReview extends UUIDEntity {
+export class OrgReview extends IncrementEntity {
   @Column({ type: 'float' })
   rating: number;
 

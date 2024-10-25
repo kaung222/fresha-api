@@ -1,4 +1,4 @@
-import { UUIDEntity } from '@/utils/base.entity';
+import { IncrementEntity } from '@/utils/base.entity';
 import { Column, Entity } from 'typeorm';
 
 export enum Gender {
@@ -8,7 +8,7 @@ export enum Gender {
 }
 
 @Entity()
-export class User extends UUIDEntity {
+export class User extends IncrementEntity {
   @Column()
   firstName: string;
 

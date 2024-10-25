@@ -20,7 +20,7 @@ export class CategoriesService {
   }
 
   findAll(orgId: number) {
-    return this.categoryRepository.findOne({
+    return this.categoryRepository.find({
       relations: { services: true },
       where: { organization: { id: orgId } },
     });
@@ -41,7 +41,7 @@ export class CategoriesService {
   async checkOwnership(id: number, orgId: number): Promise<boolean> {
     const category = await this.categoryRepository.findOneBy({
       id,
-      creatorId: orgId,
+      organization: { id: orgId },
     });
     if (!category) throw new NotFoundException('category not found');
     return true;
