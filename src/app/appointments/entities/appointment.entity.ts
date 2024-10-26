@@ -1,6 +1,8 @@
 import { IncrementEntity } from '@/utils';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { BookingItem } from './booking-item.entity';
+import { User } from '@/app/users/entities/user.entity';
+import { Organization } from '@/app/organizations/entities/organization.entity';
 
 export enum BookingStatus {
   pending = 'pending',
@@ -20,16 +22,13 @@ export class Appointment extends IncrementEntity {
   date: Date;
 
   @Column()
-  firstName: string;
-
-  @Column({ nullable: true })
-  lastName: string;
+  username: string;
 
   @Column({ type: 'text', nullable: true })
   notes: string;
 
   @Column('enum', {
-    default: 'pending',
+    default: BookingStatus.pending,
     enum: BookingStatus,
   })
   status: BookingStatus;
@@ -37,9 +36,15 @@ export class Appointment extends IncrementEntity {
   @Column({ nullable: true })
   phone: string;
 
-  @Column('enum', { enum: GenderEnum })
+  @Column('enum', { enum: GenderEnum, nullable: true })
   gender: GenderEnum;
 
   @OneToMany(() => BookingItem, (item) => item.appointment)
   bookingItems: BookingItem[];
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  user: User;
+
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
+  organization: Organization;
 }

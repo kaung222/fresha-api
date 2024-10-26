@@ -6,11 +6,15 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Role } from '@/security/role.decorator';
+import { Roles, User } from '@/security/user.decorator';
+import { PaginateQuery } from '@/utils/paginate-query.dto';
 
 @Controller('appointments')
 @ApiTags('Appointment')
@@ -18,30 +22,71 @@ export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Post()
-  create(@Body() createAppointmentDto: CreateAppointmentDto) {
-    return this.appointmentsService.create(createAppointmentDto);
+  @ApiOperation({ summary: 'Create booking by user' })
+  @Role(Roles.user)
+  create(
+    @Body() createAppointmentDto: CreateAppointmentDto,
+    @User('id') userId: number,
+  ) {
+    return this.appointmentsService.create(createAppointmentDto, userId);
   }
 
   @Get()
-  findAll() {
-    return this.appointmentsService.findAll();
+  @ApiOperation({ summary: 'Get bookings by org or member' })
+  @Role(Roles.org, Roles.member)
+  findAll(@User('orgId') orgId: number, @Query() paginateQuery: PaginateQuery) {
+    return this.appointmentsService.findAll(orgId, paginateQuery);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get details' })
   findOne(@Param('id') id: string) {
     return this.appointmentsService.findOne(+id);
   }
 
   @Patch(':id')
-  update(
+  @ApiOperation({
+    summary: 'Update booking by org or member, only created ones',
+  })
+  @Role(Roles.org, Roles.member)
+  async update(
     @Param('id') id: string,
     @Body() updateAppointmentDto: UpdateAppointmentDto,
+    @User('orgId') orgId: number,
   ) {
+    await this.appointmentsService.checkOwnership(+id, orgId);
     return this.appointmentsService.update(+id, updateAppointmentDto);
   }
 
+  @Patch(':id/confirm')
+  @Role(Roles.org, Roles.member)
+  @ApiOperation({ summary: 'Confirm booking by org or member' })
+  async confirmBooking(@Param('id') id: string, @User('orgId') orgId: number) {
+    await this.appointmentsService.checkOwnership(+id, orgId);
+    return this.appointmentsService.confirmBooking(+id);
+  }
+
+  @Patch(':id/cancel')
+  @Role(Roles.org, Roles.member)
+  @ApiOperation({ summary: 'Cancel booking by org or member' })
+  async cancelBooking(@Param('id') id: string, @User('orgId') orgId: number) {
+    await this.appointmentsService.checkOwnership(+id, orgId);
+    return this.appointmentsService.cancelBooking(+id);
+  }
+
+  @Patch(':id/complete')
+  @Role(Roles.org, Roles.member)
+  @ApiOperation({ summary: 'Mark as complete booking by org or member' })
+  async completeBooking(@Param('id') id: string, @User('orgId') orgId: number) {
+    await this.appointmentsService.checkOwnership(+id, orgId);
+    return this.appointmentsService.completeBooking(+id);
+  }
+
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @ApiOperation({ summary: 'Delete booking by org or member' })
+  @Role(Roles.org, Roles.member)
+  async remove(@Param('id') id: string, @User('orgId') orgId: number) {
+    await this.appointmentsService.checkOwnership(+id, orgId);
     return this.appointmentsService.remove(+id);
   }
 }
