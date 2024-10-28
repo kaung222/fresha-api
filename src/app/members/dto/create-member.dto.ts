@@ -9,8 +9,9 @@ import {
   IsString,
   IsUrl,
 } from 'class-validator';
-import { Gender, MemberType } from '../entities/member.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { Gender } from '@/app/users/entities/user.entity';
+import { MemberType } from '../entities/member.entity';
 
 export class CreateMemberDto {
   @IsNotEmpty()

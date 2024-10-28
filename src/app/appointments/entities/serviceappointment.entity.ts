@@ -1,17 +1,14 @@
-import { Member } from '@/app/members/entities/member.entity';
 import { Service } from '@/app/services/entities/service.entity';
 import { IncrementEntity } from '@/utils';
 import { Entity, ManyToOne } from 'typeorm';
 import { Appointment } from './appointment.entity';
 
+// service appointment join table
 @Entity()
-export class BookingItem extends IncrementEntity {
-  @ManyToOne(() => Service)
+export class ServiceAppointment extends IncrementEntity {
+  @ManyToOne(() => Service, { onDelete: 'CASCADE' })
   service: Service;
 
-  @ManyToOne(() => Member)
-  member: Member;
-
-  @ManyToOne(() => Appointment)
+  @ManyToOne(() => Appointment, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   appointment: Appointment;
 }

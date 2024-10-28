@@ -7,44 +7,51 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment, BookingStatus } from './entities/appointment.entity';
-import { Repository } from 'typeorm';
-import { BookingItem } from './entities/booking-item.entity';
+import { Between, MoreThan, Repository } from 'typeorm';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
+import { ServiceAppointment } from './entities/serviceappointment.entity';
+import { GetAppointmentDto } from './dto/get-appointment.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
+    private eventEmitter: EventEmitter2,
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
-    @InjectRepository(BookingItem)
-    private readonly bookingItemRepository: Repository<BookingItem>,
+    @InjectRepository(ServiceAppointment)
+    private readonly serviceAppointmentRepository: Repository<ServiceAppointment>,
   ) {}
+
+  // create new appointment by user
   async create(createAppointmentDto: CreateAppointmentDto, userId: number) {
-    const { bookingItems, orgId, ...rest } = createAppointmentDto;
+    const { serviceIds, memberId, orgId, ...rest } = createAppointmentDto;
     const createAppointment = this.appointmentRepository.create({
       ...rest,
       user: { id: userId },
+      organization: { id: orgId },
+      member: { id: memberId },
     });
     const appointment =
       await this.appointmentRepository.save(createAppointment);
-    const createAppointmentItems = this.bookingItemRepository.create(
-      bookingItems.map((item) => {
-        return {
-          member: { id: item.memberId },
-          service: { id: item.serviceId },
-          appointment: { id: appointment.id },
-        };
-      }),
+    const createAppointmentItems = this.serviceAppointmentRepository.create(
+      serviceIds.map((serviceId) => ({
+        service: { id: serviceId },
+        appointment: { id: appointment.id },
+      })),
     );
-    await this.bookingItemRepository.save(createAppointmentItems);
-    return 'This action adds a new appointment';
+    await this.serviceAppointmentRepository.save(createAppointmentItems);
+    // emit an event to create a client
+    return {
+      message: 'Book an appointment successfully',
+    };
   }
 
-  async findAll(orgId: number, paginateQuery: PaginateQuery) {
-    const { page } = paginateQuery;
+  async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
+    const { page, date, username } = getAppointmentDto;
     const [data, totalCount] = await this.appointmentRepository.findAndCount({
-      where: { organization: { id: orgId } },
+      where: { organization: { id: orgId }, date: MoreThan(new Date()) },
       take: 10,
       skip: 10 * (page - 1),
       order: { createdAt: 'ASC' },
@@ -63,24 +70,23 @@ export class AppointmentsService {
   }
 
   async update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
-    const { bookingItems, ...rest } = updateAppointmentDto;
+    const { serviceIds, ...rest } = updateAppointmentDto;
     const appointment = await this.appointmentRepository.findOne({
-      relations: { user: true },
+      relations: { client: true },
     });
     if (!appointment) throw new NotFoundException('appointment not found');
-    if (!appointment.user)
+    if (!appointment.client)
       throw new ForbiddenException("This item can't not be updated");
-    const createAppointmentItems = this.bookingItemRepository.create(
-      bookingItems.map((item) => {
-        return {
-          member: { id: item.memberId },
-          service: { id: item.serviceId },
-          appointment: { id: appointment.id },
-        };
-      }),
+    const createAppointmentItems = this.serviceAppointmentRepository.create(
+      serviceIds.map((serviceId) => ({
+        service: { id: serviceId },
+        appointment: { id: id },
+      })),
     );
-    const items = await this.bookingItemRepository.save(createAppointmentItems);
-    appointment.bookingItems = items;
+    const service = await this.serviceAppointmentRepository.save(
+      createAppointmentItems,
+    );
+    appointment.bookingItems = service;
     Object.assign(appointment, rest);
     return await this.appointmentRepository.save(appointment);
   }

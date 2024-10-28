@@ -10,7 +10,9 @@ import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { Category } from '../categories/entities/category.entity';
 import { OrgReview } from '../org-reviews/entities/org-review.entity';
-
+import { CreateAppointmentDto } from '../appointments/dto/create-appointment.dto';
+import { Appointment } from '../appointments/entities/appointment.entity';
+import { ServiceAppointment } from '../appointments/entities/serviceappointment.entity';
 @Injectable()
 export class OrganizationsService {
   constructor(
@@ -80,8 +82,31 @@ export class OrganizationsService {
         skip: 10 * (page - 1),
         take: 10,
         where: { organization: { id: orgId } },
+        order: {
+          rating: 'desc',
+        },
       });
     return new PaginationResponse({ data, page, totalCount }).toResponse();
+  }
+
+  async createAppointment(
+    orgId: number,
+    createAppointmentDto: CreateAppointmentDto,
+  ) {
+    const { serviceIds, ...rest } = createAppointmentDto;
+
+    const appointmentRepository = this.dataSource.getRepository(Appointment);
+    const bookingItemRepository =
+      this.dataSource.getRepository(ServiceAppointment);
+    const newAppointment = appointmentRepository.create({
+      ...rest,
+      organization: { id: orgId },
+    });
+    const appointment = await appointmentRepository.save(newAppointment);
+    // ..
+    return {
+      message: 'Create an appoinment successfully',
+    };
   }
 
   update(id: number, updateOrganizationDto: UpdateOrganizationDto) {

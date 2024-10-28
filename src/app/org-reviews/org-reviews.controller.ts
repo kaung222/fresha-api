@@ -1,20 +1,35 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { OrgReviewsService } from './org-reviews.service';
 import { CreateOrgReviewDto } from './dto/create-org-review.dto';
 import { UpdateOrgReviewDto } from './dto/update-org-review.dto';
+import { Roles, User } from '@/security/user.decorator';
+import { Role } from '@/security/role.decorator';
 
 @Controller('org-reviews')
 export class OrgReviewsController {
   constructor(private readonly orgReviewsService: OrgReviewsService) {}
 
   @Post()
-  create(@Body() createOrgReviewDto: CreateOrgReviewDto) {
-    return this.orgReviewsService.create(createOrgReviewDto);
+  @Role(Roles.user)
+  create(
+    @Body() createOrgReviewDto: CreateOrgReviewDto,
+    @User('id') userId: number,
+  ) {
+    return this.orgReviewsService.create(createOrgReviewDto, userId);
   }
 
   @Get()
-  findAll() {
-    return this.orgReviewsService.findAll();
+  @Role(Roles.org)
+  findAll(@User('orgId') orgId: number) {
+    return this.orgReviewsService.findAll(orgId);
   }
 
   @Get(':id')
@@ -22,13 +37,10 @@ export class OrgReviewsController {
     return this.orgReviewsService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOrgReviewDto: UpdateOrgReviewDto) {
-    return this.orgReviewsService.update(+id, updateOrgReviewDto);
-  }
-
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @Role(Roles.user)
+  async remove(@Param('id') id: string, @User('id') userId: number) {
+    await this.orgReviewsService.checkOwnership(+id, userId);
     return this.orgReviewsService.remove(+id);
   }
 }

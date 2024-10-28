@@ -3,11 +3,7 @@ import { IncrementEntity } from '@/utils/base.entity';
 import { Service } from '@/app/services/entities/service.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Roles } from '@/security/user.decorator';
-
-export enum Gender {
-  male = 'male',
-  female = 'female',
-}
+import { Gender } from '@/app/users/entities/user.entity';
 
 export enum MemberRole {
   org = 'organization',
@@ -37,12 +33,11 @@ export class Member extends IncrementEntity {
   dob: Date;
 
   @Column({ nullable: true })
-  profilePictureUrl: string;
+  profilePictureUrl?: string;
 
-  @Column({
-    type: 'enum',
+  @Column('enum', {
     enum: Gender,
-    nullable: true,
+    default: Gender.none,
   })
   gender: Gender;
 
@@ -75,7 +70,7 @@ export class Member extends IncrementEntity {
   type: MemberType;
 
   // rating
-  @Column('float', { default: 0, nullable: true })
+  @Column('float', { default: 0 })
   averageRating: number;
 
   @Column({ nullable: true, select: false })

@@ -20,4 +20,10 @@ export class Organization extends IncrementEntity {
 
   @Column('simple-array', { nullable: true })
   types: string[];
+
+  @Column('float')
+  rating: number;
+
+  @Column('int')
+  totalReviews: number;
 }

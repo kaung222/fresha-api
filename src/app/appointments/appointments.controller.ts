@@ -15,6 +15,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
+import { GetAppointmentDto } from './dto/get-appointment.dto';
 
 @Controller('appointments')
 @ApiTags('Appointment')
@@ -34,8 +35,11 @@ export class AppointmentsController {
   @Get()
   @ApiOperation({ summary: 'Get bookings by org or member' })
   @Role(Roles.org, Roles.member)
-  findAll(@User('orgId') orgId: number, @Query() paginateQuery: PaginateQuery) {
-    return this.appointmentsService.findAll(orgId, paginateQuery);
+  findAll(
+    @User('orgId') orgId: number,
+    @Query() getAppointmentDto: GetAppointmentDto,
+  ) {
+    return this.appointmentsService.findAll(orgId, getAppointmentDto);
   }
 
   @Get(':id')

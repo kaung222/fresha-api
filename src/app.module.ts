@@ -31,6 +31,11 @@ import { File } from './app/files/entities/file.entity';
 import { MemberReviewsModule } from './app/member-reviews/member-reviews.module';
 import { OrgReviewsModule } from './app/org-reviews/org-reviews.module';
 import { BranchModule } from './app/branch/branch.module';
+import { ClientsModule } from './app/clients/clients.module';
+import { OrgReview } from './app/org-reviews/entities/org-review.entity';
+import { Client } from './app/clients/entities/client.entity';
+import { Appointment } from './app/appointments/entities/appointment.entity';
+import { ServiceAppointment } from './app/appointments/entities/serviceappointment.entity';
 
 @Module({
   imports: [
@@ -45,7 +50,19 @@ import { BranchModule } from './app/branch/branch.module';
       synchronize: true,
       logging: true,
       // autoLoadEntities: true,
-      entities: [Member, Service, Organization, Category, User, OTP, File],
+      entities: [
+        Member,
+        Service,
+        Organization,
+        Category,
+        User,
+        OTP,
+        File,
+        OrgReview,
+        Client,
+        Appointment,
+        ServiceAppointment,
+      ],
     }),
 
     GlobalModule,
@@ -88,6 +105,7 @@ import { BranchModule } from './app/branch/branch.module';
     MemberReviewsModule,
     OrgReviewsModule,
     BranchModule,
+    ClientsModule,
   ],
   controllers: [],
   providers: [

@@ -36,7 +36,9 @@ export class Service extends IncrementEntity {
   @Column({ nullable: true })
   duration?: number; // in minutes
 
-  @ManyToMany(() => Member, (member) => member.services)
+  @ManyToMany(() => Member, (member) => member.services, {
+    onDelete: 'CASCADE',
+  })
   members: Member[];
 
   @Column('enum', { enum: PriceType, default: PriceType.fixed })

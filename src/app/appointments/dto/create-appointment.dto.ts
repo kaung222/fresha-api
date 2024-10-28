@@ -1,4 +1,6 @@
 import {
+  ArrayMinSize,
+  IsArray,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -6,15 +8,13 @@ import {
   IsPhoneNumber,
   ValidateNested,
 } from 'class-validator';
-import { BookingStatus, GenderEnum } from '../entities/appointment.entity';
+import { BookingStatus } from '../entities/appointment.entity';
 import { Type } from 'class-transformer';
+import { Gender } from '@/app/users/entities/user.entity';
 
 class BookingItem {
   @IsNotEmpty()
   serviceId: number;
-
-  @IsOptional()
-  memberId: number;
 }
 export class CreateAppointmentDto {
   @IsNotEmpty()
@@ -33,15 +33,23 @@ export class CreateAppointmentDto {
   @IsPhoneNumber()
   phone: string;
 
-  @IsEnum(GenderEnum)
-  gender: GenderEnum;
+  @IsEnum(Gender)
+  gender: Gender;
 
   @IsEmail()
   email: string;
 
-  @ValidateNested({ each: true })
-  @Type(() => BookingItem)
-  bookingItems: BookingItem[];
+  // @ValidateNested({ each: true })
+  // @Type(() => BookingItem)
+  // bookingItems: BookingItem[];
+
+  @IsNotEmpty()
+  memberId: number;
+
+  @IsNotEmpty()
+  @IsArray()
+  @ArrayMinSize(1)
+  serviceIds: number[];
 
   @IsNotEmpty()
   orgId: number;
