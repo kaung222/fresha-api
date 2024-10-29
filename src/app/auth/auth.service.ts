@@ -60,7 +60,9 @@ export class AuthService {
     }
     const { password, ...rest } = member;
     const jwtPayload = {
-      user: { id: member.id, role: member.role, orgId: member.organization.id },
+      id: member.id,
+      role: member.role,
+      orgId: member.organization.id,
     };
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
     return {
@@ -154,16 +156,17 @@ export class AuthService {
   // create password for new member added
   async createPassword(createPasswordDto: CreatePasswordDto) {
     const { email } = createPasswordDto;
-    const member = await this.memberRepository.findOneByOrFail({
-      email,
-      password: null,
+    const member = await this.memberRepository.findOneOrFail({
+      where: { email, password: null },
+      relations: { organization: true },
     });
     if (!member) throw new NotFoundException();
     const password = await this.hashPassword(createPasswordDto.password);
     await this.memberRepository.update(member.id, { password });
     const { accessToken, refreshToken } = this.generateTokens({
-      org: member.organization.id,
-      user: { role: Roles.member, id: member.id },
+      role: Roles.member,
+      id: member.id,
+      orgId: member.organization.id,
     });
     return {
       message: 'Create password successfully please login',

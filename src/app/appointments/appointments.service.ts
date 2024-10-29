@@ -28,7 +28,8 @@ export class AppointmentsService {
 
   // create new appointment by user
   async create(createAppointmentDto: CreateAppointmentDto, userId: number) {
-    const { serviceIds, memberId, orgId, ...rest } = createAppointmentDto;
+    const { serviceIds, memberId, orgId, start, ...rest } =
+      createAppointmentDto;
 
     const services = await this.dataSource
       .getRepository(Service)
@@ -41,6 +42,8 @@ export class AppointmentsService {
       user: { id: userId },
       organization: { id: orgId },
       member: { id: memberId },
+      end: start + totalTime,
+      start,
       totalTime,
       totalPrice,
     });
@@ -62,7 +65,7 @@ export class AppointmentsService {
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
     const { page, date, username } = getAppointmentDto;
     const [data, totalCount] = await this.appointmentRepository.findAndCount({
-      where: { organization: { id: orgId }, date: MoreThan(new Date()) },
+      // where: { organization: { id: orgId }, date: MoreThan(Date.now()) },
       take: 10,
       skip: 10 * (page - 1),
       order: { createdAt: 'ASC' },

@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsPhoneNumber,
+  IsPositive,
 } from 'class-validator';
 import { BookingStatus } from '@/app/appointments/entities/appointment.entity';
 import { Gender } from '@/app/users/entities/user.entity';
@@ -15,7 +16,8 @@ export class AddAppointmentDto {
   clientId: number;
 
   @IsNotEmpty()
-  date: Date;
+  @IsPositive()
+  date: number;
 
   @IsNotEmpty()
   username: string;
@@ -44,4 +46,8 @@ export class AddAppointmentDto {
   @IsArray()
   @ArrayMinSize(1)
   serviceIds: number[];
+
+  @IsNotEmpty()
+  @IsPositive()
+  start: number;
 }

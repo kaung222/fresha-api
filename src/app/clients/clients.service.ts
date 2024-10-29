@@ -50,7 +50,8 @@ export class ClientsService {
   }
 
   async createAppointment(orgId: number, addAppointmentDto: AddAppointmentDto) {
-    const { serviceIds, clientId, memberId, ...rest } = addAppointmentDto;
+    const { serviceIds, clientId, start, memberId, ...rest } =
+      addAppointmentDto;
     const appointmentRepository = this.dataSource.getRepository(Appointment);
     const bookingItemRepository =
       this.dataSource.getRepository(ServiceAppointment);
@@ -64,6 +65,8 @@ export class ClientsService {
       organization: { id: orgId },
       member: { id: memberId },
       client: { id: clientId },
+      start,
+      end: start + totalTime,
       totalPrice,
       totalTime,
     });
