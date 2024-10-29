@@ -10,8 +10,11 @@ import {
 } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
+import { AddAppointmentDto } from '../clients/dto/create-appointment.dto';
+import { Role } from '@/security/role.decorator';
+import { Roles, User } from '@/security/user.decorator';
 
 @Controller('organizations')
 @ApiTags('Organization')
@@ -34,21 +37,35 @@ export class OrganizationsController {
   }
 
   @Get(':id/team')
+  @ApiOperation({ summary: 'Get team members of organization' })
   findTeam(@Param('id') id: string) {
     return this.organizationsService.findTeam(+id);
   }
 
   @Get(':id/reviews')
+  @ApiOperation({ summary: 'Get reviews of organization' })
   findReviews(@Param('id') id: string, @Query() paginateQuery: PaginateQuery) {
     return this.organizationsService.findReviews(+id, paginateQuery);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update the organization details' })
+  @Role(Roles.org)
   update(
     @Param('id') id: string,
     @Body() updateOrganizationDto: UpdateOrganizationDto,
   ) {
     return this.organizationsService.update(+id, updateOrganizationDto);
+  }
+
+  @ApiOperation({ summary: 'Add appointment by organization' })
+  @Post(':id/appointments')
+  @Role(Roles.org)
+  createAppointment(
+    @User('orgId') id: string,
+    @Body() addAppointmentDto: AddAppointmentDto,
+  ) {
+    return this.organizationsService.createAppointment(+id, addAppointmentDto);
   }
 
   @Delete(':id')

@@ -3,24 +3,25 @@ import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Member } from './entities/member.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { ServicesService } from '../services/services.service';
+import { Service } from '../services/entities/service.entity';
 
 @Injectable()
 export class MembersService {
   constructor(
     private readonly serviceService: ServicesService,
+    private dataSource: DataSource,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
   ) {}
 
-  // create new service
+  // create new member
   async create(createMemberDto: CreateMemberDto, orgId: number) {
-    const { serviceIds } = createMemberDto;
-    const services = await this.serviceService.findByIds(serviceIds);
+    const { serviceIds, ...rest } = createMemberDto;
     const member = this.memberRepository.create({
-      ...createMemberDto,
-      services,
+      ...rest,
+      services: serviceIds?.map((id) => ({ id })),
       organization: { id: orgId },
     });
     return await this.memberRepository.save(member);

@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { CreateTestDto } from './dto/create-test.dto';
 import { UpdateTestDto } from './dto/update-test.dto';
+import { DataSource } from 'typeorm';
+import { Test } from './entities/test.entity';
 
 @Injectable()
 export class TestService {
+  constructor(private readonly dataSource: DataSource) {}
   create(createTestDto: CreateTestDto) {
     return 'This action adds a new test';
   }
@@ -15,7 +18,8 @@ export class TestService {
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} test`;
+    const test = this.dataSource.getRepository(Test).create({ name: 'james' });
+    console.log(test);
   }
 
   update(id: number, updateTestDto: UpdateTestDto) {

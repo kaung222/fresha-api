@@ -36,6 +36,7 @@ import { OrgReview } from './app/org-reviews/entities/org-review.entity';
 import { Client } from './app/clients/entities/client.entity';
 import { Appointment } from './app/appointments/entities/appointment.entity';
 import { ServiceAppointment } from './app/appointments/entities/serviceappointment.entity';
+import { Test } from './app/test/entities/test.entity';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { ServiceAppointment } from './app/appointments/entities/serviceappointme
         Client,
         Appointment,
         ServiceAppointment,
+        Test,
       ],
     }),
 

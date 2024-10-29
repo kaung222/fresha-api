@@ -43,7 +43,7 @@ export class Appointment extends IncrementEntity {
   totalTime: number;
 
   @Column('float', { default: 0 })
-  totolPrice: number;
+  totalPrice: number;
 
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
   user: User;

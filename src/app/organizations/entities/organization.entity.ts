@@ -21,9 +21,9 @@ export class Organization extends IncrementEntity {
   @Column('simple-array', { nullable: true })
   types: string[];
 
-  @Column('float')
+  @Column('float', { default: 0 })
   rating: number;
 
-  @Column('int')
+  @Column('int', { default: 0 })
   totalReviews: number;
 }

@@ -28,8 +28,9 @@ export class ClientsController {
   }
 
   @Get()
-  findAll() {
-    return this.clientsService.findAll();
+  @Role(Roles.org)
+  findAll(@User('orgId') orgId: number) {
+    return this.clientsService.findAll(orgId);
   }
 
   @Get(':id')
@@ -42,7 +43,7 @@ export class ClientsController {
     return this.clientsService.update(+id, updateClientDto);
   }
 
-  @Patch(':id/appointment')
+  @Post(':id/appointments')
   @Role(Roles.org)
   createAppointment(
     @User('orgId') orgId: number,

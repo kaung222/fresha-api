@@ -13,11 +13,15 @@ export class ServicesService {
     private readonly serviceRepository: Repository<Service>,
     private readonly dataSource: DataSource,
   ) {}
+
+  // create new service
   async create(createServiceDto: CreateServiceDto, orgId: number) {
     const { memberIds, ...rest } = createServiceDto;
     const members = await this.dataSource
       .getRepository(Member)
       .findBy({ id: In(memberIds) });
+    if (!members) throw new NotFoundException('member not found');
+
     const newService = this.serviceRepository.create({
       ...rest,
       members,
@@ -27,7 +31,10 @@ export class ServicesService {
   }
 
   findAll(orgId: number) {
-    return this.serviceRepository.findBy({ organization: { id: orgId } });
+    return this.serviceRepository.find({
+      where: { organization: { id: orgId } },
+      relations: { members: true },
+    });
   }
 
   findOne(id: number) {

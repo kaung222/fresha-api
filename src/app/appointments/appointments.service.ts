@@ -7,16 +7,18 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment, BookingStatus } from './entities/appointment.entity';
-import { Between, MoreThan, Repository } from 'typeorm';
+import { Between, DataSource, In, MoreThan, Repository } from 'typeorm';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { ServiceAppointment } from './entities/serviceappointment.entity';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Service } from '../services/entities/service.entity';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
+    private dataSource: DataSource,
     private eventEmitter: EventEmitter2,
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
@@ -27,18 +29,27 @@ export class AppointmentsService {
   // create new appointment by user
   async create(createAppointmentDto: CreateAppointmentDto, userId: number) {
     const { serviceIds, memberId, orgId, ...rest } = createAppointmentDto;
+
+    const services = await this.dataSource
+      .getRepository(Service)
+      .findBy({ id: In(serviceIds) });
+    if (!services) throw new NotFoundException('service not found');
+    const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
+    const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
     const createAppointment = this.appointmentRepository.create({
       ...rest,
       user: { id: userId },
       organization: { id: orgId },
       member: { id: memberId },
+      totalTime,
+      totalPrice,
     });
     const appointment =
       await this.appointmentRepository.save(createAppointment);
     const createAppointmentItems = this.serviceAppointmentRepository.create(
-      serviceIds.map((serviceId) => ({
-        service: { id: serviceId },
-        appointment: { id: appointment.id },
+      services.map((service) => ({
+        service,
+        appointment,
       })),
     );
     await this.serviceAppointmentRepository.save(createAppointmentItems);
@@ -55,6 +66,11 @@ export class AppointmentsService {
       take: 10,
       skip: 10 * (page - 1),
       order: { createdAt: 'ASC' },
+      relations: {
+        member: true,
+        user: true,
+        client: true,
+      },
     });
     return new PaginationResponse({ data, page, totalCount }).toResponse();
   }

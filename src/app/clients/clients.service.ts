@@ -4,12 +4,13 @@ import { UpdateClientDto } from './dto/update-client.dto';
 import { OnEvent } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from './entities/client.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { CreateAppointmentDto } from '../appointments/dto/create-appointment.dto';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { ServiceAppointment } from '../appointments/entities/serviceappointment.entity';
 import { AddAppointmentDto } from './dto/create-appointment.dto';
+import { Service } from '../services/entities/service.entity';
 
 @Injectable()
 export class ClientsService {
@@ -20,21 +21,23 @@ export class ClientsService {
   ) {}
   // create new clinet of organization
   @OnEvent('appointment.created')
-  create(orgId: number, createClientDto: CreateClientDto) {
+  async create(orgId: number, createClientDto: CreateClientDto) {
     const createClient = this.clientRepository.create({
       ...createClientDto,
       organization: { id: orgId },
     });
-    const client = this.clientRepository.save(createClient);
+    const client = await this.clientRepository.save(createClient);
     return {
       message: 'Create client successfully',
       data: client,
     };
   }
 
-  async findAll() {
+  async findAll(orgId: number) {
     let page = 1;
-    const [data, totalCount] = await this.clientRepository.findAndCount();
+    const [data, totalCount] = await this.clientRepository.findAndCount({
+      where: { organization: { id: orgId } },
+    });
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
@@ -51,10 +54,18 @@ export class ClientsService {
     const appointmentRepository = this.dataSource.getRepository(Appointment);
     const bookingItemRepository =
       this.dataSource.getRepository(ServiceAppointment);
+    const services = await this.dataSource
+      .getRepository(Service)
+      .findBy({ id: In(serviceIds) });
+    const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
+    const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
     const createAppointment = appointmentRepository.create({
       ...rest,
       organization: { id: orgId },
       member: { id: memberId },
+      client: { id: clientId },
+      totalPrice,
+      totalTime,
     });
 
     const appointment = await appointmentRepository.save(createAppointment);

@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Organization } from './entities/organization.entity';
-import { DataSource, Repository, TableInheritance } from 'typeorm';
+import { DataSource, In, Repository, TableInheritance } from 'typeorm';
 import { Service } from '../services/entities/service.entity';
 import { Member } from '../members/entities/member.entity';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
@@ -13,6 +13,7 @@ import { OrgReview } from '../org-reviews/entities/org-review.entity';
 import { CreateAppointmentDto } from '../appointments/dto/create-appointment.dto';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { ServiceAppointment } from '../appointments/entities/serviceappointment.entity';
+import { AddAppointmentDto } from '../clients/dto/create-appointment.dto';
 @Injectable()
 export class OrganizationsService {
   constructor(
@@ -89,23 +90,38 @@ export class OrganizationsService {
     return new PaginationResponse({ data, page, totalCount }).toResponse();
   }
 
-  async createAppointment(
-    orgId: number,
-    createAppointmentDto: CreateAppointmentDto,
-  ) {
-    const { serviceIds, ...rest } = createAppointmentDto;
+  // add appointment by org
+  async createAppointment(orgId: number, addAppointmentDto: AddAppointmentDto) {
+    const { serviceIds, clientId, memberId, ...rest } = addAppointmentDto;
 
     const appointmentRepository = this.dataSource.getRepository(Appointment);
-    const bookingItemRepository =
+    const serviceAppointmentRepository =
       this.dataSource.getRepository(ServiceAppointment);
-    const newAppointment = appointmentRepository.create({
+
+    const services = await this.dataSource
+      .getRepository(Service)
+      .findBy({ id: In(serviceIds) });
+    if (!services) throw new NotFoundException('service not found');
+    const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
+    const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
+    const createAppointment = appointmentRepository.create({
       ...rest,
+      client: { id: clientId },
       organization: { id: orgId },
+      member: { id: memberId },
+      totalTime,
+      totalPrice,
     });
-    const appointment = await appointmentRepository.save(newAppointment);
-    // ..
+    const appointment = await appointmentRepository.save(createAppointment);
+    const createAppointmentItems = serviceAppointmentRepository.create(
+      services.map((service) => ({
+        service,
+        appointment,
+      })),
+    );
+    await serviceAppointmentRepository.save(createAppointmentItems);
     return {
-      message: 'Create an appoinment successfully',
+      message: 'Book an appointment successfully',
     };
   }
 
