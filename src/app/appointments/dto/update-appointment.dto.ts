@@ -1,8 +1,45 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreateAppointmentDto } from './create-appointment.dto';
-import { IsOptional } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  IsPositive,
+} from 'class-validator';
+import { BookingStatus } from '../entities/appointment.entity';
+import { Gender } from '@/app/users/entities/user.entity';
 
-export class UpdateAppointmentDto extends PartialType(CreateAppointmentDto) {
+export class UpdateAppointmentDto {
   @IsOptional()
-  serviceIds?: number[];
+  username: string;
+
+  @IsOptional()
+  notes: string;
+
+  @IsEnum(BookingStatus)
+  status: BookingStatus;
+
+  @IsPhoneNumber()
+  phone: string;
+
+  @IsEnum(Gender)
+  gender: Gender;
+
+  @IsEmail()
+  email: string;
+
+  @IsOptional()
+  memberId: number;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  serviceIds: number[];
+
+  @IsNotEmpty()
+  @IsPositive()
+  start: number;
 }

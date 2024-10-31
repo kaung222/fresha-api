@@ -99,16 +99,18 @@ export class AppointmentsService {
     if (!appointment) throw new NotFoundException('appointment not found');
     if (!appointment.client)
       throw new ForbiddenException("This item can't not be updated");
-    const createAppointmentItems = this.serviceAppointmentRepository.create(
-      serviceIds.map((serviceId) => ({
-        service: { id: serviceId },
-        appointment: { id: id },
-      })),
-    );
-    const service = await this.serviceAppointmentRepository.save(
-      createAppointmentItems,
-    );
-    appointment.bookingItems = service;
+    if (serviceIds) {
+      const createAppointmentItems = this.serviceAppointmentRepository.create(
+        serviceIds?.map((serviceId) => ({
+          service: { id: serviceId },
+          appointment: { id: id },
+        })),
+      );
+      const service = await this.serviceAppointmentRepository.save(
+        createAppointmentItems,
+      );
+      appointment.bookingItems = service;
+    }
     Object.assign(appointment, rest);
     return await this.appointmentRepository.save(appointment);
   }
