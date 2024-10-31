@@ -30,3 +30,31 @@ const res = {
     },
   ],
 };
+
+enum TimeType {
+  working = 'working',
+  leave = 'leave',
+  holidays = 'holidays',
+  other = 'other',
+}
+
+enum Day {
+  monday = 'Monday',
+  tuesday = 'Tuesday',
+  wednesday = 'Wednesday',
+  thursday = 'Thursday',
+  friday = 'Friday',
+  satuarday = 'Satuarday',
+  sunday = 'Sunday',
+}
+class Time {
+  startTime: string;
+  endTime: string;
+  type: TimeType;
+  notes: string;
+  title: string;
+  isAvailable: boolean;
+  memberId: number;
+  day: Day;
+  isRegular: boolean;
+}

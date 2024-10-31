@@ -33,7 +33,9 @@ export class Appointment extends IncrementEntity {
   @Column('enum', { enum: Gender, default: Gender.none })
   gender: Gender;
 
-  @OneToMany(() => ServiceAppointment, (item) => item.appointment)
+  @OneToMany(() => ServiceAppointment, (item) => item.appointment, {
+    eager: true,
+  })
   bookingItems: ServiceAppointment[];
 
   @Column('float', { default: 0 })
@@ -51,7 +53,7 @@ export class Appointment extends IncrementEntity {
   @ManyToOne(() => Client, { onDelete: 'SET NULL' })
   client: Client;
 
-  @ManyToOne(() => Member)
+  @ManyToOne(() => Member, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'memberId' })
   member: Member;
 

@@ -63,29 +63,17 @@ export class AppointmentsService {
   }
 
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
-    const { page = 1, date, username } = getAppointmentDto;
-    const [data, totalCount] = await this.appointmentRepository.findAndCount({
-      // where: { organization: { id: orgId }, date: MoreThan(Date.now()) },
-      take: 10,
-      skip: 10 * (page - 1),
-      order: { createdAt: 'ASC' },
-      relations: {
-        member: true,
-        user: true,
-        client: true,
-      },
+    const { date } = getAppointmentDto;
+    const data = await this.appointmentRepository.find({
+      where: { organization: { id: orgId } },
     });
-    return new PaginationResponse({ data, page, totalCount }).toResponse();
+    return data;
   }
 
   findOne(id: number) {
     return this.appointmentRepository.findOne({
       where: { id },
       relations: {
-        bookingItems: {
-          service: true,
-        },
-        user: true,
         client: true,
       },
     });

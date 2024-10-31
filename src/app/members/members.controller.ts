@@ -39,6 +39,12 @@ export class MembersController {
     return this.membersService.findOne(+id);
   }
 
+  @Get(':id/profile')
+  @Role(Roles.org)
+  getProfile(@User('id') id: number) {
+    return this.membersService.getProfile(id);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateMemberDto: UpdateMemberDto) {
     return this.membersService.update(+id, updateMemberDto);

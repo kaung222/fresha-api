@@ -1,11 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Member } from './entities/member.entity';
 import { DataSource, Repository } from 'typeorm';
 import { ServicesService } from '../services/services.service';
-import { Service } from '../services/entities/service.entity';
+import { Roles } from '@/security/user.decorator';
 
 @Injectable()
 export class MembersService {
@@ -50,6 +54,10 @@ export class MembersService {
     });
   }
 
+  getProfile(id: number) {
+    return this.memberRepository.findOneBy({ id });
+  }
+
   async update(id: number, updateMemberDto: UpdateMemberDto) {
     // Find the member with the relations (services)
     const member = await this.memberRepository.findOne({
@@ -89,9 +97,13 @@ export class MembersService {
     return this.memberRepository.restore(ids);
   }
 
-  checkOwnership(memberId: number, userId: number) {
-    return this.memberRepository.findOne({
+  async checkOwnership(memberId: number, userId: number): Promise<Member> {
+    const member = await this.memberRepository.findOne({
       where: { organization: { id: userId }, id: memberId },
     });
+    if (member.role === Roles.org) {
+      throw new ForbiddenException('this account cannot be deleted');
+    }
+    return member;
   }
 }

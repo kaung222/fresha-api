@@ -97,4 +97,18 @@ export class OrganizationsService {
   remove(id: number) {
     return this.orgRepository.delete(id);
   }
+
+  getNearOrg(lng: number, lat: number, maxDistance: number) {
+    return this.orgRepository.query(
+      `SELECT *, ST_Distance_Sphere(location, POINT(?, ?)) AS distance
+       FROM shop
+       HAVING distance <= ?
+       ORDER BY distance
+       LIMIT 10;`,
+      [lng, lat, maxDistance],
+    );
+  }
+
+  // @Column({ type: 'point' })
+  // location: string;
 }

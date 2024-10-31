@@ -5,11 +5,6 @@ import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Roles } from '@/security/user.decorator';
 import { Gender } from '@/app/users/entities/user.entity';
 
-export enum MemberRole {
-  org = 'organization',
-  member = 'member',
-}
-
 export enum MemberType {
   employee = 'employee',
   self_employed = 'self-employed',
@@ -56,7 +51,7 @@ export class Member extends IncrementEntity {
   @Column('simple-array', { nullable: true })
   languageProficiency: string[];
 
-  @ManyToMany(() => Service, (service) => service.members, { cascade: true })
+  @ManyToMany(() => Service, (service) => service.members)
   @JoinTable()
   services: Service[];
 
@@ -71,7 +66,10 @@ export class Member extends IncrementEntity {
 
   // rating
   @Column('float', { default: 0 })
-  averageRating: number;
+  rating: number;
+
+  @Column({ default: 0 })
+  ratingCount: number;
 
   @Column({ nullable: true, select: false })
   password: string;

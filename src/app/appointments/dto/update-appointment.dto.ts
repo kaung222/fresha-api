@@ -21,15 +21,19 @@ export class UpdateAppointmentDto {
   notes: string;
 
   @IsEnum(BookingStatus)
+  @IsOptional()
   status: BookingStatus;
 
   @IsPhoneNumber()
+  @IsOptional()
   phone: string;
 
   @IsEnum(Gender)
+  @IsOptional()
   gender: Gender;
 
   @IsEmail()
+  @IsOptional()
   email: string;
 
   @IsOptional()
@@ -37,9 +41,10 @@ export class UpdateAppointmentDto {
 
   @IsArray()
   @ArrayMinSize(1)
+  @IsOptional()
   serviceIds: number[];
 
-  @IsNotEmpty()
   @IsPositive()
+  @IsOptional()
   start: number;
 }

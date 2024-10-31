@@ -1,0 +1,44 @@
+{
+  "day": {
+    "iso": "2024-11-01",
+    "dayOfMonth": 1,
+    "formattedDayOfMonth": "1",
+    "formattedYear": "2024",
+    "monthName": "November",
+    "dayName": "Friday"
+  },
+  "slots": [
+    {
+      "startTimeInSeconds": 36000,
+      "formattedTime": "10:00",
+      "formattedRetailPrice": null,
+      "formattedNonDiscountedPrice": null,
+      "formattedDiscountInfo": null,
+      "isHighDemanded": false
+    },
+    {
+      "startTimeInSeconds": 37800,
+      "formattedTime": "10:30",
+      "formattedRetailPrice": null,
+      "formattedNonDiscountedPrice": null,
+      "formattedDiscountInfo": null,
+      "isHighDemanded": false
+    },
+    {
+      "startTimeInSeconds": 39600,
+      "formattedTime": "11:00",
+      "formattedRetailPrice": null,
+      "formattedNonDiscountedPrice": null,
+      "formattedDiscountInfo": null,
+      "isHighDemanded": false
+    },
+    {
+      "startTimeInSeconds": 41400,
+      "formattedTime": "11:30",
+      "formattedRetailPrice": null,
+      "formattedNonDiscountedPrice": null,
+      "formattedDiscountInfo": null,
+      "isHighDemanded": false
+    }
+  ]
+}

@@ -60,6 +60,6 @@ export class OrganizationsController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.organizationsService.remove(+id);
+    // return this.organizationsService.remove(+id);
   }
 }
