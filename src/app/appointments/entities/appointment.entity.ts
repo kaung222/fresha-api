@@ -15,7 +15,7 @@ export enum BookingStatus {
 
 @Entity()
 export class Appointment extends IncrementEntity {
-  @Column()
+  @Column({ nullable: true, default: 'unknown' })
   username: string;
 
   @Column({ type: 'text', nullable: true })

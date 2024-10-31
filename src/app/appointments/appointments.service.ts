@@ -94,7 +94,8 @@ export class AppointmentsService {
   async update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
     const { serviceIds, ...rest } = updateAppointmentDto;
     const appointment = await this.appointmentRepository.findOne({
-      relations: { client: true },
+      relations: { client: true, user: true },
+      where: { id },
     });
     if (!appointment) throw new NotFoundException('appointment not found');
     if (!appointment.client)
