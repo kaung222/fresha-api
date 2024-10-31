@@ -90,41 +90,6 @@ export class OrganizationsService {
     return new PaginationResponse({ data, page, totalCount }).toResponse();
   }
 
-  // add appointment by org
-  async createAppointment(orgId: number, addAppointmentDto: AddAppointmentDto) {
-    const { serviceIds, clientId, memberId, ...rest } = addAppointmentDto;
-
-    const appointmentRepository = this.dataSource.getRepository(Appointment);
-    const serviceAppointmentRepository =
-      this.dataSource.getRepository(ServiceAppointment);
-
-    const services = await this.dataSource
-      .getRepository(Service)
-      .findBy({ id: In(serviceIds) });
-    if (!services) throw new NotFoundException('service not found');
-    const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
-    const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
-    const createAppointment = appointmentRepository.create({
-      ...rest,
-      client: { id: clientId },
-      organization: { id: orgId },
-      member: { id: memberId },
-      totalTime,
-      totalPrice,
-    });
-    const appointment = await appointmentRepository.save(createAppointment);
-    const createAppointmentItems = serviceAppointmentRepository.create(
-      services.map((service) => ({
-        service,
-        appointment,
-      })),
-    );
-    await serviceAppointmentRepository.save(createAppointmentItems);
-    return {
-      message: 'Book an appointment successfully',
-    };
-  }
-
   update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
     return this.orgRepository.update(id, updateOrganizationDto);
   }

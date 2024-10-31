@@ -50,6 +50,7 @@ import { Test } from './app/test/entities/test.entity';
       database: process?.env.MYSQL_DATABASE,
       synchronize: true,
       logging: true,
+      retryAttempts: 3,
       // autoLoadEntities: true,
       entities: [
         Member,

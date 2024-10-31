@@ -19,9 +19,6 @@ class BookingItem {
 }
 export class CreateAppointmentDto {
   @IsNotEmpty()
-  date: number;
-
-  @IsNotEmpty()
   username: string;
 
   @IsOptional()

@@ -58,16 +58,6 @@ export class OrganizationsController {
     return this.organizationsService.update(+id, updateOrganizationDto);
   }
 
-  @ApiOperation({ summary: 'Add appointment by organization' })
-  @Post(':id/appointments')
-  @Role(Roles.org)
-  createAppointment(
-    @User('orgId') id: string,
-    @Body() addAppointmentDto: AddAppointmentDto,
-  ) {
-    return this.organizationsService.createAppointment(+id, addAppointmentDto);
-  }
-
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.organizationsService.remove(+id);

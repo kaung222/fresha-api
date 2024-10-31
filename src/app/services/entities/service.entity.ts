@@ -24,7 +24,7 @@ export class Service extends IncrementEntity {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column('float', { default: 0 })
   price: number;
 
   @Column({ nullable: true })

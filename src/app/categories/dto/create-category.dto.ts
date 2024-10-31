@@ -7,6 +7,5 @@ export class CreateCategoryDto {
 
   @IsString()
   @IsOptional()
-  @Max(255)
   notes: string;
 }

@@ -1,5 +1,5 @@
 import { IncrementEntity } from '@/utils';
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { ServiceAppointment } from './serviceappointment.entity';
 import { Gender, User } from '@/app/users/entities/user.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
@@ -15,9 +15,6 @@ export enum BookingStatus {
 
 @Entity()
 export class Appointment extends IncrementEntity {
-  @Column({ type: 'bigint', default: Date.now() })
-  date: number;
-
   @Column()
   username: string;
 
@@ -45,6 +42,9 @@ export class Appointment extends IncrementEntity {
   @Column('float', { default: 0 })
   totalPrice: number;
 
+  @Column({ nullable: true })
+  memberId: number;
+
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
   user: User;
 
@@ -52,14 +52,15 @@ export class Appointment extends IncrementEntity {
   client: Client;
 
   @ManyToOne(() => Member)
+  @JoinColumn({ name: 'memberId' })
   member: Member;
 
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   organization: Organization;
 
-  @Column({ nullable: true })
-  start: number;
+  @Column('bigint', { nullable: true })
+  start: string;
 
-  @Column({ nullable: true })
-  end: number;
+  @Column('bigint', { nullable: true })
+  end: string;
 }

@@ -42,8 +42,8 @@ export class AppointmentsService {
       user: { id: userId },
       organization: { id: orgId },
       member: { id: memberId },
-      end: start + totalTime,
-      start,
+      end: (start + totalTime).toString(),
+      start: start.toString(),
       totalTime,
       totalPrice,
     });
@@ -63,7 +63,7 @@ export class AppointmentsService {
   }
 
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
-    const { page, date, username } = getAppointmentDto;
+    const { page = 1, date, username } = getAppointmentDto;
     const [data, totalCount] = await this.appointmentRepository.findAndCount({
       // where: { organization: { id: orgId }, date: MoreThan(Date.now()) },
       take: 10,
@@ -82,8 +82,11 @@ export class AppointmentsService {
     return this.appointmentRepository.findOne({
       where: { id },
       relations: {
-        bookingItems: true,
+        bookingItems: {
+          service: true,
+        },
         user: true,
+        client: true,
       },
     });
   }
