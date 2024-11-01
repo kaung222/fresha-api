@@ -14,7 +14,10 @@ async function bootstrap() {
   SwaggerModule.setup('/', app, document);
   //compression
   app.use(compression());
-  app.enableCors({ origin: 'http://localhost:4040', credentials: true });
+  app.enableCors({
+    origin: ['http://localhost:4040', 'https://fresha-clone.vercel.app'],
+    credentials: true,
+  });
   await app.listen(3000);
 }
 bootstrap();

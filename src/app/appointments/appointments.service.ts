@@ -80,7 +80,7 @@ export class AppointmentsService {
   }
 
   async update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
-    const { serviceIds, ...rest } = updateAppointmentDto;
+    const { serviceIds, start, ...rest } = updateAppointmentDto;
     const appointment = await this.appointmentRepository.findOne({
       relations: { client: true, user: true },
       where: { id },
@@ -89,16 +89,25 @@ export class AppointmentsService {
     if (!appointment.client)
       throw new ForbiddenException("This item can't not be updated");
     if (serviceIds) {
+      const services = await this.dataSource
+        .getRepository(Service)
+        .findBy({ id: In(serviceIds) });
+      if (!services) throw new NotFoundException('service not found');
       const createAppointmentItems = this.serviceAppointmentRepository.create(
-        serviceIds?.map((serviceId) => ({
-          service: { id: serviceId },
+        services?.map((service) => ({
+          service,
           appointment: { id: id },
         })),
       );
-      const service = await this.serviceAppointmentRepository.save(
+      const bookingItems = await this.serviceAppointmentRepository.save(
         createAppointmentItems,
       );
-      appointment.bookingItems = service;
+      const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
+      appointment.bookingItems = bookingItems;
+      appointment.totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
+      appointment.totalTime = totalTime;
+      appointment.end = (start + totalTime).toString();
+      appointment.start = start.toString();
     }
     Object.assign(appointment, rest);
     return await this.appointmentRepository.save(appointment);

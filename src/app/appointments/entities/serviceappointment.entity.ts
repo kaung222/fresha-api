@@ -6,7 +6,7 @@ import { Appointment } from './appointment.entity';
 // service appointment join table
 @Entity()
 export class ServiceAppointment extends IncrementEntity {
-  @ManyToOne(() => Service, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Service, { onDelete: 'CASCADE', eager: true })
   service: Service;
 
   @ManyToOne(() => Appointment, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
