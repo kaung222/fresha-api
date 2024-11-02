@@ -32,7 +32,7 @@ export class UserAuthService {
     );
     if (!isAuthenticated)
       throw new UnauthorizedException('Invalid email or password');
-    const jwtPayload = { user: { id: user.id, role: Roles.user } };
+    const jwtPayload = { id: user.id, role: Roles.user };
     const tokens = this.authService.generateTokens(jwtPayload);
     return {
       message: 'Login successfully',
@@ -45,13 +45,15 @@ export class UserAuthService {
     const { email } = registerUserDto;
     const user = await this.userRepository.findOneBy({ email });
     if (user) throw new ConflictException('email already taken');
-    const password = this.authService.hashPassword(registerUserDto.password);
+    const password = await this.authService.hashPassword(
+      registerUserDto.password,
+    );
     const createUser = this.userRepository.create({
       password,
       ...registerUserDto,
     });
     const newUser = await this.userRepository.save(createUser);
-    const jwtPayload = { user: { id: newUser.id, role: Roles.user } };
+    const jwtPayload = { id: newUser.id, role: Roles.user };
     const tokens = this.authService.generateTokens(jwtPayload);
     return {
       ...newUser,
