@@ -14,7 +14,7 @@ export class UserAuthController {
     const { refreshToken, ...rest } =
       await this.userAuthService.loginUser(loginUserDto);
     this.userAuthService.setCookieHeaders(res, refreshToken);
-    return { ...rest };
+    res.send({ ...rest }).status(200);
   }
 
   @Post('user-register')
@@ -25,6 +25,6 @@ export class UserAuthController {
     const { refreshToken, ...rest } =
       await this.userAuthService.registerUser(registerUserDto);
     this.userAuthService.setCookieHeaders(res, refreshToken);
-    return { ...rest };
+    res.send({ ...rest }).status(200);
   }
 }

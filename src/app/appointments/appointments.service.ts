@@ -7,7 +7,7 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment, BookingStatus } from './entities/appointment.entity';
-import { Between, DataSource, In, MoreThan, Repository } from 'typeorm';
+import { Between, DataSource, Equal, In, MoreThan, Repository } from 'typeorm';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { ServiceAppointment } from './entities/serviceappointment.entity';
@@ -42,8 +42,8 @@ export class AppointmentsService {
       user: { id: userId },
       organization: { id: orgId },
       member: { id: memberId },
-      end: (start + totalTime).toString(),
-      start: start.toString(),
+      end: start + totalTime,
+      start: start,
       totalTime,
       totalPrice,
     });
@@ -65,7 +65,7 @@ export class AppointmentsService {
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
     const { date } = getAppointmentDto;
     const data = await this.appointmentRepository.find({
-      where: { organization: { id: orgId } },
+      where: { organization: { id: orgId }, date },
     });
     return data;
   }
@@ -106,8 +106,8 @@ export class AppointmentsService {
       appointment.bookingItems = bookingItems;
       appointment.totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
       appointment.totalTime = totalTime;
-      appointment.end = (start + totalTime).toString();
-      appointment.start = start.toString();
+      appointment.end = start + totalTime;
+      appointment.start = start;
     }
     Object.assign(appointment, rest);
     return await this.appointmentRepository.save(appointment);

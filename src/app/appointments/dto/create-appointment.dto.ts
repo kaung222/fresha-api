@@ -1,6 +1,7 @@
 import {
   ArrayMinSize,
   IsArray,
+  IsDate,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -18,6 +19,10 @@ class BookingItem {
   serviceId: number;
 }
 export class CreateAppointmentDto {
+  @IsNotEmpty()
+  @IsDate()
+  date: string;
+
   @IsNotEmpty()
   username: string;
 

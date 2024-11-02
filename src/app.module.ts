@@ -37,6 +37,7 @@ import { Client } from './app/clients/entities/client.entity';
 import { Appointment } from './app/appointments/entities/appointment.entity';
 import { ServiceAppointment } from './app/appointments/entities/serviceappointment.entity';
 import { Test } from './app/test/entities/test.entity';
+import { Product } from './app/products/entities/product.entity';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { Test } from './app/test/entities/test.entity';
         Appointment,
         ServiceAppointment,
         Test,
+        Product,
       ],
     }),
 

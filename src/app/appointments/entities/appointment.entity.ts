@@ -15,6 +15,9 @@ export enum BookingStatus {
 
 @Entity()
 export class Appointment extends IncrementEntity {
+  @Column('date', { nullable: true, default: '2024-4-29' })
+  date: string;
+
   @Column({ nullable: true, default: 'unknown' })
   username: string;
 
@@ -60,9 +63,9 @@ export class Appointment extends IncrementEntity {
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   organization: Organization;
 
-  @Column('bigint', { nullable: true })
-  start: string;
+  @Column('int', { nullable: true })
+  start: number; // in second
 
-  @Column('bigint', { nullable: true })
-  end: string;
+  @Column('int', { nullable: true })
+  end: number; // in second
 }

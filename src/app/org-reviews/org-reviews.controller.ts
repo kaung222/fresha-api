@@ -12,8 +12,10 @@ import { CreateOrgReviewDto } from './dto/create-org-review.dto';
 import { UpdateOrgReviewDto } from './dto/update-org-review.dto';
 import { Roles, User } from '@/security/user.decorator';
 import { Role } from '@/security/role.decorator';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('org-reviews')
+@ApiTags('Organzation review')
 export class OrgReviewsController {
   constructor(private readonly orgReviewsService: OrgReviewsService) {}
 
