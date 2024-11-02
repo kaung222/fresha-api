@@ -7,6 +7,10 @@ import {
 } from 'class-validator';
 
 export class CreateProductDto {
+  @IsOptional()
+  @IsString({ each: true })
+  images: string[];
+
   @IsNotEmpty()
   @IsString()
   name: string;

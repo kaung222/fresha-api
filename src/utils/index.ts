@@ -25,3 +25,14 @@ export function checkType(param: any): ParamType {
     return ParamType.unknown;
   }
 }
+
+export function getCurrentDate() {
+  const date = new Date();
+
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // Months are zero-indexed, so we add 1
+  const day = date.getDate();
+
+  const formattedDate = `${year}-${month}-${day}`;
+  return formattedDate;
+}

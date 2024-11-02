@@ -4,6 +4,9 @@ import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Product extends IncrementEntity {
+  @Column({ type: 'simple-array', nullable: true })
+  images: string[];
+
   @Column()
   name: string;
 

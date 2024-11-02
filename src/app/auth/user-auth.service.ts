@@ -19,6 +19,8 @@ export class UserAuthService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private authService: AuthService,
   ) {}
+
+  // login user
   async loginUser(loginUserDto: LoginUserDto) {
     const { email, password } = loginUserDto;
     const user = await this.userRepository.findOne({
@@ -42,15 +44,16 @@ export class UserAuthService {
   }
 
   async registerUser(registerUserDto: RegisterUserDto) {
-    const { email } = registerUserDto;
+    const { password, email, ...rest } = registerUserDto;
     const user = await this.userRepository.findOneBy({ email });
     if (user) throw new ConflictException('email already taken');
-    const password = await this.authService.hashPassword(
+    const hashPassword = await this.authService.hashPassword(
       registerUserDto.password,
     );
     const createUser = this.userRepository.create({
-      password,
-      ...registerUserDto,
+      ...rest,
+      email,
+      password: hashPassword,
     });
     const newUser = await this.userRepository.save(createUser);
     const jwtPayload = { id: newUser.id, role: Roles.user };

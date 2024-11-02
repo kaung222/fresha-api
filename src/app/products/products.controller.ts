@@ -12,8 +12,10 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('products')
+@ApiTags('Product')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 

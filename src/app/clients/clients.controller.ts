@@ -13,8 +13,10 @@ import { UpdateClientDto } from './dto/update-client.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { AddAppointmentDto } from './dto/create-appointment.dto';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('clients')
+@ApiTags('Client')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
