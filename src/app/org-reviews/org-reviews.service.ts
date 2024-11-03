@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { OrgReview } from './entities/org-review.entity';
 import { DataSource, Repository } from 'typeorm';
 import { Organization } from '../organizations/entities/organization.entity';
+import { PaginationResponse } from '@/utils/paginate-res.dto';
 
 @Injectable()
 export class OrgReviewsService {
@@ -24,17 +25,19 @@ export class OrgReviewsService {
     return this.orgReviewRepository.save(newReview);
   }
 
-  findAll(orgId: number) {
-    return this.orgReviewRepository.findAndCount({
+  async findAll(orgId: number) {
+    const page = 1;
+    const [data, totalCount] = await this.orgReviewRepository.findAndCount({
       where: { organization: { id: orgId } },
       take: 10,
     });
+    return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
   findOne(id: number) {
     return this.orgReviewRepository.findAndCount({
       where: { id },
-      relations: { organization: true, user: true },
+      relations: { user: true },
     });
   }
 

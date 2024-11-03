@@ -38,6 +38,8 @@ import { Appointment } from './app/appointments/entities/appointment.entity';
 import { ServiceAppointment } from './app/appointments/entities/serviceappointment.entity';
 import { Test } from './app/test/entities/test.entity';
 import { Product } from './app/products/entities/product.entity';
+import { MemberScheduleModule } from './app/member-schedule/member-schedule.module';
+import { MemberSchedule } from './app/member-schedule/entities/member-schedule.entity';
 
 @Module({
   imports: [
@@ -67,6 +69,7 @@ import { Product } from './app/products/entities/product.entity';
         ServiceAppointment,
         Test,
         Product,
+        MemberSchedule,
       ],
     }),
 
@@ -111,6 +114,7 @@ import { Product } from './app/products/entities/product.entity';
     OrgReviewsModule,
     BranchModule,
     ClientsModule,
+    MemberScheduleModule,
   ],
   controllers: [],
   providers: [

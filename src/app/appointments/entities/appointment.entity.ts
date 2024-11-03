@@ -1,4 +1,4 @@
-import { IncrementEntity } from '@/utils';
+import { getCurrentDate, IncrementEntity } from '@/utils';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { ServiceAppointment } from './serviceappointment.entity';
 import { Gender, User } from '@/app/users/entities/user.entity';
@@ -15,7 +15,7 @@ export enum BookingStatus {
 
 @Entity()
 export class Appointment extends IncrementEntity {
-  @Column('date', { nullable: true, default: '2024-4-29' })
+  @Column('date', { default: getCurrentDate() })
   date: string;
 
   @Column({ nullable: true, default: 'unknown' })
@@ -64,8 +64,8 @@ export class Appointment extends IncrementEntity {
   organization: Organization;
 
   @Column('int', { nullable: true })
-  start: number; // in second
+  startTime: number; // in second
 
   @Column('int', { nullable: true })
-  end: number; // in second
+  endTime: number; // in second
 }

@@ -48,6 +48,10 @@ export class AppointmentsController {
     return this.appointmentsService.findOne(+id);
   }
 
+  getAvailableTimeSlots(memberId: number, date?: string) {
+    return this.appointmentsService.getAvailableTimeSlots(memberId, date);
+  }
+
   @Patch(':id')
   @ApiOperation({
     summary: 'Update booking by org or member, only created ones',

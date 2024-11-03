@@ -42,7 +42,4 @@ export class UUIDEntity {
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
   updatedAt: Date;
-
-  @DeleteDateColumn({ default: null })
-  deletedAt: Date;
 }

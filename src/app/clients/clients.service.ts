@@ -65,8 +65,8 @@ export class ClientsService {
       organization: { id: orgId },
       member: { id: memberId },
       client: { id: clientId },
-      start: start,
-      end: start + totalTime,
+      startTime: start,
+      endTime: start + totalTime,
       totalPrice,
       totalTime,
     });

@@ -1,3 +1,5 @@
+import { DayOfWeek } from '@/app/member-schedule/entities/member-schedule.entity';
+
 export * from './base.entity';
 
 export function generateOpt() {
@@ -26,6 +28,7 @@ export function checkType(param: any): ParamType {
   }
 }
 
+// eg: 2024-12-30
 export function getCurrentDate() {
   const date = new Date();
 
@@ -36,3 +39,24 @@ export function getCurrentDate() {
   const formattedDate = `${year}-${month}-${day}`;
   return formattedDate;
 }
+
+// eg: Monday ,Tuesday
+export const getCurrentDayOfWeek = (date?: string) => {
+  const currentDay = new Date(date).getDay();
+  switch (currentDay) {
+    case 0:
+      return DayOfWeek.sunday;
+    case 1:
+      return DayOfWeek.monday;
+    case 2:
+      return DayOfWeek.tuesday;
+    case 3:
+      return DayOfWeek.wednesday;
+    case 4:
+      return DayOfWeek.thursday;
+    case 5:
+      return DayOfWeek.friday;
+    case 6:
+      return DayOfWeek.satuarday;
+  }
+};

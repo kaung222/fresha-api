@@ -14,7 +14,9 @@ import { ServiceAppointment } from './entities/serviceappointment.entity';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Service } from '../services/entities/service.entity';
-import { getCurrentDate } from '@/utils';
+import { getCurrentDate, getCurrentDayOfWeek } from '@/utils';
+import { MemberSchedule } from '../member-schedule/entities/member-schedule.entity';
+import { format } from 'date-fns';
 
 @Injectable()
 export class AppointmentsService {
@@ -46,8 +48,8 @@ export class AppointmentsService {
         user: { id: userId },
         organization: { id: orgId },
         member: { id: memberId },
-        end: start + totalTime,
-        start: start,
+        endTime: start + totalTime,
+        startTime: start,
         totalTime,
         totalPrice,
       });
@@ -73,6 +75,75 @@ export class AppointmentsService {
     }
   }
 
+  async getAvailableTimeSlots(
+    memberId: number,
+    currentDate = getCurrentDate(),
+  ) {
+    // Fetch member's schedule for the given day of the week
+
+    const date = new Date(currentDate);
+    const schedule = await this.dataSource
+      .getRepository(MemberSchedule)
+      .findOneBy({
+        member: { id: memberId },
+        dayOfWeek: getCurrentDayOfWeek(currentDate),
+      });
+
+    if (!schedule) {
+      throw new Error('No schedule found for the given member on this day.');
+    }
+
+    // Fetch existing appointments for the member on the specified date
+    const appointments = await this.appointmentRepository.findBy({
+      member: { id: memberId },
+      date: currentDate,
+    });
+
+    const slots = [];
+    const slotInterval = 1800; // 30 minutes in seconds
+    let slotTime = schedule.startTime;
+
+    while (slotTime < schedule.endTime) {
+      const startTimeInSeconds = slotTime;
+      const formattedTime = format(new Date(slotTime * 1000), 'HH:mm');
+
+      // Check if the current slot is overlapping with any appointment
+      const isBooked = appointments.some(
+        (appointment) =>
+          startTimeInSeconds >= appointment.startTime &&
+          startTimeInSeconds < appointment.endTime,
+      );
+
+      if (!isBooked) {
+        slots.push({
+          startTimeInSeconds,
+          formattedTime,
+          formattedRetailPrice: null,
+          formattedNonDiscountedPrice: null,
+          formattedDiscountInfo: null,
+          isHighDemanded: false,
+        });
+      }
+
+      // Move to the next slot
+      slotTime += slotInterval;
+    }
+
+    const dayInfo = {
+      iso: format(date, 'yyyy-MM-dd'),
+      dayOfMonth: date.getDate(),
+      formattedDayOfMonth: date.getDate().toString(),
+      formattedYear: format(date, 'yyyy'),
+      monthName: format(date, 'MMMM'),
+      dayName: format(date, 'EEEE'),
+    };
+
+    return {
+      day: dayInfo,
+      slots,
+    };
+  }
+
   // find all appointment by org for a given date
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
     const { date = getCurrentDate() } = getAppointmentDto;
@@ -81,7 +152,7 @@ export class AppointmentsService {
     });
     return data;
   }
-
+  // get appointment detail
   findOne(id: number) {
     return this.appointmentRepository.findOne({
       where: { id },
@@ -121,8 +192,8 @@ export class AppointmentsService {
         appointment.bookingItems = bookingItems;
         appointment.totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
         appointment.totalTime = totalTime;
-        appointment.end = start + totalTime;
-        appointment.start = start;
+        appointment.endTime = start + totalTime;
+        appointment.startTime = start;
       }
       Object.assign(appointment, rest);
       await this.appointmentRepository.save(appointment);
