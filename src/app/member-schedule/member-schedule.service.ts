@@ -1,15 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { CreateMemberScheduleDto } from './dto/create-member-schedule.dto';
 import { UpdateMemberScheduleDto } from './dto/update-member-schedule.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { MemberSchedule } from './entities/member-schedule.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class MemberScheduleService {
+  constructor(
+    @InjectRepository(MemberSchedule)
+    private readonly memberScheduleRepository: Repository<MemberSchedule>,
+  ) {}
+  // create schedule for a member
   create(createMemberScheduleDto: CreateMemberScheduleDto) {
-    return 'This action adds a new memberSchedule';
+    const createSchedule = this.memberScheduleRepository.create(
+      createMemberScheduleDto,
+    );
+    return this.memberScheduleRepository.save(createSchedule);
   }
 
-  findAll() {
-    return `This action returns all memberSchedule`;
+  findAll(orgId: number) {
+    return this.memberScheduleRepository.findBy({
+      organization: { id: orgId },
+    });
   }
 
   findOne(id: number) {

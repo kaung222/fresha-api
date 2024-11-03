@@ -1,9 +1,11 @@
 import { Member } from '@/app/members/entities/member.entity';
+import { Organization } from '@/app/organizations/entities/organization.entity';
 import { IncrementEntity, UUIDEntity } from '@/utils';
 import {
   BaseEntity,
   Column,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -47,6 +49,13 @@ export class MemberSchedule {
   @Column({ nullable: true })
   notes: string;
 
+  @Column()
+  memberId: number;
+
   @ManyToOne(() => Member, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'memberId' })
   member: Member;
+
+  @ManyToOne(() => Organization)
+  organization: Organization;
 }

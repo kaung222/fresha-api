@@ -50,6 +50,11 @@ export class MembersController {
     return this.membersService.update(+id, updateMemberDto);
   }
 
+  @Get(':id/available-times')
+  getAvailableTimeSlots(@Param('id') memberId: number, date?: string) {
+    return this.membersService.getAvailableTimeSlots(memberId, date);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.membersService.remove(+id);

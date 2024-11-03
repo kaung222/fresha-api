@@ -10,6 +10,10 @@ import { Member } from './entities/member.entity';
 import { DataSource, Repository } from 'typeorm';
 import { ServicesService } from '../services/services.service';
 import { Roles } from '@/security/user.decorator';
+import { format } from 'date-fns';
+import { getCurrentDate, getCurrentDayOfWeek } from '@/utils';
+import { MemberSchedule } from '../member-schedule/entities/member-schedule.entity';
+import { Appointment } from '../appointments/entities/appointment.entity';
 
 @Injectable()
 export class MembersService {
@@ -83,6 +87,77 @@ export class MembersService {
 
     // Save the updated member entity
     return await this.memberRepository.save(member);
+  }
+
+  async getAvailableTimeSlots(
+    memberId: number,
+    currentDate = getCurrentDate(),
+  ) {
+    // Fetch member's schedule for the given day of the week
+
+    const date = new Date(currentDate);
+    const schedule = await this.dataSource
+      .getRepository(MemberSchedule)
+      .findOneBy({
+        member: { id: memberId },
+        dayOfWeek: getCurrentDayOfWeek(currentDate),
+      });
+
+    if (!schedule) {
+      throw new Error('No schedule found for the given member on this day.');
+    }
+
+    // Fetch existing appointments for the member on the specified date
+    const appointments = await this.dataSource
+      .getRepository(Appointment)
+      .findBy({
+        member: { id: memberId },
+        date: currentDate,
+      });
+
+    const slots = [];
+    const slotInterval = 1800; // 30 minutes in seconds
+    let slotTime = schedule.startTime;
+
+    while (slotTime < schedule.endTime) {
+      const startTimeInSeconds = slotTime;
+      const formattedTime = format(new Date(slotTime * 1000), 'HH:mm');
+
+      // Check if the current slot is overlapping with any appointment
+      const isBooked = appointments.some(
+        (appointment) =>
+          startTimeInSeconds >= appointment.startTime &&
+          startTimeInSeconds < appointment.endTime,
+      );
+
+      if (!isBooked) {
+        slots.push({
+          startTimeInSeconds,
+          formattedTime,
+          formattedRetailPrice: null,
+          formattedNonDiscountedPrice: null,
+          formattedDiscountInfo: null,
+          isHighDemanded: false,
+        });
+      }
+
+      // Move to the next slot
+      slotTime += slotInterval;
+    }
+
+    const dayInfo = {
+      iso: format(date, 'yyyy-MM-dd'),
+      dayOfMonth: date.getDate(),
+      formattedDayOfMonth: date.getDate().toString(),
+      formattedYear: format(date, 'yyyy'),
+      monthName: format(date, 'MMMM'),
+      dayName: format(date, 'EEEE'),
+    };
+
+    return {
+      day: dayInfo,
+      slots,
+    };
   }
 
   remove(id: number) {

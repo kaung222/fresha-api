@@ -1,7 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { MemberScheduleService } from './member-schedule.service';
 import { CreateMemberScheduleDto } from './dto/create-member-schedule.dto';
 import { UpdateMemberScheduleDto } from './dto/update-member-schedule.dto';
+import { User } from '@/security/user.decorator';
 
 @Controller('member-schedule')
 export class MemberScheduleController {
@@ -13,8 +22,8 @@ export class MemberScheduleController {
   }
 
   @Get()
-  findAll() {
-    return this.memberScheduleService.findAll();
+  findAll(@User('orgId') orgId: number) {
+    return this.memberScheduleService.findAll(orgId);
   }
 
   @Get(':id')
@@ -23,7 +32,10 @@ export class MemberScheduleController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMemberScheduleDto: UpdateMemberScheduleDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateMemberScheduleDto: UpdateMemberScheduleDto,
+  ) {
     return this.memberScheduleService.update(+id, updateMemberScheduleDto);
   }
 
