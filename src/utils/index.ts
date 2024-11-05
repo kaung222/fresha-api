@@ -1,4 +1,5 @@
 import { DayOfWeek } from '@/app/member-schedule/entities/member-schedule.entity';
+import { addDays, format } from 'date-fns';
 
 export * from './base.entity';
 
@@ -60,3 +61,27 @@ export const getCurrentDayOfWeek = (date?: string) => {
       return DayOfWeek.satuarday;
   }
 };
+
+export function getDatesBetweenDates(
+  startDate: string,
+  endDate: string,
+): string[] {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const dates = [];
+
+  let currentDate = start;
+  while (currentDate <= end) {
+    dates.push(format(currentDate, 'yyyy-MM-d'));
+    currentDate = addDays(currentDate, 1);
+  }
+
+  return dates;
+}
+
+export function formatSecondsToTime(seconds: number): string {
+  // Convert seconds to milliseconds and create a Date object (1970-01-01 is the epoch start)
+  const date = new Date(seconds * 1000);
+  // Format the Date object to "HH:mm:ss" format
+  return format(date, 'HH:mm:ss');
+}

@@ -12,7 +12,10 @@ import { ServicesService } from '../services/services.service';
 import { Roles } from '@/security/user.decorator';
 import { format } from 'date-fns';
 import { getCurrentDate, getCurrentDayOfWeek } from '@/utils';
-import { MemberSchedule } from '../member-schedule/entities/member-schedule.entity';
+import {
+  MemberSchedule,
+  ScheduleType,
+} from '../member-schedule/entities/member-schedule.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 
 @Injectable()
@@ -94,7 +97,6 @@ export class MembersService {
     currentDate = getCurrentDate(),
   ) {
     // Fetch member's schedule for the given day of the week
-
     const date = new Date(currentDate);
     const schedule = await this.dataSource
       .getRepository(MemberSchedule)
@@ -103,10 +105,23 @@ export class MembersService {
         dayOfWeek: getCurrentDayOfWeek(currentDate),
       });
 
-    if (!schedule) {
-      throw new Error('No schedule found for the given member on this day.');
-    }
+    const dayInfo = {
+      iso: format(date, 'yyyy-MM-dd'),
+      dayOfMonth: date.getDate(),
+      formattedDayOfMonth: date.getDate().toString(),
+      formattedYear: format(date, 'yyyy'),
+      monthName: format(date, 'MMMM'),
+      dayName: format(date, 'EEEE'),
+    };
 
+    // Check if the day is marked as a business off day or leave
+    if (!schedule) {
+      return {
+        day: dayInfo,
+        slots: [], // Empty slots array for non-working days
+        message: 'Member is not available',
+      };
+    }
     // Fetch existing appointments for the member on the specified date
     const appointments = await this.dataSource
       .getRepository(Appointment)
@@ -144,15 +159,6 @@ export class MembersService {
       // Move to the next slot
       slotTime += slotInterval;
     }
-
-    const dayInfo = {
-      iso: format(date, 'yyyy-MM-dd'),
-      dayOfMonth: date.getDate(),
-      formattedDayOfMonth: date.getDate().toString(),
-      formattedYear: format(date, 'yyyy'),
-      monthName: format(date, 'MMMM'),
-      dayName: format(date, 'EEEE'),
-    };
 
     return {
       day: dayInfo,

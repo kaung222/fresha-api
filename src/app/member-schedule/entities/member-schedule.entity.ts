@@ -7,8 +7,10 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { BreakTime } from './break-time.entity';
 
 export enum DayOfWeek {
   monday = 'Monday',
@@ -40,15 +42,6 @@ export class MemberSchedule {
   @Column('enum', { enum: DayOfWeek, default: DayOfWeek.monday })
   dayOfWeek: DayOfWeek;
 
-  @Column('enum', { enum: ScheduleType, default: ScheduleType.workingDay })
-  type: ScheduleType;
-
-  @Column({ type: 'boolean', default: true })
-  isRegular: boolean;
-
-  @Column({ nullable: true })
-  notes: string;
-
   @Column()
   memberId: number;
 
@@ -56,6 +49,9 @@ export class MemberSchedule {
   @JoinColumn({ name: 'memberId' })
   member: Member;
 
-  @ManyToOne(() => Organization)
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   organization: Organization;
+
+  @OneToMany(() => BreakTime, (breakTime) => breakTime.memberSchedule)
+  breakTimes: BreakTime[];
 }

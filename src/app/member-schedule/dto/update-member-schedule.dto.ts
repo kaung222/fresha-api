@@ -1,4 +1,8 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateMemberScheduleDto } from './create-member-schedule.dto';
+import { IsNotEmpty } from 'class-validator';
 
-export class UpdateMemberScheduleDto extends PartialType(CreateMemberScheduleDto) {}
+export class UpdateMemberScheduleDto {
+  @IsNotEmpty()
+  startTime: number;
+  @IsNotEmpty()
+  endTime: number;
+}

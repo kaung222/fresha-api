@@ -40,6 +40,9 @@ import { Test } from './app/test/entities/test.entity';
 import { Product } from './app/products/entities/product.entity';
 import { MemberScheduleModule } from './app/member-schedule/member-schedule.module';
 import { MemberSchedule } from './app/member-schedule/entities/member-schedule.entity';
+import { OrgScheduleModule } from './app/org-schedule/org-schedule.module';
+import { BreakTime } from './app/member-schedule/entities/break-time.entity';
+import { OrgSchedule } from './app/org-schedule/entities/org-schedule.entity';
 
 @Module({
   imports: [
@@ -70,6 +73,8 @@ import { MemberSchedule } from './app/member-schedule/entities/member-schedule.e
         Test,
         Product,
         MemberSchedule,
+        BreakTime,
+        OrgSchedule,
       ],
     }),
 
@@ -115,6 +120,7 @@ import { MemberSchedule } from './app/member-schedule/entities/member-schedule.e
     BranchModule,
     ClientsModule,
     MemberScheduleModule,
+    OrgScheduleModule,
   ],
   controllers: [],
   providers: [

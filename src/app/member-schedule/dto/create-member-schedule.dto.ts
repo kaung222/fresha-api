@@ -7,10 +7,12 @@ import {
   IsPositive,
   IsString,
   Max,
+  ValidateNested,
 } from 'class-validator';
 import { DayOfWeek, ScheduleType } from '../entities/member-schedule.entity';
+import { Type } from 'class-transformer';
 
-export class CreateMemberScheduleDto {
+class MemberSchedule {
   @IsNotEmpty()
   @Max(86400)
   @IsPositive()
@@ -37,6 +39,12 @@ export class CreateMemberScheduleDto {
   @IsOptional()
   @IsString()
   notes: string;
+}
+
+export class CreateMemberScheduleDto {
+  @ValidateNested()
+  @Type(() => MemberSchedule)
+  memberSchedules: MemberSchedule[];
 
   @IsNotEmpty()
   memberId: number;

@@ -10,15 +10,23 @@ import {
 import { MemberScheduleService } from './member-schedule.service';
 import { CreateMemberScheduleDto } from './dto/create-member-schedule.dto';
 import { UpdateMemberScheduleDto } from './dto/update-member-schedule.dto';
-import { User } from '@/security/user.decorator';
+import { Roles, User } from '@/security/user.decorator';
+import { CreateBreakTimeDto } from './dto/create-breakTime.dto';
+import { ApiTags } from '@nestjs/swagger';
+import { Role } from '@/security/role.decorator';
 
 @Controller('member-schedule')
+@ApiTags('Member schedule')
 export class MemberScheduleController {
   constructor(private readonly memberScheduleService: MemberScheduleService) {}
 
   @Post()
-  create(@Body() createMemberScheduleDto: CreateMemberScheduleDto) {
-    return this.memberScheduleService.create(createMemberScheduleDto);
+  @Role(Roles.org)
+  create(
+    @Body() createMemberScheduleDto: CreateMemberScheduleDto,
+    @User('orgId') orgId: number,
+  ) {
+    return this.memberScheduleService.create(createMemberScheduleDto, orgId);
   }
 
   @Get()
@@ -29,6 +37,14 @@ export class MemberScheduleController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.memberScheduleService.findOne(+id);
+  }
+
+  @Post(':id/break-time')
+  createBreakTime(
+    @Param('id') id: string,
+    @Body() createBreakTimeDto: CreateBreakTimeDto,
+  ) {
+    return this.memberScheduleService.createBreakTime(+id, createBreakTimeDto);
   }
 
   @Patch(':id')
