@@ -42,9 +42,10 @@ export class MemberScheduleService {
   async createMany() {}
 
   async findAll(orgId: number) {
-    const memberIds = await this.dataSource
+    const members = await this.dataSource
       .getRepository(Member)
-      .find({ where: { organization: { id: orgId } }, select: { id: true } });
+      .find({ where: { organization: { id: orgId } } });
+    const memberIds = members.map((member) => member.id);
     return this.memberScheduleRepository.findBy({
       memberId: In(memberIds),
     });
@@ -64,8 +65,6 @@ export class MemberScheduleService {
         scheduleId,
         startTime,
         endTime,
-        formattedEndTime: formatSecondsToTime(endTime),
-        formattedStartTime: formatSecondsToTime(startTime),
       })),
     );
     return await this.breakTimeRepository.save(newBreakTime);

@@ -11,6 +11,7 @@ import { Appointment } from '../appointments/entities/appointment.entity';
 import { ServiceAppointment } from '../appointments/entities/serviceappointment.entity';
 import { AddAppointmentDto } from './dto/create-appointment.dto';
 import { Service } from '../services/entities/service.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class ClientsService {
@@ -87,6 +88,20 @@ export class ClientsService {
 
   remove(id: number) {
     return this.clientRepository.delete(id);
+  }
+
+  @OnEvent('appointment.created')
+  async createClient({ userId, orgId }: { userId: number; orgId: number }) {
+    const client = await this.clientRepository.findOneBy({
+      userId,
+      organization: { id: orgId },
+    });
+    if (client) return;
+    const user = await this.dataSource
+      .getRepository(User)
+      .findOneBy({ id: userId });
+    const newClient = this.clientRepository.create(user);
+    this.clientRepository.save(newClient);
   }
 
   async checkOwnership(id: number, orgId: number): Promise<Client> {

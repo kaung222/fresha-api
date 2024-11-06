@@ -12,12 +12,6 @@ export class BreakTime {
   @Column('int')
   endTime: number;
 
-  @Column('time')
-  formattedStartTime: string;
-
-  @Column('time')
-  formattedEndTime: string;
-
   @Column()
   scheduleId: number;
 

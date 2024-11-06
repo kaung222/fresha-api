@@ -33,6 +33,9 @@ export class Appointment extends IncrementEntity {
   @Column({ nullable: true })
   phone: string;
 
+  @Column({ nullable: true })
+  email: string;
+
   @Column('enum', { enum: Gender, default: Gender.none })
   gender: Gender;
 

@@ -125,7 +125,8 @@ export class AuthService {
     } else await this.otpRepository.insert(otpPayload);
     const emailPayload: SendEmailDto = {
       to: email,
-      text: otp,
+      text: `Your OTP for fresha is ${otp}`,
+      recipientName: 'Customer',
       subject: 'OTP',
     };
     await this.emailQueue.add('sendEmail', emailPayload);

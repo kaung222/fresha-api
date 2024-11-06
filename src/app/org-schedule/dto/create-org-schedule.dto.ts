@@ -10,6 +10,7 @@ class TimePeriod {
 class OneDayDuty {
   @IsNotEmpty()
   workingHours: TimePeriod;
+  3;
 
   @IsOptional()
   breakTimes?: TimePeriod[];

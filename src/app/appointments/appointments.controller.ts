@@ -66,16 +66,22 @@ export class AppointmentsController {
   @Role(Roles.org, Roles.member)
   @ApiOperation({ summary: 'Confirm booking by org or member' })
   async confirmBooking(@Param('id') id: string, @User('orgId') orgId: number) {
-    await this.appointmentsService.checkOwnership(+id, orgId);
-    return this.appointmentsService.confirmBooking(+id);
+    const appointment = await this.appointmentsService.checkOwnership(
+      +id,
+      orgId,
+    );
+    return this.appointmentsService.confirmBooking(+id, appointment);
   }
 
   @Patch(':id/cancel')
   @Role(Roles.org, Roles.member)
   @ApiOperation({ summary: 'Cancel booking by org or member' })
   async cancelBooking(@Param('id') id: string, @User('orgId') orgId: number) {
-    await this.appointmentsService.checkOwnership(+id, orgId);
-    return this.appointmentsService.cancelBooking(+id);
+    const appointment = await this.appointmentsService.checkOwnership(
+      +id,
+      orgId,
+    );
+    return this.appointmentsService.cancelBooking(+id, appointment);
   }
 
   @Patch(':id/complete')

@@ -43,6 +43,8 @@ import { MemberSchedule } from './app/member-schedule/entities/member-schedule.e
 import { OrgScheduleModule } from './app/org-schedule/org-schedule.module';
 import { BreakTime } from './app/member-schedule/entities/break-time.entity';
 import { OrgSchedule } from './app/org-schedule/entities/org-schedule.entity';
+import { NotificationsModule } from './app/notifications/notifications.module';
+import { Notification } from './app/notifications/entities/notification.entity';
 
 @Module({
   imports: [
@@ -75,6 +77,7 @@ import { OrgSchedule } from './app/org-schedule/entities/org-schedule.entity';
         MemberSchedule,
         BreakTime,
         OrgSchedule,
+        Notification,
       ],
     }),
 
@@ -121,6 +124,7 @@ import { OrgSchedule } from './app/org-schedule/entities/org-schedule.entity';
     ClientsModule,
     MemberScheduleModule,
     OrgScheduleModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [

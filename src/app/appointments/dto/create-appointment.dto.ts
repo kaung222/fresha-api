@@ -36,15 +36,12 @@ export class CreateAppointmentDto {
   @IsPhoneNumber()
   phone: string;
 
-  @IsEnum(Gender)
-  gender: Gender;
-
+  @IsNotEmpty()
   @IsEmail()
   email: string;
 
-  // @ValidateNested({ each: true })
-  // @Type(() => BookingItem)
-  // bookingItems: BookingItem[];
+  @IsEnum(Gender)
+  gender: Gender;
 
   @IsNotEmpty()
   memberId: number;

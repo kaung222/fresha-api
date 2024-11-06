@@ -1,15 +1,12 @@
 import {
-  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
-  IsOptional,
   IsPositive,
-  IsString,
   Max,
   ValidateNested,
 } from 'class-validator';
-import { DayOfWeek, ScheduleType } from '../entities/member-schedule.entity';
+import { DayOfWeek } from '../entities/member-schedule.entity';
 import { Type } from 'class-transformer';
 
 class MemberSchedule {
@@ -27,18 +24,6 @@ class MemberSchedule {
   @IsNotEmpty()
   @IsEnum(DayOfWeek)
   dayOfWeek: DayOfWeek;
-
-  @IsNotEmpty()
-  @IsEnum(ScheduleType)
-  type: ScheduleType;
-
-  @IsNotEmpty()
-  @IsBoolean()
-  isRegular: boolean;
-
-  @IsOptional()
-  @IsString()
-  notes: string;
 }
 
 export class CreateMemberScheduleDto {

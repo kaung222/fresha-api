@@ -1,10 +1,19 @@
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Service } from '@/app/services/entities/service.entity';
-import { IncrementEntity } from '@/utils/base.entity';
-import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
-export class Category extends IncrementEntity {
+export class Category {
+  @PrimaryGeneratedColumn()
+  id: number;
+
   @Column()
   name: string;
 

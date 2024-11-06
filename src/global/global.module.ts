@@ -1,3 +1,4 @@
+import { BullModule } from '@nestjs/bull';
 import { Module, Global } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 
@@ -14,8 +15,9 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         },
       },
     ]),
+    BullModule.registerQueue({ name: 'send-email' }),
   ],
   providers: [],
-  exports: [ClientsModule],
+  exports: [ClientsModule, BullModule],
 })
 export class GlobalModule {}

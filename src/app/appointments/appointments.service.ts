@@ -7,15 +7,16 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment, BookingStatus } from './entities/appointment.entity';
-import { Between, DataSource, Equal, In, MoreThan, Repository } from 'typeorm';
-import { PaginateQuery } from '@/utils/paginate-query.dto';
-import { PaginationResponse } from '@/utils/paginate-res.dto';
+import { DataSource, In, Repository } from 'typeorm';
 import { ServiceAppointment } from './entities/serviceappointment.entity';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Service } from '../services/entities/service.entity';
 import { getCurrentDate, getCurrentDayOfWeek } from '@/utils';
-import { MemberSchedule } from '../member-schedule/entities/member-schedule.entity';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
+import { SendEmailDto } from '@/global/email.service';
+import { Member } from '../members/entities/member.entity';
 import { format } from 'date-fns';
 
 @Injectable()
@@ -23,6 +24,7 @@ export class AppointmentsService {
   constructor(
     private dataSource: DataSource,
     private eventEmitter: EventEmitter2,
+    @InjectQueue('send-email') private emailQueue: Queue,
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
     @InjectRepository(ServiceAppointment)
@@ -40,7 +42,11 @@ export class AppointmentsService {
       const services = await this.dataSource
         .getRepository(Service)
         .findBy({ id: In(serviceIds) });
-      if (!services) throw new NotFoundException('service not found');
+      const member = await this.dataSource
+        .getRepository(Member)
+        .findOneBy({ id: memberId });
+      if (!services || !member)
+        throw new NotFoundException('service or member not found');
       const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
       const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
       const createAppointment = this.appointmentRepository.create({
@@ -64,6 +70,13 @@ export class AppointmentsService {
       await this.serviceAppointmentRepository.save(createAppointmentItems);
       queryRunner.commitTransaction();
       // emit an event to create a client
+      this.eventEmitter.emit('appointment.created', { userId, orgId });
+      this.sendEmail({
+        to: member.email,
+        recipientName: member.firstName,
+        subject: 'Appointment received',
+        text: `A user make an appointment to you on ${format(new Date(createAppointment.date), 'dd-MM-YYYY')}`,
+      });
       return {
         message: 'Book an appointment successfully',
       };
@@ -139,15 +152,29 @@ export class AppointmentsService {
     }
   }
 
-  confirmBooking(id: number) {
+  async confirmBooking(id: number, appointment: Appointment) {
     this.appointmentRepository.update(id, { status: BookingStatus.confirmed });
+    // send email about booking confirmation
+    this.sendEmail({
+      to: appointment.email,
+      text: 'Confirm your booking',
+      recipientName: appointment.username,
+      subject: 'Booking confirmed',
+    });
     return {
       message: 'Confirm booking succesfully',
     };
   }
 
-  cancelBooking(id: number) {
+  async cancelBooking(id: number, appointment: Appointment) {
     this.appointmentRepository.update(id, { status: BookingStatus.cancelled });
+    // send email about booking cancelation
+    this.sendEmail({
+      to: appointment.email,
+      text: 'Cancel your booking',
+      recipientName: appointment.username,
+      subject: 'Booking cancelation',
+    });
     return {
       message: 'Cancel booking succesfully',
     };
@@ -173,6 +200,10 @@ export class AppointmentsService {
       id,
     });
     if (!appointment) throw new NotFoundException('Appointment not found');
-    return true;
+    return appointment;
+  }
+
+  sendEmail(emailPayload: SendEmailDto) {
+    this.emailQueue.add('sendEmail', emailPayload);
   }
 }
