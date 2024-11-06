@@ -45,6 +45,7 @@ import { BreakTime } from './app/member-schedule/entities/break-time.entity';
 import { OrgSchedule } from './app/org-schedule/entities/org-schedule.entity';
 import { NotificationsModule } from './app/notifications/notifications.module';
 import { Notification } from './app/notifications/entities/notification.entity';
+import { PackagesModule } from './app/packages/packages.module';
 
 @Module({
   imports: [
@@ -125,6 +126,7 @@ import { Notification } from './app/notifications/entities/notification.entity';
     MemberScheduleModule,
     OrgScheduleModule,
     NotificationsModule,
+    PackagesModule,
   ],
   controllers: [],
   providers: [

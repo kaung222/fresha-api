@@ -7,7 +7,7 @@ import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Member } from './entities/member.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { ServicesService } from '../services/services.service';
 import { Roles } from '@/security/user.decorator';
 import { format } from 'date-fns';
@@ -17,11 +17,13 @@ import {
   ScheduleType,
 } from '../member-schedule/entities/member-schedule.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Service } from '../services/entities/service.entity';
 
 @Injectable()
 export class MembersService {
   constructor(
-    private readonly serviceService: ServicesService,
+    private eventEmitter: EventEmitter2,
     private dataSource: DataSource,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
@@ -35,7 +37,11 @@ export class MembersService {
       services: serviceIds?.map((id) => ({ id })),
       organization: { id: orgId },
     });
-    return await this.memberRepository.save(member);
+    await this.memberRepository.save(member);
+    this.eventEmitter.emit('member.created', member.id);
+    return {
+      message: 'Create member successfully',
+    };
   }
 
   // find many
@@ -80,9 +86,9 @@ export class MembersService {
     }
 
     // Fetch the services based on the provided service IDs
-    const services = await this.serviceService.findByIds(
-      updateMemberDto.serviceIds,
-    );
+    const services = await this.dataSource
+      .getRepository(Service)
+      .findBy({ id: In(updateMemberDto.serviceIds) });
 
     // Update the member's services and other fields
     member.services = services;
@@ -92,6 +98,7 @@ export class MembersService {
     return await this.memberRepository.save(member);
   }
 
+  // get available time slots of a member
   async getAvailableTimeSlots(
     memberId: number,
     currentDate = getCurrentDate(),

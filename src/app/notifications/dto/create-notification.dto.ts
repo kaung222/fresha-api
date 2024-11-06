@@ -14,7 +14,7 @@ export class CreateNotificationDto {
   link?: string;
 
   @IsNotEmpty()
-  userId: string;
+  userId: number;
 
   @IsOptional()
   thumbnail?: string;

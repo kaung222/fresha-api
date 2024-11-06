@@ -20,15 +20,6 @@ import { Role } from '@/security/role.decorator';
 export class MemberScheduleController {
   constructor(private readonly memberScheduleService: MemberScheduleService) {}
 
-  @Post()
-  @Role(Roles.org)
-  create(
-    @Body() createMemberScheduleDto: CreateMemberScheduleDto,
-    @User('orgId') orgId: number,
-  ) {
-    return this.memberScheduleService.create(createMemberScheduleDto, orgId);
-  }
-
   @Get()
   findAll(@User('orgId') orgId: number) {
     return this.memberScheduleService.findAll(orgId);

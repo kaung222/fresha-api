@@ -58,7 +58,7 @@ export const getCurrentDayOfWeek = (date?: string) => {
     case 5:
       return DayOfWeek.friday;
     case 6:
-      return DayOfWeek.satuarday;
+      return DayOfWeek.saturday;
   }
 };
 

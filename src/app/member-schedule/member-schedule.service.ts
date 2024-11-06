@@ -8,6 +8,8 @@ import { CreateBreakTimeDto } from './dto/create-breakTime.dto';
 import { BreakTime } from './entities/break-time.entity';
 import { formatSecondsToTime } from '@/utils';
 import { Member } from '../members/entities/member.entity';
+import { OnEvent } from '@nestjs/event-emitter';
+import { defaultScheduleData } from '@/utils/data/org-schedule.data';
 
 @Injectable()
 export class MemberScheduleService {
@@ -19,27 +21,19 @@ export class MemberScheduleService {
     private dataSource: DataSource,
   ) {}
   // create schedule for a member
-  async create(
-    createMemberScheduleDto: CreateMemberScheduleDto,
-    orgId: number,
-  ) {
-    const { memberId, memberSchedules } = createMemberScheduleDto;
-    const member = await this.dataSource
-      .getRepository(Member)
-      .findOneBy({ id: memberId, organization: { id: orgId } });
-    if (!member) throw new NotFoundException('Member not found');
+  @OnEvent('member.created')
+  async create(memberId: number) {
+    const schedules = defaultScheduleData;
     const createSchedule = this.memberScheduleRepository.create(
-      memberSchedules.map(({ startTime, endTime, dayOfWeek }) => ({
+      schedules.map(({ startTime, endTime, dayOfWeek }) => ({
         startTime,
         endTime,
         dayOfWeek,
-        member,
+        member: { id: memberId },
       })),
     );
     return this.memberScheduleRepository.save(createSchedule);
   }
-
-  async createMany() {}
 
   async findAll(orgId: number) {
     const members = await this.dataSource
@@ -52,7 +46,7 @@ export class MemberScheduleService {
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} memberSchedule`;
+    return this.memberScheduleRepository.findOneBy({ id });
   }
 
   // add  breaktimes to a schedule

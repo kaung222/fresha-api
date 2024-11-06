@@ -7,26 +7,29 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { CreateNotificationDto } from './dto/create-notification.dto';
+import { Notification } from './entities/notification.entity';
 
 @WebSocketGateway(4445, { cors: { origin: '*' } })
 export class NotificationGateway {
   @WebSocketServer()
   server: Server;
 
-  async createClinicNotification(data: CreateNotificationDto) {
-    const { userId } = data;
-    this.server.to(userId).emit('NEW_NOTIFICATION', data);
+  getRoomId(userId: number) {
+    const roomId = `notification_room_${userId}`;
+    return roomId;
+  }
+  // emit notification to user
+  async createNotification(notification: Notification) {
+    const roomId = this.getRoomId(notification.userId);
+    this.server.to(roomId).emit('NOTIFICATIONS', notification);
   }
 
-  async createUserNotification(data: CreateNotificationDto) {
-    const { userId } = data;
-    this.server.to(userId).emit('NEW_NOTIFICATION', data);
+  // global notification to all users
+  async createGlobalNotification(notification: Notification) {
+    this.server.emit('NOTIFICATIONS', notification);
   }
 
-  async createGlobalNotification(data: CreateNotificationDto) {
-    this.server.emit('NEW_NOTIFICATION', data);
-  }
-
+  // join my notification room
   @SubscribeMessage('JOIN_NOTIFICATION')
   joinNotificationRoom(
     @MessageBody() payload: any,

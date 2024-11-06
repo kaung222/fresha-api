@@ -29,8 +29,10 @@ export class OrganizationsService {
   }
 
   async findAll(paginateQuery: PaginateQuery) {
-    const { page } = paginateQuery;
-    const [data, totalCount] = await this.orgRepository.findAndCount();
+    const { page = 1 } = paginateQuery;
+    const [data, totalCount] = await this.orgRepository.findAndCount({
+      select: ['rating', 'totalReviews', 'name', 'id', 'types'],
+    });
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
@@ -58,8 +60,16 @@ export class OrganizationsService {
     return members;
   }
 
-  findOne(id: number) {
-    return this.orgRepository.findOneBy({ id });
+  async findOne(id: number) {
+    const organization = await this.orgRepository.findOneBy({ id });
+    const related = await this.orgRepository.find({
+      where: { types: In(organization.types) },
+      take: 3,
+    });
+    return {
+      organization,
+      related,
+    };
   }
 
   findCategories(orgId: number) {
@@ -92,10 +102,6 @@ export class OrganizationsService {
 
   update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
     return this.orgRepository.update(id, updateOrganizationDto);
-  }
-
-  remove(id: number) {
-    return this.orgRepository.delete(id);
   }
 
   getNearOrg(lng: number, lat: number, maxDistance: number) {

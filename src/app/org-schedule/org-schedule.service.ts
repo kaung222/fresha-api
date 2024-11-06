@@ -4,6 +4,8 @@ import { UpdateOrgScheduleDto } from './dto/update-org-schedule.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrgSchedule } from './entities/org-schedule.entity';
 import { Repository } from 'typeorm';
+import { OnEvent } from '@nestjs/event-emitter';
+import { defaultScheduleData } from '@/utils/data/org-schedule.data';
 
 @Injectable()
 export class OrgScheduleService {
@@ -11,26 +13,19 @@ export class OrgScheduleService {
     @InjectRepository(OrgSchedule)
     private orgScheduleRepository: Repository<OrgSchedule>,
   ) {}
-  create(orgId: number, createOrgScheduleDto: CreateOrgScheduleDto) {
-    const { monday, thursday, wednesday, tuesday, friday, saturday, sunday } =
-      createOrgScheduleDto;
-    const createSchedule = this.orgScheduleRepository.create({
-      organization: { id: orgId },
-      monday: this.formatObjToString(monday),
-      thursday: this.formatObjToString(thursday),
-      tuesday: this.formatObjToString(tuesday),
-      wednesday: this.formatObjToString(wednesday),
-      friday: this.formatObjToString(friday),
-      saturday: this.formatObjToString(saturday),
-      sunday: this.formatObjToString(sunday),
-    });
-    console.log(orgId, createSchedule);
-    return this.orgScheduleRepository.save(createSchedule);
-  }
+  // create schedule for an org
+  @OnEvent('organization.created')
+  create(orgId: number) {
+    const createSchedule = this.orgScheduleRepository.create(
+      defaultScheduleData.map(({ startTime, endTime, dayOfWeek }) => ({
+        organization: { id: orgId },
+        startTime,
+        endTime,
+        dayOfWeek,
+      })),
+    );
 
-  formatObjToString(payload: any) {
-    //  return JSON.stringify(payload)
-    return payload;
+    return this.orgScheduleRepository.save(createSchedule);
   }
 
   findAll(orgId: number) {
@@ -40,18 +35,10 @@ export class OrgScheduleService {
   }
 
   update(id: number, updateOrgScheduleDto: UpdateOrgScheduleDto) {
-    const { monday, tuesday, wednesday, thursday, friday, saturday, sunday } =
-      updateOrgScheduleDto;
+    const { startTime, endTime } = updateOrgScheduleDto;
     const newSchedule = this.orgScheduleRepository.create({
-      id,
-
-      monday: this.formatObjToString(monday),
-      thursday: this.formatObjToString(thursday),
-      tuesday: this.formatObjToString(tuesday),
-      wednesday: this.formatObjToString(wednesday),
-      friday: this.formatObjToString(friday),
-      saturday: this.formatObjToString(saturday),
-      sunday: this.formatObjToString(sunday),
+      startTime,
+      endTime,
     });
     return this.orgScheduleRepository.save(newSchedule);
   }

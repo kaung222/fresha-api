@@ -7,7 +7,7 @@ export class Notification extends IncrementEntity {
   title: string;
 
   @Column()
-  userId: string;
+  userId: number;
 
   @Column({ nullable: true })
   thumbnail: string;

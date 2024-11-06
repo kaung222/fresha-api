@@ -23,12 +23,14 @@ import { generateOpt } from '@/utils';
 import { OTP } from './entities/otp.entity';
 import { ConfirmOTPDto } from './dto/confirm-otp.dto';
 import { RegisterOrganizationDto } from './dto/create-org.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
+    private eventEmitter: EventEmitter2,
     @InjectQueue('send-email') private readonly emailQueue: Queue,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
@@ -100,6 +102,8 @@ export class AuthService {
     };
     delete member.password;
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
+    // event an event , to see more ==> org-schedule.service.ts
+    this.eventEmitter.emit('organization.created', organization.id);
     return {
       message: 'Create organization successfully',
       accessToken,

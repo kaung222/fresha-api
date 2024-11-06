@@ -1,14 +1,10 @@
 import { Member } from '@/app/members/entities/member.entity';
-import { Organization } from '@/app/organizations/entities/organization.entity';
-import { IncrementEntity, UUIDEntity } from '@/utils';
 import {
-  BaseEntity,
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BreakTime } from './break-time.entity';
@@ -19,7 +15,7 @@ export enum DayOfWeek {
   wednesday = 'Wednesday',
   thursday = 'Thursday',
   friday = 'Friday',
-  satuarday = 'Satuarday',
+  saturday = 'Saturday',
   sunday = 'Sunday',
 }
 
@@ -50,9 +46,6 @@ export class MemberSchedule {
   @JoinColumn({ name: 'memberId' })
   member: Member;
 
-  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
-  organization: Organization;
-
   @OneToMany(() => BreakTime, (breakTime) => breakTime.memberSchedule, {
     eager: true,
     cascade: true,
@@ -67,35 +60,4 @@ export class TimePeriod {
 export class OneDayDuty {
   workingHours: TimePeriod;
   breakTimes?: TimePeriod[];
-}
-
-@Entity()
-export class OrgSchedule {
-  @PrimaryGeneratedColumn('increment')
-  id: number;
-
-  @Column('json', { nullable: true })
-  monday: OneDayDuty;
-
-  @Column('json', { nullable: true })
-  tuesday: OneDayDuty;
-
-  @Column('json', { nullable: true })
-  wednesday: OneDayDuty;
-
-  @Column('json', { nullable: true })
-  thursday: OneDayDuty;
-
-  @Column('json', { nullable: true })
-  friday: OneDayDuty;
-
-  @Column('json', { nullable: true })
-  saturday: OneDayDuty;
-
-  @Column('json', { nullable: true })
-  sunday: OneDayDuty;
-
-  @OneToOne(() => Member, { onDelete: 'CASCADE' })
-  @JoinColumn()
-  Member: Organization;
 }

@@ -1,3 +1,4 @@
+import { DayOfWeek } from '@/app/member-schedule/entities/member-schedule.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import {
@@ -24,26 +25,14 @@ export class OrgSchedule {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @Column('json', { nullable: true })
-  monday: OneDayDuty;
+  @Column('int', { default: 28800 })
+  startTime: number; // in second eg: 01:00:00 am = 3600 in second
 
-  @Column('json', { nullable: true })
-  tuesday: OneDayDuty;
+  @Column('int', { default: 64800 })
+  endTime: number;
 
-  @Column('json', { nullable: true })
-  wednesday: OneDayDuty;
-
-  @Column('json', { nullable: true })
-  thursday: OneDayDuty;
-
-  @Column('json', { nullable: true })
-  friday: OneDayDuty;
-
-  @Column('json', { nullable: true })
-  saturday: OneDayDuty;
-
-  @Column('json', { nullable: true })
-  sunday: OneDayDuty;
+  @Column('enum', { enum: DayOfWeek })
+  dayOfWeek: DayOfWeek;
 
   @OneToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn()
