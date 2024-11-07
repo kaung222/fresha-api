@@ -127,17 +127,22 @@ export class AuthService {
     if (isExistOtp) {
       await this.otpRepository.update(isExistOtp.id, otpPayload);
     } else await this.otpRepository.insert(otpPayload);
-    const emailPayload: SendEmailDto = {
+
+    // send email otp
+    this.sendEmail({
       to: email,
       text: `Your OTP for fresha is ${otp}`,
       recipientName: 'Customer',
       subject: 'OTP',
-    };
-    await this.emailQueue.add('sendEmail', emailPayload);
+    });
     return {
       message: `Send OTP to ${email} successfully`,
       email,
     };
+  }
+
+  sendEmail(emailPayload: SendEmailDto) {
+    this.emailQueue.add('sendEmail', emailPayload);
   }
 
   // confirmOTP

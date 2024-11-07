@@ -24,7 +24,7 @@ export class AppointmentsService {
   constructor(
     private dataSource: DataSource,
     private eventEmitter: EventEmitter2,
-    @InjectQueue('send-email') private emailQueue: Queue,
+    // @InjectQueue('send-email') private emailQueue: Queue,
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
     @InjectRepository(ServiceAppointment)
@@ -204,6 +204,7 @@ export class AppointmentsService {
   }
 
   sendEmail(emailPayload: SendEmailDto) {
-    this.emailQueue.add('sendEmail', emailPayload);
+    // this.emailQueue.add('sendEmail', emailPayload);
+    console.log('sending email');
   }
 }

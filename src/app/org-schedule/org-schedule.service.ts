@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateOrgScheduleDto } from './dto/create-org-schedule.dto';
 import { UpdateOrgScheduleDto } from './dto/update-org-schedule.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrgSchedule } from './entities/org-schedule.entity';
@@ -25,11 +24,11 @@ export class OrgScheduleService {
       })),
     );
 
-    return this.orgScheduleRepository.save(createSchedule);
+    this.orgScheduleRepository.save(createSchedule);
   }
 
   findAll(orgId: number) {
-    return this.orgScheduleRepository.findOneBy({
+    return this.orgScheduleRepository.findBy({
       organization: { id: orgId },
     });
   }

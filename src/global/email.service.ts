@@ -52,7 +52,6 @@ const template = (recipientName: string, text: string) => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Innobytex Mailing Service</title>
           <style>
-    
               body {
                   font-family: Arial, sans-serif;
                   line-height: 1.6;
@@ -73,8 +72,7 @@ const template = (recipientName: string, text: string) => {
               <p>Yangon Myanmar</p>
               <p>Innobytex.com</p>
               <hr>
-              <p>Date: ${format(new Date(), 'YYYY-MM-DD')}</p>
-              
+              <p>Date: ${format(new Date(), 'yyyy-MM-dd')}</p>
               <p>Dear ${recipientName},</p>
               <p>${text}</p>
           </div>
