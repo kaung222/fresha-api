@@ -38,13 +38,12 @@ export class AppointmentsService {
       queryRunner.startTransaction();
       const { serviceIds, memberId, orgId, start, ...rest } =
         createAppointmentDto;
-
       const services = await this.dataSource
         .getRepository(Service)
         .findBy({ id: In(serviceIds) });
       const member = await this.dataSource
         .getRepository(Member)
-        .findOneBy({ id: memberId });
+        .findOneBy({ id: memberId, organization: { id: orgId } });
       if (!services || !member)
         throw new NotFoundException('service or member not found');
       const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);

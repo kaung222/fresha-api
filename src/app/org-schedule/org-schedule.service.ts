@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { UpdateOrgScheduleDto } from './dto/update-org-schedule.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrgSchedule } from './entities/org-schedule.entity';
@@ -6,6 +6,7 @@ import { In, Repository } from 'typeorm';
 import { OnEvent } from '@nestjs/event-emitter';
 import { defaultScheduleData } from '@/utils/data/org-schedule.data';
 import { UpdateMultiScheduleDto } from './dto/update-many.dto';
+import { CreateOrgScheduleDto } from './dto/create-org-schedule.dto';
 
 @Injectable()
 export class OrgScheduleService {
@@ -15,7 +16,7 @@ export class OrgScheduleService {
   ) {}
   // create schedule for an org
   @OnEvent('organization.created')
-  create(orgId: number) {
+  createMany(orgId: number) {
     const createSchedule = this.orgScheduleRepository.create(
       defaultScheduleData.map(({ startTime, endTime, dayOfWeek }) => ({
         organization: { id: orgId },
@@ -26,6 +27,22 @@ export class OrgScheduleService {
     );
 
     this.orgScheduleRepository.save(createSchedule);
+  }
+
+  async create(createOrgSchedule: CreateOrgScheduleDto, orgId: number) {
+    const { startTime, endTime, dayOfWeek } = createOrgSchedule;
+    const isExisted = await this.orgScheduleRepository.findOneBy({
+      organization: { id: orgId },
+      dayOfWeek,
+    });
+    if (isExisted) throw new ForbiddenException('Schedule already existed');
+    const createSchedule = this.orgScheduleRepository.create({
+      startTime,
+      endTime,
+      dayOfWeek,
+      organization: { id: orgId },
+    });
+    return this.orgScheduleRepository.save(createSchedule);
   }
 
   findAll(orgId: number) {
@@ -49,7 +66,7 @@ export class OrgScheduleService {
     updateMultiScheduleDto: UpdateMultiScheduleDto,
   ) {
     const { schedules } = updateMultiScheduleDto;
-    const ids = schedules.map((schedule) => schedule.id);
+    const ids = schedules.map((schedule) => schedule?.id);
     await this.checkOwnership(ids, orgId);
     const createSchedule = this.orgScheduleRepository.create(schedules);
     return this.orgScheduleRepository.save(createSchedule);
@@ -61,10 +78,10 @@ export class OrgScheduleService {
   }
 
   async checkOwnership(ids: number[], orgId: number): Promise<boolean> {
-    const schedules = await this.orgScheduleRepository.findBy({ id: In(ids) });
-    return (
-      schedules.length === ids.length &&
-      schedules.every((schedule) => schedule.organization.id === orgId)
-    );
+    const schedules = await this.orgScheduleRepository.findBy({
+      id: In(ids),
+      organization: { id: orgId },
+    });
+    return schedules.length === ids.length;
   }
 }

@@ -38,7 +38,7 @@ export class MembersService {
       organization: { id: orgId },
     });
     await this.memberRepository.save(member);
-    this.eventEmitter.emit('member.created', member.id);
+    this.eventEmitter.emit('member.created', { memberId: member.id, orgId });
     return {
       message: 'Create member successfully',
     };

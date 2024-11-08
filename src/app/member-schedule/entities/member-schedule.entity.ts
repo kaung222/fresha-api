@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BreakTime } from './break-time.entity';
+import { Organization } from '@/app/organizations/entities/organization.entity';
 
 export enum DayOfWeek {
   monday = 'Monday',
@@ -45,6 +46,10 @@ export class MemberSchedule {
   @ManyToOne(() => Member, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'memberId' })
   member: Member;
+
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'organizationId' })
+  organization: Organization;
 
   @OneToMany(() => BreakTime, (breakTime) => breakTime.memberSchedule, {
     eager: true,

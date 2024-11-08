@@ -21,6 +21,15 @@ import { UpdateMultiScheduleDto } from './dto/update-many.dto';
 export class OrgScheduleController {
   constructor(private readonly orgScheduleService: OrgScheduleService) {}
 
+  @Post()
+  @ApiOperation({ summary: 'Create a single schedule' })
+  create(
+    @Body() createOrgScheduleDto: CreateOrgScheduleDto,
+    @User('orgId') orgId: number,
+  ) {
+    return this.orgScheduleService.create(createOrgScheduleDto, orgId);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Get schedule of the org by org with access token' })
   findAll(@User('orgId') orgId: number) {

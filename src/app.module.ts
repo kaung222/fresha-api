@@ -46,6 +46,7 @@ import { OrgSchedule } from './app/org-schedule/entities/org-schedule.entity';
 import { NotificationsModule } from './app/notifications/notifications.module';
 import { Notification } from './app/notifications/entities/notification.entity';
 import { PackagesModule } from './app/packages/packages.module';
+import { StatisticsModule } from './app/statistics/statistics.module';
 
 @Module({
   imports: [
@@ -127,6 +128,7 @@ import { PackagesModule } from './app/packages/packages.module';
     OrgScheduleModule,
     NotificationsModule,
     PackagesModule,
+    StatisticsModule,
   ],
   controllers: [],
   providers: [

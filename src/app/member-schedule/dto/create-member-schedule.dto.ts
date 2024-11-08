@@ -1,15 +1,7 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsPositive,
-  Max,
-  ValidateNested,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsPositive, Max } from 'class-validator';
 import { DayOfWeek } from '../entities/member-schedule.entity';
-import { Type } from 'class-transformer';
 
-class MemberSchedule {
+export class CreateMemberScheduleDto {
   @IsNotEmpty()
   @Max(86400)
   @IsPositive()
@@ -24,12 +16,6 @@ class MemberSchedule {
   @IsNotEmpty()
   @IsEnum(DayOfWeek)
   dayOfWeek: DayOfWeek;
-}
-
-export class CreateMemberScheduleDto {
-  @ValidateNested()
-  @Type(() => MemberSchedule)
-  memberSchedules: MemberSchedule[];
 
   @IsNotEmpty()
   memberId: number;

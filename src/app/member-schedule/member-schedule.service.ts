@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateMemberScheduleDto } from './dto/create-member-schedule.dto';
 import { UpdateMemberScheduleDto } from './dto/update-member-schedule.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +14,7 @@ import { formatSecondsToTime } from '@/utils';
 import { Member } from '../members/entities/member.entity';
 import { OnEvent } from '@nestjs/event-emitter';
 import { defaultScheduleData } from '@/utils/data/org-schedule.data';
+import { UpdateMultiScheduleDto } from '../org-schedule/dto/update-many.dto';
 
 @Injectable()
 export class MemberScheduleService {
@@ -22,7 +27,7 @@ export class MemberScheduleService {
   ) {}
   // create schedule for a member
   @OnEvent('member.created')
-  async create(memberId: number) {
+  async createMany({ memberId, orgId }: { memberId: number; orgId: number }) {
     const schedules = defaultScheduleData;
     const createSchedule = this.memberScheduleRepository.create(
       schedules.map(({ startTime, endTime, dayOfWeek }) => ({
@@ -30,18 +35,32 @@ export class MemberScheduleService {
         endTime,
         dayOfWeek,
         member: { id: memberId },
+        organization: { id: orgId },
       })),
     );
     return this.memberScheduleRepository.save(createSchedule);
   }
 
+  async create(createSchedule: CreateMemberScheduleDto, orgId: number) {
+    const { startTime, endTime, memberId, dayOfWeek } = createSchedule;
+    const isExisted = await this.memberScheduleRepository.findOneBy({
+      memberId,
+      dayOfWeek,
+    });
+    if (isExisted) throw new ForbiddenException('Schedule already existed');
+    const newschedule = this.memberScheduleRepository.create({
+      startTime,
+      endTime,
+      dayOfWeek,
+      memberId,
+      organization: { id: orgId },
+    });
+    return this.memberScheduleRepository.save(newschedule);
+  }
+
   async findAll(orgId: number) {
-    const members = await this.dataSource
-      .getRepository(Member)
-      .find({ where: { organization: { id: orgId } } });
-    const memberIds = members.map((member) => member.id);
     return this.memberScheduleRepository.findBy({
-      memberId: In(memberIds),
+      organization: { id: orgId },
     });
   }
 
@@ -70,6 +89,24 @@ export class MemberScheduleService {
     return {
       message: 'Updated the schedule successfully',
     };
+  }
+
+  async updateMany(
+    orgId: number,
+    updateMultiScheduleDto: UpdateMultiScheduleDto,
+  ) {
+    const { schedules } = updateMultiScheduleDto;
+    const ids = schedules.map((schedule) => schedule.id);
+    await this.checkOwnership(ids, orgId);
+    const createSchedule = this.memberScheduleRepository.create(schedules);
+    return this.memberScheduleRepository.save(createSchedule);
+  }
+
+  async checkOwnership(ids: number[], orgId: number): Promise<boolean> {
+    const schedules = await this.memberScheduleRepository.find({
+      where: { id: In(ids), organization: { id: orgId } },
+    });
+    return schedules.length === ids.length;
   }
 
   async remove(id: number) {

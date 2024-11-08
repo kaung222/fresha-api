@@ -1,53 +1,16 @@
-import { Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, ValidateNested } from 'class-validator';
+import { DayOfWeek } from '@/app/member-schedule/entities/member-schedule.entity';
 
-class TimePeriod {
-  @IsNotEmpty()
-  startTime: number;
-  @IsNotEmpty()
-  endTime: number;
-}
-class OneDayDuty {
-  @IsNotEmpty()
-  workingHours: TimePeriod;
-  3;
+import { IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
 
-  @IsOptional()
-  breakTimes?: TimePeriod[];
-}
 export class CreateOrgScheduleDto {
-  @ValidateNested()
-  @Type(() => TimePeriod)
   @IsNotEmpty()
-  monday: TimePeriod;
+  @IsPositive()
+  startTime: number;
 
-  @ValidateNested()
-  @Type(() => TimePeriod)
   @IsNotEmpty()
-  tuesday: TimePeriod;
+  @IsPositive()
+  endTime: number;
 
-  @ValidateNested()
-  @Type(() => TimePeriod)
-  @IsNotEmpty()
-  wednesday: TimePeriod;
-
-  @ValidateNested()
-  @Type(() => TimePeriod)
-  @IsNotEmpty()
-  thursday: TimePeriod;
-
-  @ValidateNested()
-  @Type(() => TimePeriod)
-  @IsNotEmpty()
-  friday: TimePeriod;
-
-  @ValidateNested()
-  @Type(() => TimePeriod)
-  @IsNotEmpty()
-  saturday: TimePeriod;
-
-  @ValidateNested()
-  @Type(() => TimePeriod)
-  @IsNotEmpty()
-  sunday: TimePeriod;
+  @IsEnum(DayOfWeek)
+  dayOfWeek: DayOfWeek;
 }
