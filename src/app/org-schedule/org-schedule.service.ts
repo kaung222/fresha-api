@@ -67,7 +67,14 @@ export class OrgScheduleService {
   ) {
     const { schedules } = updateMultiScheduleDto;
     await this.orgScheduleRepository.delete({ organization: { id: orgId } });
-    const createSchedule = this.orgScheduleRepository.create(schedules);
+    const createSchedule = this.orgScheduleRepository.create(
+      schedules.map(({ startTime, endTime, dayOfWeek }) => ({
+        startTime,
+        endTime,
+        dayOfWeek,
+        organization: { id: orgId },
+      })),
+    );
     return this.orgScheduleRepository.save(createSchedule);
   }
 

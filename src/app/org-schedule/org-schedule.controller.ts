@@ -17,7 +17,7 @@ import { UpdateMultiScheduleDto } from './dto/update-many.dto';
 
 @Controller('org-schedule')
 @ApiTags('Organization Schedule')
-@Role(Roles.org)
+@Role(Roles.org, Roles.member)
 export class OrgScheduleController {
   constructor(private readonly orgScheduleService: OrgScheduleService) {}
 

@@ -12,7 +12,8 @@ import { CreateBreakTimeDto } from './dto/create-breakTime.dto';
 import { BreakTime } from './entities/break-time.entity';
 import { OnEvent } from '@nestjs/event-emitter';
 import { defaultScheduleData } from '@/utils/data/org-schedule.data';
-import { UpdateMultiScheduleDto } from './dto/create-many.dto';
+import { UpdateMultiScheduleDto } from './dto/update-many.dto';
+import { Member } from '../members/entities/member.entity';
 
 @Injectable()
 export class MemberScheduleService {
@@ -57,8 +58,14 @@ export class MemberScheduleService {
   }
 
   async findAll(orgId: number) {
-    return this.memberScheduleRepository.findBy({
-      organization: { id: orgId },
+    // return this.memberScheduleRepository.findBy({
+    //   organization: { id: orgId },
+    // });
+    return this.dataSource.getRepository(Member).find({
+      relations: { schedules: true },
+      where: {
+        organization: { id: orgId },
+      },
     });
   }
 
@@ -98,7 +105,15 @@ export class MemberScheduleService {
       memberId: memberId,
       organization: { id: orgId },
     });
-    const createSchedule = this.memberScheduleRepository.create(schedules);
+    const createSchedule = this.memberScheduleRepository.create(
+      schedules.map(({ startTime, endTime, dayOfWeek }) => ({
+        startTime,
+        endTime,
+        dayOfWeek,
+        organization: { id: orgId },
+        memberId,
+      })),
+    );
     return this.memberScheduleRepository.save(createSchedule);
   }
 

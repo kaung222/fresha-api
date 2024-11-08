@@ -14,7 +14,7 @@ import { Roles, User } from '@/security/user.decorator';
 import { CreateBreakTimeDto } from './dto/create-breakTime.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
-import { UpdateMultiScheduleDto } from './dto/create-many.dto';
+import { UpdateMultiScheduleDto } from './dto/update-many.dto';
 
 @Controller('member-schedule')
 @ApiTags('Member schedule')
@@ -32,6 +32,8 @@ export class MemberScheduleController {
 
   @Get()
   findAll(@User('orgId') orgId: number) {
+    console.log('run');
+
     return this.memberScheduleService.findAll(orgId);
   }
 

@@ -1,9 +1,17 @@
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { IncrementEntity } from '@/utils/base.entity';
 import { Service } from '@/app/services/entities/service.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Roles } from '@/security/user.decorator';
 import { Gender } from '@/app/users/entities/user.entity';
+import { MemberSchedule } from '@/app/member-schedule/entities/member-schedule.entity';
 
 export enum MemberType {
   employee = 'employee',
@@ -85,4 +93,7 @@ export class Member extends IncrementEntity {
 
   //   @OneToMany(() => Review, (review) => review.doctor)
   //   reviews: Review[];
+
+  @OneToMany(() => MemberSchedule, (schedule) => schedule.member)
+  schedules: MemberSchedule[];
 }
