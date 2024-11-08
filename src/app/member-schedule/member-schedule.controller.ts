@@ -14,7 +14,7 @@ import { Roles, User } from '@/security/user.decorator';
 import { CreateBreakTimeDto } from './dto/create-breakTime.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
-import { UpdateMultiScheduleDto } from '../org-schedule/dto/update-many.dto';
+import { UpdateMultiScheduleDto } from './dto/create-many.dto';
 
 @Controller('member-schedule')
 @ApiTags('Member schedule')

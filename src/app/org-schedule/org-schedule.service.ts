@@ -66,8 +66,7 @@ export class OrgScheduleService {
     updateMultiScheduleDto: UpdateMultiScheduleDto,
   ) {
     const { schedules } = updateMultiScheduleDto;
-    const ids = schedules.map((schedule) => schedule?.id);
-    await this.checkOwnership(ids, orgId);
+    await this.orgScheduleRepository.delete({ organization: { id: orgId } });
     const createSchedule = this.orgScheduleRepository.create(schedules);
     return this.orgScheduleRepository.save(createSchedule);
   }

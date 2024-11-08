@@ -10,11 +10,9 @@ import { MemberSchedule } from './entities/member-schedule.entity';
 import { DataSource, In, Repository } from 'typeorm';
 import { CreateBreakTimeDto } from './dto/create-breakTime.dto';
 import { BreakTime } from './entities/break-time.entity';
-import { formatSecondsToTime } from '@/utils';
-import { Member } from '../members/entities/member.entity';
 import { OnEvent } from '@nestjs/event-emitter';
 import { defaultScheduleData } from '@/utils/data/org-schedule.data';
-import { UpdateMultiScheduleDto } from '../org-schedule/dto/update-many.dto';
+import { UpdateMultiScheduleDto } from './dto/create-many.dto';
 
 @Injectable()
 export class MemberScheduleService {
@@ -95,9 +93,11 @@ export class MemberScheduleService {
     orgId: number,
     updateMultiScheduleDto: UpdateMultiScheduleDto,
   ) {
-    const { schedules } = updateMultiScheduleDto;
-    const ids = schedules.map((schedule) => schedule.id);
-    await this.checkOwnership(ids, orgId);
+    const { schedules, memberId } = updateMultiScheduleDto;
+    await this.memberScheduleRepository.delete({
+      memberId: memberId,
+      organization: { id: orgId },
+    });
     const createSchedule = this.memberScheduleRepository.create(schedules);
     return this.memberScheduleRepository.save(createSchedule);
   }
