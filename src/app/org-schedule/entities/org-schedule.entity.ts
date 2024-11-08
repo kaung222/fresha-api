@@ -31,10 +31,9 @@ export class OrgSchedule {
   @Column('int', { default: 64800 })
   endTime: number;
 
-  @Column('enum', { enum: DayOfWeek })
+  @Column('enum', { enum: DayOfWeek, default: DayOfWeek.sunday })
   dayOfWeek: DayOfWeek;
 
-  @OneToOne(() => Organization, { onDelete: 'CASCADE' })
-  @JoinColumn()
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   organization: Organization;
 }

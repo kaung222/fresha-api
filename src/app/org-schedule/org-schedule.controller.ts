@@ -13,6 +13,7 @@ import { UpdateOrgScheduleDto } from './dto/update-org-schedule.dto';
 import { Roles, User } from '@/security/user.decorator';
 import { Role } from '@/security/role.decorator';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UpdateMultiScheduleDto } from './dto/update-many.dto';
 
 @Controller('org-schedule')
 @ApiTags('Organization Schedule')
@@ -27,6 +28,7 @@ export class OrgScheduleController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update single schedule' })
   update(
     @Param('id') id: string,
     @Body() updateOrgScheduleDto: UpdateOrgScheduleDto,
@@ -34,8 +36,17 @@ export class OrgScheduleController {
     return this.orgScheduleService.update(+id, updateOrgScheduleDto);
   }
 
+  @Patch('update/multiple')
+  @ApiOperation({ summary: 'Update mutiple schedule' })
+  updateMany(
+    @User('orgId') orgId: number,
+    @Body() updateMultiScheduleDto: UpdateMultiScheduleDto,
+  ) {
+    return this.orgScheduleService.updateMany(orgId, updateMultiScheduleDto);
+  }
+
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.orgScheduleService.remove(+id);
+  remove(@Param('id') id: string, @User('orgId') orgId: number) {
+    return this.orgScheduleService.remove(+id, orgId);
   }
 }

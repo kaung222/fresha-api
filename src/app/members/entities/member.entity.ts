@@ -74,7 +74,7 @@ export class Member extends IncrementEntity {
   @Column({ nullable: true, select: false })
   password: string;
 
-  @Column({ enum: Roles, default: Roles.member })
+  @Column({ type: 'enum', enum: Roles, default: Roles.member })
   role: Roles;
 
   @Column({ nullable: true })

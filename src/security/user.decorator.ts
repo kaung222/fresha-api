@@ -9,7 +9,7 @@ export class SignedUser {
 
 export enum Roles {
   user = 'user',
-  org = 'organisation',
+  org = 'organization',
   member = 'member',
 }
 
