@@ -17,22 +17,27 @@ export class ClosedDaysService {
   // create closed days
   create(createClosedDayDto: CreateClosedDayDto, orgId: number) {
     const { startDate, endDate, type, notes } = createClosedDayDto;
-
     const createClosedDay = this.closedDayRepository.create({
       startDate,
       endDate,
       type,
       notes,
+      organization: { id: orgId },
     });
     return this.closedDayRepository.save(createClosedDay);
   }
 
   // get all close days by org
-  async findAll(orgId: number, getClosedDay: GetClosedDay) {
-    const { startDate, endDate } = getClosedDay;
+  async findAll(orgId: number, getClosedDay?: GetClosedDay) {
+    // const { startDate, endDate } = getClosedDay;
     const closedDates = await this.closedDayRepository.findBy({
       organization: { id: orgId },
     });
+    return closedDates;
+  }
+
+  async getFormattedcloseDay(orgId: number) {
+    const closedDates = await this.findAll(orgId);
     return this.formattedClosedDays(closedDates);
   }
 
@@ -48,7 +53,7 @@ export class ClosedDaysService {
         type,
       }));
     });
-    return formattedDays;
+    return formattedDays[0];
   }
 
   async remove(id: number, orgId: number) {

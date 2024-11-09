@@ -35,6 +35,11 @@ export class ClosedDaysController {
     return this.closedDaysService.findAll(orgId, getClosedDay);
   }
 
+  @Get('formatted-closed-days')
+  fomattedClosedDays(@User('orgId') orgId: number) {
+    return this.closedDaysService.getFormattedcloseDay(orgId);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete closed day by org' })
   remove(@Param('id') id: string, @User('orgId') orgId: number) {

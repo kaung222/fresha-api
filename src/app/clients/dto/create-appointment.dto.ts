@@ -2,6 +2,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsDate,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -14,7 +15,7 @@ import { Gender } from '@/app/users/entities/user.entity';
 
 export class AddAppointmentDto {
   @IsNotEmpty()
-  @IsDate()
+  @IsDateString()
   date: string;
 
   @IsNotEmpty()

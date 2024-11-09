@@ -1,5 +1,6 @@
 import {
   IsDate,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -7,6 +8,7 @@ import {
   IsPhoneNumber,
   IsString,
   IsUrl,
+  MinDate,
 } from 'class-validator';
 import { Gender } from '../entities/user.entity';
 
@@ -39,7 +41,8 @@ export class CreateUserDto {
   @IsEnum(Gender)
   gender?: Gender;
 
-  @IsDate()
+  @IsDateString()
+  @MinDate(() => new Date('2010-1-1'))
   @IsOptional()
   dob: Date;
 }

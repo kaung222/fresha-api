@@ -1,6 +1,7 @@
 import { Gender } from '@/app/users/entities/user.entity';
 import {
   IsDate,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -41,6 +42,6 @@ export class RegisterUserDto {
   gender?: Gender;
 
   @IsOptional()
-  @IsDate()
+  @IsDateString()
   dob: Date;
 }

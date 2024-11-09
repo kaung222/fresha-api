@@ -1,11 +1,11 @@
-import { IsDate, IsNotEmpty } from 'class-validator';
+import { IsDate, IsDateString, IsNotEmpty } from 'class-validator';
 
 export class GetAvailableTimes {
   @IsNotEmpty()
-  @IsDate()
+  @IsDateString()
   startDate: Date;
 
-  @IsDate()
+  @IsDateString()
   @IsNotEmpty()
   endDate: Date;
 }
