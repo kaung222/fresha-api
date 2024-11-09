@@ -1,28 +1,42 @@
-import { MinDateString } from '@/utils/decorators/validators';
-import { Transform, Type } from 'class-transformer';
+import IsMinCurrentDate, { MinDateCustom } from '@/utils/decorators/validators';
+import { Type } from 'class-transformer';
 import {
   IsDate,
   IsDateString,
-  IsNotEmpty,
   IsOptional,
   IsString,
-  MinDate,
-  Validate,
+  registerDecorator,
+  ValidationArguments,
 } from 'class-validator';
 
-export class CreateClosedDayDto {
-  //   @IsDateString()
-  //   @IsNotEmpty()
-  //   @Type(() => Date)
-  //   @MinDate(() => new Date('2024-11-11'))
-  //   startDate: string;
+function IsGreaterThanStartDate() {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      name: 'isGreaterThanStartDate',
+      target: object.constructor,
+      propertyName,
+      options: {
+        message: 'End date should be greater than or equal to start date',
+      },
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          const inputDate = new Date(value);
+          //@ts-expect-error
+          const startDate = new Date(args.object?.startDate);
+          return inputDate >= startDate;
+        },
+      },
+    });
+  };
+}
 
+export class CreateClosedDayDto {
   @IsDateString()
-  @Validate(MinDateString)
+  @IsMinCurrentDate()
   startDate: string;
 
   @IsDateString()
-  @IsNotEmpty()
+  @IsGreaterThanStartDate()
   endDate: string;
 
   @IsOptional()

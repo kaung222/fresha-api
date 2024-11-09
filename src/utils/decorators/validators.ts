@@ -1,19 +1,42 @@
-import {
-  ValidationArguments,
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
-} from 'class-validator';
+import { ValidationArguments, registerDecorator } from 'class-validator';
 
-@ValidatorConstraint({ name: 'MinDateString', async: false })
-export class MinDateString implements ValidatorConstraintInterface {
-  validate(dateStr: string, args: ValidationArguments) {
-    const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set time to start of the current day
-    return date >= today; // Check if the date is today or later
-  }
+export default function IsMinCurrentDate() {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      name: 'isMinDate',
+      target: object.constructor,
+      propertyName,
+      options: { message: 'Date should be greater than current date' },
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          const inputdate = new Date(value);
+          //   console.log(new Date('2024-11-10'));
+          return inputdate >= new Date();
+        },
+      },
+    });
+  };
+}
+// https://drive.google.com/file/d/11Qziebobg7D0yn8RbIXYB5DF3EQdMpbl/view?usp=drive_link
 
-  defaultMessage(args: ValidationArguments) {
-    return `${args.property} must be a date after or equal to today`;
-  }
+export function MinDateCustom(property: string) {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      name: 'minDateCustom',
+      target: object.constructor,
+      propertyName,
+      options: {
+        message: `Date should be greater than ${property}`,
+      },
+      constraints: [property],
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          const inputDate = new Date(value);
+          const [property] = args.constraints;
+          const minDate = new Date(property);
+          return inputDate >= minDate;
+        },
+      },
+    });
+  };
 }

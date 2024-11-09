@@ -20,6 +20,7 @@ import { Appointment } from '../appointments/entities/appointment.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Service } from '../services/entities/service.entity';
 import { GetAvailableTimes } from './dto/get-available-time.dto';
+import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 
 @Injectable()
 export class MembersService {
@@ -40,6 +41,15 @@ export class MembersService {
     });
     await this.memberRepository.save(member);
     this.eventEmitter.emit('member.created', { memberId: member.id, orgId });
+    const notification: CreateNotificationDto = {
+      body: 'New member created and send invitation email',
+      title: 'Member created',
+      type: 'Member',
+      userId: member.id,
+      link: member.id.toString(),
+      thumbnail: member?.profilePictureUrl,
+    };
+    this.eventEmitter.emit('notification.created', notification);
     return {
       message: 'Create member successfully',
     };

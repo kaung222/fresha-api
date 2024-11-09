@@ -15,7 +15,7 @@ export class NotificationsService {
     private readonly notificationRepository: Repository<Notification>,
     private notificationGateway: NotificationGateway,
   ) {}
-  // @OnEvent()
+  @OnEvent('notification.created')
   async create(createNotificationDto: CreateNotificationDto) {
     const newNoti = this.notificationRepository.create(createNotificationDto);
     const notification = await this.notificationRepository.save(newNoti);
