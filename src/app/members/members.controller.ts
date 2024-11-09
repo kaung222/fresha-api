@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { MembersService } from './members.service';
 import { CreateMemberDto } from './dto/create-member.dto';
@@ -13,6 +14,7 @@ import { UpdateMemberDto } from './dto/update-member.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
+import { GetAvailableTimes } from './dto/get-available-time.dto';
 
 @Controller('members')
 @ApiTags('Member')
@@ -51,8 +53,11 @@ export class MembersController {
   }
 
   @Get(':id/available-times')
-  getAvailableTimeSlots(@Param('id') memberId: number, date?: string) {
-    return this.membersService.getAvailableTimeSlots(memberId, date);
+  getAvailableTimeSlots(
+    @Param('id') memberId: number,
+    @Query() getTimes: GetAvailableTimes,
+  ) {
+    return this.membersService.getAvailableTimeSlots(memberId, getTimes);
   }
 
   @Delete(':id')

@@ -19,6 +19,7 @@ import {
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Service } from '../services/entities/service.entity';
+import { GetAvailableTimes } from './dto/get-available-time.dto';
 
 @Injectable()
 export class MembersService {
@@ -99,11 +100,10 @@ export class MembersService {
   }
 
   // get available time slots of a member
-  async getAvailableTimeSlots(
-    memberId: number,
-    currentDate = getCurrentDate(),
-  ) {
+  async getAvailableTimeSlots(memberId: number, getTimes: GetAvailableTimes) {
     // Fetch member's schedule for the given day of the week
+    // const {startDate,endDate} = getTimes
+    const currentDate = getCurrentDate();
     const date = new Date(currentDate);
     const schedule = await this.dataSource
       .getRepository(MemberSchedule)

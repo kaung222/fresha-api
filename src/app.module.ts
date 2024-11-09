@@ -47,6 +47,8 @@ import { NotificationsModule } from './app/notifications/notifications.module';
 import { Notification } from './app/notifications/entities/notification.entity';
 import { PackagesModule } from './app/packages/packages.module';
 import { StatisticsModule } from './app/statistics/statistics.module';
+import { ClosedDaysModule } from './app/closed-days/closed-days.module';
+import { ClosedDay } from './app/closed-days/entities/closed-day.entity';
 
 @Module({
   imports: [
@@ -80,6 +82,7 @@ import { StatisticsModule } from './app/statistics/statistics.module';
         BreakTime,
         OrgSchedule,
         Notification,
+        ClosedDay,
       ],
     }),
 
@@ -129,6 +132,7 @@ import { StatisticsModule } from './app/statistics/statistics.module';
     NotificationsModule,
     PackagesModule,
     StatisticsModule,
+    ClosedDaysModule,
   ],
   controllers: [],
   providers: [
