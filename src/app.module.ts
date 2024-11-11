@@ -49,6 +49,9 @@ import { PackagesModule } from './app/packages/packages.module';
 import { StatisticsModule } from './app/statistics/statistics.module';
 import { ClosedDaysModule } from './app/closed-days/closed-days.module';
 import { ClosedDay } from './app/closed-days/entities/closed-day.entity';
+import { LeavesModule } from './app/leaves/leaves.module';
+import { Leave } from './app/leaves/entities/leave.entity';
+import { Package } from './app/packages/entities/package.entity';
 
 @Module({
   imports: [
@@ -83,6 +86,8 @@ import { ClosedDay } from './app/closed-days/entities/closed-day.entity';
         OrgSchedule,
         Notification,
         ClosedDay,
+        Leave,
+        Package,
       ],
     }),
 
@@ -133,6 +138,7 @@ import { ClosedDay } from './app/closed-days/entities/closed-day.entity';
     PackagesModule,
     StatisticsModule,
     ClosedDaysModule,
+    LeavesModule,
   ],
   controllers: [],
   providers: [

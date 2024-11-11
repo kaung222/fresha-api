@@ -1,7 +1,5 @@
-import IsMinCurrentDate, { MinDateCustom } from '@/utils/decorators/validators';
-import { Type } from 'class-transformer';
+import IsMinCurrentDate from '@/utils/decorators/validators';
 import {
-  IsDate,
   IsDateString,
   IsOptional,
   IsString,
@@ -9,7 +7,7 @@ import {
   ValidationArguments,
 } from 'class-validator';
 
-function IsGreaterThanStartDate() {
+export function IsGreaterThanStartDate() {
   return function (object: Object, propertyName: string) {
     registerDecorator({
       name: 'isGreaterThanStartDate',

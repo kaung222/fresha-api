@@ -1,6 +1,7 @@
 import { Category } from '@/app/categories/entities/category.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
+import { Package } from '@/app/packages/entities/package.entity';
 import { IncrementEntity } from '@/utils/base.entity';
 import { Entity, Column, ManyToOne, ManyToMany, JoinColumn } from 'typeorm';
 
@@ -53,4 +54,7 @@ export class Service extends IncrementEntity {
 
   @ManyToOne(() => Organization)
   organization: Organization;
+
+  @ManyToMany(() => Package, (pack) => pack.services)
+  packages: Package[];
 }

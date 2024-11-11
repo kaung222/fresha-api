@@ -67,7 +67,7 @@ export class AppointmentsService {
         })),
       );
       await this.serviceAppointmentRepository.save(createAppointmentItems);
-      queryRunner.commitTransaction();
+      await queryRunner.commitTransaction();
       // emit an event to create a client
       this.eventEmitter.emit('appointment.created', { userId, orgId });
       this.sendEmail({
@@ -108,9 +108,9 @@ export class AppointmentsService {
 
   async update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
     const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
     try {
-      queryRunner.startTransaction();
-      const { serviceIds, start, ...rest } = updateAppointmentDto;
+      const { serviceIds, ...rest } = updateAppointmentDto;
       const appointment = await this.appointmentRepository.findOne({
         relations: { client: true, user: true },
         where: { id },
@@ -136,12 +136,12 @@ export class AppointmentsService {
         appointment.bookingItems = bookingItems;
         appointment.totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
         appointment.totalTime = totalTime;
-        appointment.endTime = start + totalTime;
-        appointment.startTime = start;
+        appointment.endTime = rest.start + totalTime;
+        appointment.startTime = rest.start;
       }
       Object.assign(appointment, rest);
       await this.appointmentRepository.save(appointment);
-      queryRunner.commitTransaction();
+      await queryRunner.commitTransaction();
       return { message: 'Update the appointment successfully' };
     } catch (error) {
       queryRunner.rollbackTransaction();

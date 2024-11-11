@@ -45,7 +45,7 @@ export class MembersService {
       body: 'New member created and send invitation email',
       title: 'Member created',
       type: 'Member',
-      userId: member.id,
+      userId: orgId,
       link: member.id.toString(),
       thumbnail: member?.profilePictureUrl,
     };

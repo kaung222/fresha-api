@@ -49,7 +49,7 @@ export class OrgReviewsService {
     const { totalReviews, totalRating } = await this.dataSource
       .getRepository(OrgReview)
       .createQueryBuilder('review')
-      .where('review.organization.id=:orgId', { orgId })
+      .where('review.organization=:orgId', { orgId })
       .select('SUM(review.rating)', 'totalRating')
       .addSelect('COUNT(*)', 'totalReviews')
       .getRawOne();
