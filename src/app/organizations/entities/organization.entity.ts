@@ -15,15 +15,21 @@ export class Organization extends IncrementEntity {
   @Column({ nullable: true, select: false })
   notes: string;
 
-  @Column({ nullable: true })
-  profilePictureUrl: string;
+  @Column('simple-array', { nullable: true })
+  images: string[];
 
   @Column('simple-array', { nullable: true })
   types: string[];
+
+  latitude: string;
+  longitude: string;
 
   @Column('float', { default: 0 })
   rating: number;
 
   @Column('int', { default: 0 })
   totalReviews: number;
+
+  @Column('boolean', { default: false })
+  isPublished: boolean;
 }

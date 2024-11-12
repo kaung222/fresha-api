@@ -5,12 +5,12 @@ import { FilesService } from './files.service';
 @Injectable()
 export class FileListener {
   constructor(private readonly fileService: FilesService) {}
-  @OnEvent('unused_file')
+  @OnEvent('files.unused')
   updateFileAsUnused({ ids }) {
     this.fileService.updateFileAsUnused(ids);
   }
 
-  @OnEvent('used_file')
+  @OnEvent('files.used')
   updateFileAsUsed({ ids }) {
     this.fileService.updateFileAsUsed(ids);
   }

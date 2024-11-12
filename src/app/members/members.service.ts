@@ -34,12 +34,12 @@ export class MembersService {
   // create new member
   async create(createMemberDto: CreateMemberDto, orgId: number) {
     const { serviceIds, ...rest } = createMemberDto;
-    const member = this.memberRepository.create({
+    const createMember = this.memberRepository.create({
       ...rest,
       services: serviceIds?.map((id) => ({ id })),
       organization: { id: orgId },
     });
-    await this.memberRepository.save(member);
+    const member = await this.memberRepository.save(createMember);
     this.eventEmitter.emit('member.created', { memberId: member.id, orgId });
     const notification: CreateNotificationDto = {
       body: 'New member created and send invitation email',
@@ -50,6 +50,9 @@ export class MembersService {
       thumbnail: member?.profilePictureUrl,
     };
     this.eventEmitter.emit('notification.created', notification);
+    this.eventEmitter.emit('files.used', {
+      ids: [createMemberDto.profilePictureUrl],
+    });
     return {
       message: 'Create member successfully',
     };
@@ -83,6 +86,7 @@ export class MembersService {
   }
 
   async update(id: number, updateMemberDto: UpdateMemberDto) {
+    const { serviceIds, profilePictureUrl } = updateMemberDto;
     // Find the member with the relations (services)
     const member = await this.memberRepository.findOne({
       where: { id },
@@ -99,14 +103,19 @@ export class MembersService {
     // Fetch the services based on the provided service IDs
     const services = await this.dataSource
       .getRepository(Service)
-      .findBy({ id: In(updateMemberDto.serviceIds) });
+      .findBy({ id: In(serviceIds) });
 
     // Update the member's services and other fields
     member.services = services;
     Object.assign(member, updateMemberDto);
 
     // Save the updated member entity
-    return await this.memberRepository.save(member);
+    await this.memberRepository.save(member);
+    this.eventEmitter.emit('files.used', { ids: [profilePictureUrl] });
+    this.eventEmitter.emit('files.unused', { ids: [member.profilePictureUrl] });
+    return {
+      message: 'success',
+    };
   }
 
   // get available time slots of a member

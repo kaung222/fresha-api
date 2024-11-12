@@ -52,6 +52,7 @@ import { ClosedDay } from './app/closed-days/entities/closed-day.entity';
 import { LeavesModule } from './app/leaves/leaves.module';
 import { Leave } from './app/leaves/entities/leave.entity';
 import { Package } from './app/packages/entities/package.entity';
+import { PublicationModule } from './app/publication/publication.module';
 
 @Module({
   imports: [
@@ -139,6 +140,7 @@ import { Package } from './app/packages/entities/package.entity';
     StatisticsModule,
     ClosedDaysModule,
     LeavesModule,
+    PublicationModule,
   ],
   controllers: [],
   providers: [

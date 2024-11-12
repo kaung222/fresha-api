@@ -13,14 +13,14 @@ import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { EventPattern, Payload } from '@nestjs/microservices';
-import { Roles } from '@/security/user.decorator';
 import { FilesService } from './files.service';
 import { StoreFiledto } from './dto/store-file.dto';
 import { StoreMultipleFilesDto } from './dto/store-multi-file.dto';
+import { Roles } from '@/security/user.decorator';
 
 @Controller('files')
 @ApiTags('File')
+@Role(Roles.member, Roles.org, Roles.user)
 export class FilesController {
   constructor(private fileService: FilesService) {}
   @Post()
