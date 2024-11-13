@@ -117,7 +117,7 @@ export class OrganizationsService {
   getNearOrg(lng: number, lat: number, maxDistance: number) {
     return this.orgRepository.query(
       `SELECT *, ST_Distance_Sphere(location, POINT(?, ?)) AS distance
-       FROM shop
+       FROM organization
        HAVING distance <= ?
        ORDER BY distance
        LIMIT 10;`,

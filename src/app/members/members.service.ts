@@ -31,16 +31,9 @@ export class MembersService {
     private readonly memberRepository: Repository<Member>,
   ) {}
 
-  // create new member
-  async create(createMemberDto: CreateMemberDto, orgId: number) {
-    const { serviceIds, ...rest } = createMemberDto;
-    const createMember = this.memberRepository.create({
-      ...rest,
-      services: serviceIds?.map((id) => ({ id })),
-      organization: { id: orgId },
-    });
-    const member = await this.memberRepository.save(createMember);
+  async memberCreateEvent(orgId: number, member: Member) {
     this.eventEmitter.emit('member.created', { memberId: member.id, orgId });
+    // create notification for owner org
     const notification: CreateNotificationDto = {
       body: 'New member created and send invitation email',
       title: 'Member created',
@@ -50,9 +43,21 @@ export class MembersService {
       thumbnail: member?.profilePictureUrl,
     };
     this.eventEmitter.emit('notification.created', notification);
+    // file update as used
     this.eventEmitter.emit('files.used', {
-      ids: [createMemberDto.profilePictureUrl],
+      ids: [member.profilePictureUrl],
     });
+  }
+  // create new member
+  async create(createMemberDto: CreateMemberDto, orgId: number) {
+    const { serviceIds, ...rest } = createMemberDto;
+    const createMember = this.memberRepository.create({
+      ...rest,
+      services: serviceIds?.map((id) => ({ id })),
+      organization: { id: orgId },
+    });
+    const member = await this.memberRepository.save(createMember);
+    this.memberCreateEvent(orgId, member);
     return {
       message: 'Create member successfully',
     };

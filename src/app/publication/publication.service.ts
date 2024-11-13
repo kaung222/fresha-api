@@ -49,8 +49,7 @@ export class PublicationService {
     const { address, latitude, longitude } = updateLocation;
     await this.orgRepository.update(orgId, {
       address,
-      latitude,
-      longitude,
+      location: `POINT(${latitude} ${longitude})`,
     });
   }
 
@@ -105,9 +104,9 @@ export class PublicationService {
   }
 
   async publishOrganization(orgId: number) {
-    const { address, latitude, images, name, types } =
+    const { address, location, images, name, types } =
       await this.orgRepository.findOneBy({ id: orgId });
-    if (!address || !latitude || !images || !name || !types) {
+    if (!address || !location || !images || !name || !types) {
       throw new ForbiddenException('Please complete setup first');
     }
     const updateRes = await this.orgRepository.update(orgId, {
