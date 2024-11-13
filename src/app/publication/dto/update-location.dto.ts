@@ -5,8 +5,8 @@ export class UpdateLocation {
   address: string;
 
   @IsNotEmpty()
-  latitude: string;
+  latitude: number;
 
   @IsNotEmpty()
-  longitude: string;
+  longitude: number;
 }

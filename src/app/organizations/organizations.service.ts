@@ -114,17 +114,26 @@ export class OrganizationsService {
     return this.orgRepository.update(id, updateOrganizationDto);
   }
 
-  getNearOrg(lng: number, lat: number, maxDistance: number) {
-    return this.orgRepository.query(
-      `SELECT *, ST_Distance_Sphere(location, POINT(?, ?)) AS distance
-       FROM organization
-       HAVING distance <= ?
-       ORDER BY distance
-       LIMIT 10;`,
-      [lng, lat, maxDistance],
-    );
-  }
+  async gerNearBy(lat: number, lng: number, radius: number) {
+    const earthRadiusKm = 6371; // Radius of the Earth in kilometers
+    const query = `
+      SELECT *, 
+        (${earthRadiusKm} * ACOS(
+          COS(RADIANS(?)) * COS(RADIANS(latitude)) * COS(RADIANS(longitude) - RADIANS(?)) 
+          + SIN(RADIANS(?)) * SIN(RADIANS(latitude))
+        )) AS distance
+      FROM organization
+      HAVING distance <= ?
+      ORDER BY distance
+      LIMIT 10;
+    `;
 
-  // @Column({ type: 'point' })
-  // location: string;
+    const results = await this.orgRepository.query(query, [
+      lat,
+      lng,
+      lat,
+      radius,
+    ]);
+    return results;
+  }
 }
