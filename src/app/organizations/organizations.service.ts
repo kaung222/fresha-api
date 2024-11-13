@@ -71,6 +71,14 @@ export class OrganizationsService {
       related,
     };
   }
+  async getProfile(orgId: number) {
+    const organization = await this.orgRepository
+      .createQueryBuilder()
+      .where('id=:orgId', { orgId })
+      .addSelect('isPublished', 'isPublished')
+      .getOne();
+    return organization;
+  }
 
   findCategories(orgId: number) {
     return this.dataSource.getRepository(Category).find({

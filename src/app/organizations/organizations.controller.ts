@@ -31,6 +31,13 @@ export class OrganizationsController {
     return this.organizationsService.findOne(+id);
   }
 
+  @Get(':id')
+  @Role(Roles.org)
+  @ApiOperation({ summary: 'Get profile with access token' })
+  getProfile(@User('orgId') orgId: number) {
+    return this.organizationsService.getProfile(orgId);
+  }
+
   @Get(':id/categories')
   findCategories(@Param('id') id: string) {
     return this.organizationsService.findCategories(+id);

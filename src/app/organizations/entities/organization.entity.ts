@@ -30,6 +30,6 @@ export class Organization extends IncrementEntity {
   @Column('int', { default: 0 })
   totalReviews: number;
 
-  @Column('boolean', { default: false })
+  @Column('boolean', { default: false, select: false })
   isPublished: boolean;
 }

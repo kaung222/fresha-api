@@ -1,7 +1,7 @@
 import { Controller, Patch } from '@nestjs/common';
 import { PublicationService } from './publication.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UpdateBasiceInfo } from './dto/update-basic-info.dto';
+import { UpdateBasiceInfo, UpdateTypes } from './dto/update-basic-info.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { UploadImages } from './dto/upload-images.dto';
@@ -21,6 +21,12 @@ export class PublicationController {
     updateBasiceInfo: UpdateBasiceInfo,
   ) {
     return this.publicationService.updateBasicInfo(orgId, updateBasiceInfo);
+  }
+
+  @Patch(':orgId/types')
+  @ApiOperation({ summary: 'Update types' })
+  updateTypes(@User('orgId') orgId: number, { types }: UpdateTypes) {
+    return this.publicationService.updateTypes(orgId, types);
   }
 
   @Patch(':orgId/location')

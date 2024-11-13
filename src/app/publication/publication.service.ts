@@ -19,11 +19,22 @@ export class PublicationService {
   ) {}
 
   async updateBasicInfo(orgId: number, updateBasiceInfo: UpdateBasiceInfo) {
-    const { name, phones, types, notes } = updateBasiceInfo;
+    const { name, phones, notes } = updateBasiceInfo;
     const updateRes = await this.orgRepository.update(orgId, {
       name,
       phones,
       notes,
+    });
+
+    if (updateRes.affected == 1)
+      return {
+        message: 'success',
+      };
+    throw new ForbiddenException('Cannot update');
+  }
+
+  async updateTypes(orgId: number, types: string[]) {
+    const updateRes = await this.orgRepository.update(orgId, {
       types,
     });
 
