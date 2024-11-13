@@ -22,7 +22,7 @@ export class NotificationsService {
     this.notificationGateway.createNotification(notification);
   }
 
-  async findAll(userId: number, page: number) {
+  async findAll(userId: number, page = 1) {
     const [data, totalCount] = await this.notificationRepository.findAndCount({
       where: { userId },
       take: 10,

@@ -1,4 +1,4 @@
-import { Controller, Patch } from '@nestjs/common';
+import { Body, Controller, Patch } from '@nestjs/common';
 import { PublicationService } from './publication.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateBasiceInfo, UpdateTypes } from './dto/update-basic-info.dto';
@@ -18,27 +18,30 @@ export class PublicationController {
   @ApiOperation({ summary: 'Update basic info' })
   updateBasiceInfo(
     @User('orgId') orgId: number,
-    updateBasiceInfo: UpdateBasiceInfo,
+    @Body() updateBasiceInfo: UpdateBasiceInfo,
   ) {
     return this.publicationService.updateBasicInfo(orgId, updateBasiceInfo);
   }
 
   @Patch(':orgId/types')
   @ApiOperation({ summary: 'Update types' })
-  updateTypes(@User('orgId') orgId: number, { types }: UpdateTypes) {
+  updateTypes(@User('orgId') orgId: number, @Body() { types }: UpdateTypes) {
     return this.publicationService.updateTypes(orgId, types);
   }
 
   @Patch(':orgId/location')
   @ApiOperation({ summary: 'Update location' })
-  updateLocation(@User('orgId') orgId: number, updateLocation: UpdateLocation) {
+  updateLocation(
+    @User('orgId') orgId: number,
+    @Body() updateLocation: UpdateLocation,
+  ) {
     return this.publicationService.updateLocation(orgId, updateLocation);
   }
 
   @Patch(':orgId/opening-hours')
   updateOpeningHours(
     @User('orgId') orgId: number,
-    updateOrgScheduleDto: UpdateMultiScheduleDto,
+    @Body() updateOrgScheduleDto: UpdateMultiScheduleDto,
   ) {
     return this.publicationService.updateManySchedule(
       orgId,
@@ -48,7 +51,10 @@ export class PublicationController {
 
   @Patch(':orgId/images')
   @ApiOperation({ summary: 'Upload showcase images' })
-  updateImages(@User('orgId') orgId: number, uploadImages: UploadImages) {
+  updateImages(
+    @User('orgId') orgId: number,
+    @Body() uploadImages: UploadImages,
+  ) {
     return this.publicationService.uploadImages(orgId, uploadImages);
   }
 

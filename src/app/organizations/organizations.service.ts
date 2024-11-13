@@ -73,9 +73,11 @@ export class OrganizationsService {
   }
   async getProfile(orgId: number) {
     const organization = await this.orgRepository
-      .createQueryBuilder()
-      .where('id=:orgId', { orgId })
-      .addSelect('isPublished', 'isPublished')
+      .createQueryBuilder('organization')
+      .where('organization.id=:orgId', { orgId })
+      .addSelect('organization.isPublished')
+      .addSelect('organization.notes')
+      .addSelect('organization.address')
       .getOne();
     return organization;
   }
