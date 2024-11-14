@@ -55,6 +55,8 @@ import { Package } from './app/packages/entities/package.entity';
 import { PublicationModule } from './app/publication/publication.module';
 import { BrandsModule } from './app/brands/brands.module';
 import { ProductCategoryModule } from './app/product-category/product-category.module';
+import { Brand } from './app/brands/entities/brand.entity';
+import { ProductCategory } from './app/product-category/entities/product-category.entity';
 
 @Module({
   imports: [
@@ -91,6 +93,8 @@ import { ProductCategoryModule } from './app/product-category/product-category.m
         ClosedDay,
         Leave,
         Package,
+        Brand,
+        ProductCategory,
       ],
     }),
 

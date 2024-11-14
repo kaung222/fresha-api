@@ -11,9 +11,16 @@ export class BrandsService {
     @InjectRepository(Brand)
     private readonly brandRepository: Repository<Brand>,
   ) {}
-  create(orgId: number, createBrandDto: CreateBrandDto) {
+  async create(orgId: number, createBrandDto: CreateBrandDto) {
+    const { name, notes } = createBrandDto;
+    const existCategory = await this.brandRepository.findOneBy({
+      name,
+      orgId,
+    });
+    if (existCategory) return existCategory;
     const createBrand = this.brandRepository.create({
-      ...createBrandDto,
+      name,
+      notes,
       orgId,
     });
     return this.brandRepository.save(createBrand);

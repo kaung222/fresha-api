@@ -11,9 +11,19 @@ export class ProductCategoryService {
     @InjectRepository(ProductCategory)
     private categoryRepository: Repository<ProductCategory>,
   ) {}
-  create(orgId: number, createProductCategoryDto: CreateProductCategoryDto) {
+  async create(
+    orgId: number,
+    createProductCategoryDto: CreateProductCategoryDto,
+  ) {
+    const { name, notes } = createProductCategoryDto;
+    const existCategory = await this.categoryRepository.findOneBy({
+      name,
+      orgId,
+    });
+    if (existCategory) return existCategory;
     const createCategory = this.categoryRepository.create({
-      ...createProductCategoryDto,
+      name,
+      notes,
       orgId,
     });
     return this.categoryRepository.save(createCategory);
