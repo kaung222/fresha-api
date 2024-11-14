@@ -3,7 +3,9 @@ import {
   ArrayMinSize,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
+  IsPositive,
   Max,
   Min,
 } from 'class-validator';
@@ -25,7 +27,9 @@ export class CreateServiceDto {
   price: number;
 
   @IsNotEmpty()
-  duration: number; //in minutes
+  @IsNumber()
+  @IsPositive()
+  duration: number;
 
   @ApiProperty({ default: TargetGender.all, enum: TargetGender })
   @IsEnum(TargetGender)

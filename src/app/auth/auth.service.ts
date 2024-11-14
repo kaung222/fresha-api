@@ -145,11 +145,27 @@ export class AuthService {
     this.emailQueue.add('sendEmail', emailPayload);
   }
 
+  async forgetPassword(email: string) {
+    let otp = generateOpt();
+    const member = await this.memberRepository.findOneBy({ email });
+    if (!member) throw new NotFoundException('email not found');
+    await this.memberRepository.update({ id: member.id }, { password: null });
+    this.sendEmail({
+      to: email,
+      recipientName: member.firstName,
+      subject: 'OTP confirmation',
+      text: `Your account password have been reset.and This is your OTP.Dont share it anyone.YOur OTP is ${otp}`,
+    });
+    return {
+      message: 'Send OTP to email',
+      email,
+    };
+  }
+
   // confirmOTP
   async confirmOTP(confirmOTPDto: ConfirmOTPDto) {
     const { email, otp } = confirmOTPDto;
     const storedOtp = await this.otpRepository.findOneBy({ email });
-
     if (
       !storedOtp ||
       storedOtp.otp !== otp.toString() ||
@@ -173,15 +189,8 @@ export class AuthService {
     if (!member) throw new NotFoundException();
     const password = await this.hashPassword(createPasswordDto.password);
     await this.memberRepository.update(member.id, { password });
-    const { accessToken, refreshToken } = this.generateTokens({
-      role: Roles.member,
-      id: member.id,
-      orgId: member.organization.id,
-    });
     return {
       message: 'Create password successfully please login',
-      accessToken,
-      refreshToken,
     };
   }
 

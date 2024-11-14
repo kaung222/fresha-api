@@ -7,11 +7,15 @@ import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Member } from './entities/member.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, MoreThan, Repository } from 'typeorm';
 import { ServicesService } from '../services/services.service';
 import { Roles } from '@/security/user.decorator';
 import { format } from 'date-fns';
-import { getCurrentDate, getCurrentDayOfWeek } from '@/utils';
+import {
+  getCurrentDate,
+  getCurrentDayOfWeek,
+  getDatesBetweenDates,
+} from '@/utils';
 import {
   MemberSchedule,
   ScheduleType,
@@ -21,6 +25,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Service } from '../services/entities/service.entity';
 import { GetAvailableTimes } from './dto/get-available-time.dto';
 import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
+import { Leave } from '../leaves/entities/leave.entity';
+import { ClosedDay } from '../closed-days/entities/closed-day.entity';
 
 @Injectable()
 export class MembersService {
@@ -145,8 +151,20 @@ export class MembersService {
       dayName: format(date, 'EEEE'),
     };
 
+    const leaves = await this.dataSource
+      .getRepository(Leave)
+      // @ts-expect-error
+      .findBy({ member: { id: memberId }, startDate: MoreThan(new Date()) });
+    const leaveDays = leaves.map(({ startDate, endDate }) =>
+      getDatesBetweenDates(startDate, endDate),
+    );
+
+    const isMemberLeave = leaveDays[0].includes(currentDate);
+
+    // const checkIsPublicHoliday = await this.dataSource.getRepository(ClosedDay).findOneBy({organization: {id: orgId}})
+
     // Check if the day is marked as a business off day or leave
-    if (!schedule) {
+    if (!schedule || isMemberLeave) {
       return {
         day: dayInfo,
         slots: [], // Empty slots array for non-working days

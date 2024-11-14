@@ -53,6 +53,8 @@ import { LeavesModule } from './app/leaves/leaves.module';
 import { Leave } from './app/leaves/entities/leave.entity';
 import { Package } from './app/packages/entities/package.entity';
 import { PublicationModule } from './app/publication/publication.module';
+import { BrandsModule } from './app/brands/brands.module';
+import { ProductCategoryModule } from './app/product-category/product-category.module';
 
 @Module({
   imports: [
@@ -141,6 +143,8 @@ import { PublicationModule } from './app/publication/publication.module';
     ClosedDaysModule,
     LeavesModule,
     PublicationModule,
+    BrandsModule,
+    ProductCategoryModule,
   ],
   controllers: [],
   providers: [

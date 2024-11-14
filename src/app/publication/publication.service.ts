@@ -105,8 +105,13 @@ export class PublicationService {
   }
 
   async publishOrganization(orgId: number) {
-    const { address, latitude, images, name, types } =
-      await this.orgRepository.findOneBy({ id: orgId });
+    const { address, latitude, images, name, types } = await this.orgRepository
+      .createQueryBuilder('organization')
+      .where('organization.id=:orgId', { orgId })
+      .addSelect('organization.isPublished')
+      .addSelect('organization.notes')
+      .addSelect('organization.address')
+      .getOne();
     if (!address || !latitude || !images || !name || !types) {
       throw new ForbiddenException('Please complete setup first');
     }

@@ -17,6 +17,7 @@ import { Request, Response } from 'express';
 import { ConfirmOTPDto } from './dto/confirm-otp.dto';
 import { GetOTPDto } from './dto/get-otp.dto';
 import { RegisterOrganizationDto } from './dto/create-org.dto';
+import { CreatePasswordDto } from './dto/create-password.dto';
 
 @Controller('auth')
 @ApiTags('Organization Auth')
@@ -37,7 +38,8 @@ export class AuthController {
     return this.authService.getOTP(getOtpDto.email);
   }
 
-  @Post('otp')
+  @Post('otp/confirm')
+  @ApiOperation({ summary: 'confirm otp' })
   confirmOTP(@Body() confirmOTPDto: ConfirmOTPDto) {
     return this.authService.confirmOTP(confirmOTPDto);
   }
@@ -65,5 +67,17 @@ export class AuthController {
     const tokens = this.authService.getNewAccessToken(token);
     this.authService.setCookieHeaders(res, tokens.refreshToken);
     res.send({ accessToken: tokens.accessToken });
+  }
+
+  @Post('forget-password')
+  @ApiOperation({ summary: 'Get opt when forget password' })
+  forgetPassword(@Body() { email }) {
+    return this.authService.forgetPassword(email);
+  }
+
+  @Post('new-password')
+  @ApiOperation({ summary: 'Create new password' })
+  createNewPassword(@Body() createPassword: CreatePasswordDto) {
+    return this.authService.createPassword(createPassword);
   }
 }
