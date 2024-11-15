@@ -7,5 +7,5 @@ export class CreateProductCategoryDto {
 
   @IsString()
   @IsOptional()
-  notes: string;
+  notes?: string;
 }

@@ -57,6 +57,8 @@ import { BrandsModule } from './app/brands/brands.module';
 import { ProductCategoryModule } from './app/product-category/product-category.module';
 import { Brand } from './app/brands/entities/brand.entity';
 import { ProductCategory } from './app/product-category/entities/product-category.entity';
+import { PaymentsModule } from './app/payments/payments.module';
+import { Payment } from './app/payments/entities/payment.entity';
 
 @Module({
   imports: [
@@ -94,6 +96,7 @@ import { ProductCategory } from './app/product-category/entities/product-categor
         Leave,
         Package,
         Brand,
+        Payment,
         ProductCategory,
       ],
     }),
@@ -149,6 +152,7 @@ import { ProductCategory } from './app/product-category/entities/product-categor
     PublicationModule,
     BrandsModule,
     ProductCategoryModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [

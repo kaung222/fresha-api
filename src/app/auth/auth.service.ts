@@ -131,7 +131,7 @@ export class AuthService {
     // send email otp
     this.sendEmail({
       to: email,
-      text: `Your OTP for fresha is ${otp}`,
+      text: `Your OTP for fresha is ${otp}.Dont share it anyone!`,
       recipientName: 'Customer',
       subject: 'OTP',
     });
@@ -146,25 +146,23 @@ export class AuthService {
   }
 
   async forgetPassword(email: string) {
-    let otp = generateOpt();
     const member = await this.memberRepository.findOneBy({ email });
     if (!member) throw new NotFoundException('email not found');
     await this.memberRepository.update({ id: member.id }, { password: null });
-    this.sendEmail({
-      to: email,
-      recipientName: member.firstName,
-      subject: 'OTP confirmation',
-      text: `Your account password have been reset.and This is your OTP.Dont share it anyone.YOur OTP is ${otp}`,
-    });
-    return {
-      message: 'Send OTP to email',
-      email,
-    };
+    return await this.getOTP(email);
   }
 
   // confirmOTP
   async confirmOTP(confirmOTPDto: ConfirmOTPDto) {
     const { email, otp } = confirmOTPDto;
+    await this.checkValidOTP(email, otp);
+    await this.otpRepository.update({ email }, { isConfirmed: true });
+    return {
+      message: 'Confirm OTP successfully',
+    };
+  }
+
+  async checkValidOTP(email: string, otp: string) {
     const storedOtp = await this.otpRepository.findOneBy({ email });
     if (
       !storedOtp ||
@@ -173,15 +171,23 @@ export class AuthService {
     ) {
       throw new UnauthorizedException('Invalid OTP or expired!');
     }
-    await this.otpRepository.update(storedOtp.id, { isConfirmed: true });
-    return {
-      message: 'Confirm OTP successfully',
-    };
+    return true;
+  }
+
+  async checkIsConfirm(email: string) {
+    const otp = await this.otpRepository.findOneBy({ email });
+    if (
+      !otp ||
+      otp.isConfirmed === false ||
+      parseInt(otp.expiredAt) <= Date.now()
+    )
+      throw new UnauthorizedException('Confirm OTP first!');
   }
 
   // create password for new member added
   async createPassword(createPasswordDto: CreatePasswordDto) {
     const { email } = createPasswordDto;
+    await this.checkIsConfirm(email);
     const member = await this.memberRepository.findOneOrFail({
       where: { email, password: null },
       relations: { organization: true },

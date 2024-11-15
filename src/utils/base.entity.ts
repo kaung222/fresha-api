@@ -27,8 +27,8 @@ export class IncrementEntity {
 }
 
 export class UUIDEntity {
-  @PrimaryGeneratedColumn('increment')
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @CreateDateColumn({
     type: 'timestamp',
