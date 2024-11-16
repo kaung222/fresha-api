@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -13,6 +14,7 @@ import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Roles, User } from '@/security/user.decorator';
 import { ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
+import { PaginateQuery } from '@/utils/paginate-query.dto';
 
 @Controller('payments')
 @ApiTags('Payment')
@@ -29,17 +31,23 @@ export class PaymentsController {
   }
 
   @Get()
-  findAll(@User('orgId') orgId: number) {
-    return this.paymentsService.findAll(orgId);
+  findAll(@User('orgId') orgId: number, @Query() paginateQuery: PaginateQuery) {
+    return this.paymentsService.findAll(orgId, paginateQuery);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string, @User('orgId') orgId: number) {
+    await this.paymentsService.checkOwnership(id, orgId);
     return this.paymentsService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePaymentDto: UpdatePaymentDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updatePaymentDto: UpdatePaymentDto,
+    @User('orgId') orgId: number,
+  ) {
+    await this.paymentsService.checkOwnership(id, orgId);
     return this.paymentsService.update(id, updatePaymentDto);
   }
 }

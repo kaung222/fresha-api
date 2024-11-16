@@ -148,7 +148,6 @@ export class AuthService {
   async forgetPassword(email: string) {
     const member = await this.memberRepository.findOneBy({ email });
     if (!member) throw new NotFoundException('email not found');
-    await this.memberRepository.update({ id: member.id }, { password: null });
     return await this.getOTP(email);
   }
 
@@ -176,12 +175,12 @@ export class AuthService {
 
   async checkIsConfirm(email: string) {
     const otp = await this.otpRepository.findOneBy({ email });
-    if (
-      !otp ||
-      otp.isConfirmed === false ||
-      parseInt(otp.expiredAt) <= Date.now()
-    )
+    if (!otp || otp.isConfirmed === false)
       throw new UnauthorizedException('Confirm OTP first!');
+    if (parseInt(otp.expiredAt) <= Date.now()) {
+      throw new UnauthorizedException('OTP session ended!');
+    }
+    return true;
   }
 
   // create password for new member added
@@ -189,7 +188,7 @@ export class AuthService {
     const { email } = createPasswordDto;
     await this.checkIsConfirm(email);
     const member = await this.memberRepository.findOneOrFail({
-      where: { email, password: null },
+      where: { email },
       relations: { organization: true },
     });
     if (!member) throw new NotFoundException();

@@ -1,5 +1,5 @@
 // Example of entity definition
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Index } from 'typeorm';
 
 @Entity()
 export class OTP {
@@ -18,6 +18,7 @@ export class OTP {
   @Column({ nullable: true, unique: true })
   userId: string;
 
+  @Index('OTP_email')
   @Column({ nullable: true, unique: true })
   email: string;
 }

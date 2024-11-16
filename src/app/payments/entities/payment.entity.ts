@@ -1,7 +1,7 @@
 import { Member } from '@/app/members/entities/member.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import { UUIDEntity } from '@/utils';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Generated, JoinColumn, ManyToOne } from 'typeorm';
 
 export enum PaymentMethod {
   cash = 'Cash',
@@ -12,7 +12,7 @@ export enum PaymentMethod {
 
 @Entity()
 export class Payment extends UUIDEntity {
-  @Column('uuid')
+  @Generated('uuid')
   transactionId: number;
 
   @Column()
@@ -21,11 +21,15 @@ export class Payment extends UUIDEntity {
   @Column('enum', { enum: PaymentMethod })
   method: PaymentMethod;
 
-  @ManyToOne(() => Member)
-  member: Member;
-
   @Column('decimal')
   amount: number;
+
+  @Column({ nullable: true })
+  memberId: number;
+
+  @ManyToOne(() => Member)
+  @JoinColumn({ name: 'memberId' })
+  member: Member;
 
   @ManyToOne(() => Organization)
   organization: Organization;
