@@ -61,6 +61,7 @@ import { PaymentsModule } from './app/payments/payments.module';
 import { Payment } from './app/payments/entities/payment.entity';
 import { SalesModule } from './app/sales/sales.module';
 import { Sale } from './app/sales/entities/sale.entity';
+import { SaleItem } from './app/sales/entities/sale-item.entity';
 
 @Module({
   imports: [
@@ -101,6 +102,7 @@ import { Sale } from './app/sales/entities/sale.entity';
         Payment,
         ProductCategory,
         Sale,
+        SaleItem
       ],
     }),
 

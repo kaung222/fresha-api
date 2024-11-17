@@ -1,35 +1,64 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
-import { CreateQuickSaleDto } from './dto/create-quick-sale.dto';
+import { CreateQuickSaleDto, SaleItemDto } from './dto/create-quick-sale.dto';
 import { DataSource, In, Repository } from 'typeorm';
 import { Product } from '../products/entities/product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Sale } from './entities/sale.entity';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
+import { SaleItem } from './entities/sale-item.entity';
 
 @Injectable()
 export class SalesService {
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(Sale) private readonly saleRepository: Repository<Sale>,
+    @InjectRepository(SaleItem)
+    private saleItemRepository: Repository<SaleItem>,
   ) {}
   create(userId: number, createSaleDto: CreateSaleDto) {
     return this.saleRepository.create(createSaleDto);
   }
 
   async createQuickSale(orgId: number, createQuickSaleDto: CreateQuickSaleDto) {
-    const { productIds, ...rest } = createQuickSaleDto;
-    const products = await this.getProductsByIds(productIds);
-    const { totalPrice } = this.calculateTotalPrice(products);
+    const { saleItems, ...rest } = createQuickSaleDto;
     const createSale = this.saleRepository.create({
-      totalPrice,
-      products,
       ...rest,
       organization: { id: orgId },
     });
-    return this.saleRepository.save(createSale);
+    const sale = await this.saleRepository.save(createSale);
+    const productIds = saleItems.map((item) => item.productId);
+    const products = await this.getProductsByIds(productIds);
+    if (products.length == 0) throw new NotFoundException('Products not found');
+    const items = await this.saveSaleItems(sale, saleItems, products);
+    const { totalPrice } = this.calculateTotalPrice(items);
+    sale.totalPrice = totalPrice;
+    return this.saleRepository.save(sale);
+  }
+
+  private async saveSaleItems(
+    sale: Sale,
+    saleItems: SaleItemDto[],
+    products: Product[],
+  ) {
+    const createSaleItems = this.saleItemRepository.create(
+      saleItems.map(({ productId, quantity }) => {
+        const product = products.find((product) => product.id === productId);
+        // add some discrount here
+        const subtotalPrice = product.price * quantity;
+        return {
+          product,
+          quantity,
+          name: product.name,
+          price: product.price,
+          sale,
+          subtotalPrice,
+        };
+      }),
+    );
+    return await this.saleItemRepository.save(createSaleItems);
   }
 
   private async getProductsByIds(productIds: number[]) {
@@ -37,8 +66,8 @@ export class SalesService {
       .getRepository(Product)
       .findBy({ id: In(productIds) });
   }
-  private calculateTotalPrice(products: Product[]) {
-    const totalPrice = products.reduce((pv, cv) => pv + cv.price, 0);
+  private calculateTotalPrice(items: SaleItem[]) {
+    const totalPrice = items.reduce((pv, cv) => pv + cv.subtotalPrice, 0);
     return {
       totalPrice,
     };
@@ -57,8 +86,6 @@ export class SalesService {
     return this.saleRepository.findOneOrFail({
       where: { id, organization: { id: orgId } },
       relations: {
-        user: true,
-        products: true,
         client: true,
       },
     });

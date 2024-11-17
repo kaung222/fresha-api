@@ -1,14 +1,32 @@
-import { ArrayMinSize, IsArray, IsNotEmpty, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsPositive,
+  ValidateNested,
+} from 'class-validator';
 
+export class SaleItemDto {
+  @IsNotEmpty()
+  productId: number;
+
+  @IsNotEmpty()
+  @IsPositive()
+  quantity: number;
+}
 export class CreateQuickSaleDto {
-  //   @IsOptional()
-  //   clientId: string;
-
   @IsOptional()
   notes: string;
 
+  @IsOptional()
+  username: string;
+
   @IsNotEmpty()
+  @ValidateNested()
   @IsArray()
   @ArrayMinSize(1)
-  productIds: number[];
+  @Type(() => SaleItemDto)
+  saleItems: SaleItemDto[];
 }
