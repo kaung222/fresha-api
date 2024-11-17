@@ -1,3 +1,4 @@
+import { Appointment } from '@/app/appointments/entities/appointment.entity';
 import { Category } from '@/app/categories/entities/category.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
@@ -57,4 +58,7 @@ export class Service extends IncrementEntity {
 
   @ManyToMany(() => Package, (pack) => pack.services)
   packages: Package[];
+
+  @ManyToMany(() => Appointment, (appointment) => appointment.services)
+  appointments: Appointment[];
 }

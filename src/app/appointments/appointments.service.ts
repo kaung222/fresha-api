@@ -18,6 +18,7 @@ import { Queue } from 'bull';
 import { SendEmailDto } from '@/global/email.service';
 import { Member } from '../members/entities/member.entity';
 import { format } from 'date-fns';
+import { CreateQuickAppointment } from './dto/create-quick-appointment.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -36,37 +37,28 @@ export class AppointmentsService {
     const queryRunner = this.dataSource.createQueryRunner();
     try {
       queryRunner.startTransaction();
-      const { serviceIds, memberId, orgId, start, ...rest } =
+      const { serviceIds, memberId, orgId, startTime, ...rest } =
         createAppointmentDto;
-      const services = await this.dataSource
-        .getRepository(Service)
-        .findBy({ id: In(serviceIds) });
+      const services = await this.getServicesByIds(serviceIds);
       const member = await this.dataSource
         .getRepository(Member)
         .findOneBy({ id: memberId, organization: { id: orgId } });
       if (!services || !member)
         throw new NotFoundException('service or member not found');
-      const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
-      const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
+      const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
       const createAppointment = this.appointmentRepository.create({
         ...rest,
         user: { id: userId },
         organization: { id: orgId },
         member: { id: memberId },
-        endTime: start + totalTime,
-        startTime: start,
+        endTime: startTime + totalTime,
+        startTime,
         totalTime,
         totalPrice,
+        services,
       });
       const appointment =
         await this.appointmentRepository.save(createAppointment);
-      const createAppointmentItems = this.serviceAppointmentRepository.create(
-        services.map((service) => ({
-          service,
-          appointment,
-        })),
-      );
-      await this.serviceAppointmentRepository.save(createAppointmentItems);
       await queryRunner.commitTransaction();
       // emit an event to create a client
       this.eventEmitter.emit('appointment.created', { userId, orgId });
@@ -78,6 +70,7 @@ export class AppointmentsService {
       });
       return {
         message: 'Book an appointment successfully',
+        appointment,
       };
     } catch (error) {
       queryRunner.rollbackTransaction();
@@ -85,6 +78,40 @@ export class AppointmentsService {
     } finally {
       queryRunner.release();
     }
+  }
+
+  async getServicesByIds(serviceIds: number[]) {
+    return await this.dataSource
+      .getRepository(Service)
+      .findBy({ id: In(serviceIds) });
+  }
+
+  calculateTimeAndPrice(services: Service[]) {
+    const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
+    const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
+    return {
+      totalPrice,
+      totalTime,
+    };
+  }
+
+  async createQuickAppointment(
+    orgId: number,
+    quickAppointment: CreateQuickAppointment,
+  ) {
+    const { serviceIds, startTime, ...rest } = quickAppointment;
+    const services = await this.getServicesByIds(serviceIds);
+    const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+    const createAppointment = this.appointmentRepository.create({
+      ...rest,
+      services,
+      organization: { id: orgId },
+      startTime,
+      endTime: startTime + totalTime,
+      totalPrice,
+      totalTime,
+    });
+    return await this.appointmentRepository.save(createAppointment);
   }
 
   // find all appointment by org for a given date
@@ -102,6 +129,7 @@ export class AppointmentsService {
       where: { id },
       relations: {
         client: true,
+        services: true,
       },
     });
   }
@@ -119,35 +147,23 @@ export class AppointmentsService {
       if (!appointment.client)
         throw new ForbiddenException("This item can't not be updated");
       if (serviceIds) {
-        const services = await this.dataSource
-          .getRepository(Service)
-          .findBy({ id: In(serviceIds) });
-        if (!services) throw new NotFoundException('service not found');
-        const createAppointmentItems = this.serviceAppointmentRepository.create(
-          services?.map((service) => ({
-            service,
-            appointment: { id: id },
-          })),
-        );
-        const bookingItems = await this.serviceAppointmentRepository.save(
-          createAppointmentItems,
-        );
-        const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
-        appointment.bookingItems = bookingItems;
-        appointment.totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
+        const services = await this.getServicesByIds(serviceIds);
+        const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+        appointment.services = services;
         appointment.totalTime = totalTime;
-        appointment.endTime = rest.start + totalTime;
-        appointment.startTime = rest.start;
+        appointment.endTime = rest.startTime + totalTime;
+        appointment.startTime = rest.startTime;
+        appointment.totalPrice = totalPrice;
       }
       Object.assign(appointment, rest);
       await this.appointmentRepository.save(appointment);
       await queryRunner.commitTransaction();
       return { message: 'Update the appointment successfully' };
     } catch (error) {
-      queryRunner.rollbackTransaction();
+      await queryRunner.rollbackTransaction();
       throw new ForbiddenException('Cannot Update the appointment');
     } finally {
-      queryRunner.release();
+      await queryRunner.release();
     }
   }
 

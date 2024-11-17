@@ -46,5 +46,5 @@ export class UpdateAppointmentDto {
 
   @IsPositive()
   @IsOptional()
-  start: number;
+  startTime: number;
 }

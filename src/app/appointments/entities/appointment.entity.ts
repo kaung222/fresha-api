@@ -1,10 +1,19 @@
 import { getCurrentDate, IncrementEntity } from '@/utils';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { ServiceAppointment } from './serviceappointment.entity';
 import { Gender, User } from '@/app/users/entities/user.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Client } from '@/app/clients/entities/client.entity';
+import { Service } from '@/app/services/entities/service.entity';
 
 export enum BookingStatus {
   pending = 'pending',
@@ -18,7 +27,7 @@ export class Appointment extends IncrementEntity {
   @Column('date', { default: getCurrentDate() })
   date: string;
 
-  @Column({ nullable: true, default: 'unknown' })
+  @Column({ default: 'unknown' })
   username: string;
 
   @Column({ type: 'text', nullable: true })
@@ -39,11 +48,6 @@ export class Appointment extends IncrementEntity {
   @Column('enum', { enum: Gender, default: Gender.none })
   gender: Gender;
 
-  @OneToMany(() => ServiceAppointment, (item) => item.appointment, {
-    eager: true,
-  })
-  bookingItems: ServiceAppointment[];
-
   @Column('float', { default: 0 })
   totalTime: number;
 
@@ -52,6 +56,16 @@ export class Appointment extends IncrementEntity {
 
   @Column({ nullable: true })
   memberId: number;
+
+  @Column('int', { nullable: true })
+  startTime: number; // in second
+
+  @Column('int', { nullable: true })
+  endTime: number; // in second
+
+  @ManyToMany(() => Service, (service) => service.appointments)
+  @JoinTable()
+  services: Service[];
 
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
   user: User;
@@ -65,10 +79,4 @@ export class Appointment extends IncrementEntity {
 
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   organization: Organization;
-
-  @Column('int', { nullable: true })
-  startTime: number; // in second
-
-  @Column('int', { nullable: true })
-  endTime: number; // in second
 }

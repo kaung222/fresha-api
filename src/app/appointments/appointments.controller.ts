@@ -14,8 +14,8 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
-import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
+import { CreateQuickAppointment } from './dto/create-quick-appointment.dto';
 
 @Controller('appointments')
 @ApiTags('Appointment')
@@ -30,6 +30,19 @@ export class AppointmentsController {
     @User('id') userId: number,
   ) {
     return this.appointmentsService.create(createAppointmentDto, userId);
+  }
+
+  @Post('quick-sale')
+  @ApiOperation({ summary: 'Create Quick booking by org' })
+  @Role(Roles.org)
+  createQuickSale(
+    @User('orgId') orgId: number,
+    @Body() quickAppointment: CreateQuickAppointment,
+  ) {
+    return this.appointmentsService.createQuickAppointment(
+      orgId,
+      quickAppointment,
+    );
   }
 
   @Get()

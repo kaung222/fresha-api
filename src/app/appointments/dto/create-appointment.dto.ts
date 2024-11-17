@@ -9,10 +9,8 @@ import {
   IsOptional,
   IsPhoneNumber,
   IsPositive,
-  ValidateNested,
 } from 'class-validator';
 import { BookingStatus } from '../entities/appointment.entity';
-import { Type } from 'class-transformer';
 import { Gender } from '@/app/users/entities/user.entity';
 
 class BookingItem {
@@ -57,5 +55,5 @@ export class CreateAppointmentDto {
 
   @IsNotEmpty()
   @IsPositive()
-  start: number;
+  startTime: number;
 }

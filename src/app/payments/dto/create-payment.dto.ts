@@ -1,4 +1,10 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsPositive } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+} from 'class-validator';
 import { PaymentMethod } from '../entities/payment.entity';
 
 export class CreatePaymentDto {
@@ -16,4 +22,13 @@ export class CreatePaymentDto {
 
   @IsNotEmpty()
   memberId: number;
+
+  @IsOptional()
+  serviceIds: number[];
+
+  @IsOptional()
+  packageIds: number[];
+
+  @IsOptional()
+  productIds: number[];
 }

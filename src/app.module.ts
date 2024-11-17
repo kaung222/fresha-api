@@ -59,6 +59,8 @@ import { Brand } from './app/brands/entities/brand.entity';
 import { ProductCategory } from './app/product-category/entities/product-category.entity';
 import { PaymentsModule } from './app/payments/payments.module';
 import { Payment } from './app/payments/entities/payment.entity';
+import { SalesModule } from './app/sales/sales.module';
+import { Sale } from './app/sales/entities/sale.entity';
 
 @Module({
   imports: [
@@ -98,6 +100,7 @@ import { Payment } from './app/payments/entities/payment.entity';
         Brand,
         Payment,
         ProductCategory,
+        Sale,
       ],
     }),
 
@@ -153,6 +156,7 @@ import { Payment } from './app/payments/entities/payment.entity';
     BrandsModule,
     ProductCategoryModule,
     PaymentsModule,
+    SalesModule,
   ],
   controllers: [],
   providers: [
