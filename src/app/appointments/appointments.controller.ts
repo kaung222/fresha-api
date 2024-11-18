@@ -16,6 +16,7 @@ import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { CreateQuickAppointment } from './dto/create-quick-appointment.dto';
+import { CancelBookingDto } from './dto/cancel-booking.dto';
 
 @Controller('appointments')
 @ApiTags('Appointment')
@@ -89,20 +90,19 @@ export class AppointmentsController {
   @Patch(':id/cancel')
   @Role(Roles.org, Roles.member)
   @ApiOperation({ summary: 'Cancel booking by org or member' })
-  async cancelBooking(@Param('id') id: string, @User('orgId') orgId: number) {
-    const appointment = await this.appointmentsService.checkOwnership(
-      +id,
-      orgId,
-    );
-    return this.appointmentsService.cancelBooking(+id, appointment);
+  cancelBooking(
+    @Param('id') id: string,
+    @User('orgId') orgId: number,
+    @Body() cancelBookingDto: CancelBookingDto,
+  ) {
+    return this.appointmentsService.cancelBooking(+id, cancelBookingDto, orgId);
   }
 
   @Patch(':id/complete')
   @Role(Roles.org, Roles.member)
   @ApiOperation({ summary: 'Mark as complete booking by org or member' })
-  async completeBooking(@Param('id') id: string, @User('orgId') orgId: number) {
-    await this.appointmentsService.checkOwnership(+id, orgId);
-    return this.appointmentsService.completeBooking(+id);
+  completeBooking(@Param('id') id: string, @User('orgId') orgId: number) {
+    return this.appointmentsService.completeBooking(+id, orgId);
   }
 
   @Delete(':id')

@@ -27,7 +27,7 @@ export class PaymentsController {
     @User('orgId') orgId: number,
     @Body() createPaymentDto: CreatePaymentDto,
   ) {
-    return this.paymentsService.create(orgId, createPaymentDto);
+    // return this.paymentsService.create(orgId, createPaymentDto);
   }
 
   @Get()
@@ -37,17 +37,6 @@ export class PaymentsController {
 
   @Get(':id')
   async findOne(@Param('id') id: string, @User('orgId') orgId: number) {
-    await this.paymentsService.checkOwnership(id, orgId);
-    return this.paymentsService.findOne(id);
-  }
-
-  @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updatePaymentDto: UpdatePaymentDto,
-    @User('orgId') orgId: number,
-  ) {
-    await this.paymentsService.checkOwnership(id, orgId);
-    return this.paymentsService.update(id, updatePaymentDto);
+    return this.paymentsService.findOne(id, orgId);
   }
 }

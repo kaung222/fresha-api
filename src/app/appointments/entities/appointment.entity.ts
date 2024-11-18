@@ -63,7 +63,7 @@ export class Appointment extends IncrementEntity {
   @Column('int', { nullable: true })
   endTime: number; // in second
 
-  @ManyToMany(() => Service, (service) => service.appointments)
+  @ManyToMany(() => Service, (service) => service.appointments, { eager: true })
   @JoinTable()
   services: Service[];
 
@@ -77,6 +77,10 @@ export class Appointment extends IncrementEntity {
   @JoinColumn({ name: 'memberId' })
   member: Member;
 
+  @Column()
+  orgId: number;
+
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'orgId' })
   organization: Organization;
 }

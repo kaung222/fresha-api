@@ -15,7 +15,7 @@ export class SendEmailDto {
   recipientName: string;
 }
 
-@Processor('send-email') // Replace with your queue name
+@Processor('emailQueue') // Replace with your queue name
 export class EmailService {
   constructor(private mailerService: MailerService) {}
   @Process('sendEmail')

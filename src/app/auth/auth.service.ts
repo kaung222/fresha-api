@@ -31,7 +31,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
-    @InjectQueue('send-email') private readonly emailQueue: Queue,
+    @InjectQueue('emailQueue') private readonly emailQueue: Queue,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
     @InjectRepository(Organization)

@@ -19,17 +19,22 @@ import { SendEmailDto } from '@/global/email.service';
 import { Member } from '../members/entities/member.entity';
 import { format } from 'date-fns';
 import { CreateQuickAppointment } from './dto/create-quick-appointment.dto';
+import { CancelBookingDto } from './dto/cancel-booking.dto';
+import { PaymentsService } from '../payments/payments.service';
+import { PaymentMethod } from '../payments/entities/payment.entity';
+import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
     private dataSource: DataSource,
     private eventEmitter: EventEmitter2,
-    // @InjectQueue('send-email') private emailQueue: Queue,
+    @InjectQueue('emailQueue') private emailQueue: Queue,
+    @InjectQueue('notificationQueue') private notificationQueue: Queue,
+
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
-    @InjectRepository(ServiceAppointment)
-    private readonly serviceAppointmentRepository: Repository<ServiceAppointment>,
+    private readonly paymentService: PaymentsService,
   ) {}
 
   // create new appointment by user
@@ -119,6 +124,9 @@ export class AppointmentsService {
     const { date = getCurrentDate() } = getAppointmentDto;
     const data = await this.appointmentRepository.find({
       where: { organization: { id: orgId }, date },
+      relations: {
+        services: true,
+      },
     });
     return data;
   }
@@ -130,6 +138,7 @@ export class AppointmentsService {
       relations: {
         client: true,
         services: true,
+        user: true,
       },
     });
   }
@@ -140,22 +149,20 @@ export class AppointmentsService {
     try {
       const { serviceIds, ...rest } = updateAppointmentDto;
       const appointment = await this.appointmentRepository.findOne({
-        relations: { client: true, user: true },
+        relations: { client: true },
         where: { id },
       });
       if (!appointment) throw new NotFoundException('appointment not found');
       if (!appointment.client)
         throw new ForbiddenException("This item can't not be updated");
-      if (serviceIds) {
-        const services = await this.getServicesByIds(serviceIds);
-        const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
-        appointment.services = services;
-        appointment.totalTime = totalTime;
-        appointment.endTime = rest.startTime + totalTime;
-        appointment.startTime = rest.startTime;
-        appointment.totalPrice = totalPrice;
-      }
-      Object.assign(appointment, rest);
+      const services = await this.getServicesByIds(serviceIds);
+      const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+      appointment.services = services;
+      appointment.totalTime = totalTime;
+      appointment.endTime = rest.startTime + totalTime;
+      appointment.startTime = rest.startTime;
+      appointment.totalPrice = totalPrice;
+
       await this.appointmentRepository.save(appointment);
       await queryRunner.commitTransaction();
       return { message: 'Update the appointment successfully' };
@@ -181,12 +188,17 @@ export class AppointmentsService {
     };
   }
 
-  async cancelBooking(id: number, appointment: Appointment) {
+  async cancelBooking(
+    id: number,
+    cancelBookingDto: CancelBookingDto,
+    orgId: number,
+  ) {
+    const appointment = await this.checkOwnership(id, orgId);
     this.appointmentRepository.update(id, { status: BookingStatus.cancelled });
     // send email about booking cancelation
     this.sendEmail({
       to: appointment.email,
-      text: 'Cancel your booking',
+      text: `Cancel your booking for the reason ${cancelBookingDto.reason}`,
       recipientName: appointment.username,
       subject: 'Booking cancelation',
     });
@@ -195,22 +207,37 @@ export class AppointmentsService {
     };
   }
 
-  completeBooking(id: number) {
-    this.appointmentRepository.update(id, { status: BookingStatus.completed });
+  async completeBooking(id: number, orgId: number) {
+    const appointment = await this.appointmentRepository.findOne({
+      where: { id, orgId },
+      relations: { services: true },
+    });
+    if (!appointment) throw new NotFoundException('Appointment not found');
+    await this.appointmentRepository.update(id, {
+      status: BookingStatus.completed,
+    });
+    this.paymentService.createPaymentByAppointment({
+      amount: appointment.totalPrice,
+      clientName: appointment.username,
+      memberId: appointment.memberId,
+      method: PaymentMethod.cash,
+      orgId,
+      services: appointment.services,
+    });
     return {
-      message: 'Marked as omplete booking succesfully',
+      message: 'Marked as complete booking succesfully',
     };
   }
 
   remove(id: number) {
-    this.appointmentRepository.delete(id);
+    // this.appointmentRepository.delete(id);
     return {
       message: 'Delete booking succesfully',
     };
   }
 
   async checkOwnership(id: number, orgId: number) {
-    const appointment = await this.appointmentRepository.findOneBy({
+    const appointment = await this.appointmentRepository.findOneByOrFail({
       organization: { id: orgId },
       id,
     });
@@ -219,7 +246,10 @@ export class AppointmentsService {
   }
 
   sendEmail(emailPayload: SendEmailDto) {
-    // this.emailQueue.add('sendEmail', emailPayload);
-    console.log('sending email');
+    this.emailQueue.add('sendEmail', emailPayload);
+  }
+
+  createNotification(createNotification: CreateNotificationDto) {
+    this.notificationQueue.add('notification.created', createNotification);
   }
 }

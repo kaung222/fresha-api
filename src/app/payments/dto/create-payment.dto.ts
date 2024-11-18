@@ -6,6 +6,8 @@ import {
   IsPositive,
 } from 'class-validator';
 import { PaymentMethod } from '../entities/payment.entity';
+import { Service } from '@/app/services/entities/service.entity';
+import { Product } from '@/app/products/entities/product.entity';
 
 export class CreatePaymentDto {
   @IsNotEmpty()
@@ -19,16 +21,14 @@ export class CreatePaymentDto {
   @IsPositive()
   @IsNumber()
   amount: number;
+}
 
-  @IsNotEmpty()
+export class CreatePaymentBySystem {
+  clientName: string;
+  method: PaymentMethod;
+  amount: number;
   memberId: number;
-
-  @IsOptional()
-  serviceIds: number[];
-
-  @IsOptional()
-  packageIds: number[];
-
-  @IsOptional()
-  productIds: number[];
+  services?: Service[];
+  products?: Product[];
+  orgId: number;
 }

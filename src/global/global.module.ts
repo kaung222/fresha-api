@@ -5,8 +5,8 @@ import { EmailService } from './email.service';
 
 @Global()
 @Module({
-  imports: [],
-  providers: [],
-  exports: [],
+  imports: [BullModule.registerQueue({ name: 'emailQueue' })],
+  providers: [EmailService],
+  exports: [EmailService],
 })
 export class GlobalModule {}
