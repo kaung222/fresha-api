@@ -78,6 +78,8 @@ export class SalesService {
     const { page } = paginateQuery;
     const [data, totalCount] = await this.saleRepository.findAndCount({
       where: { organization: { id: orgId } },
+      take: 10,
+      skip: 10 * (page - 1),
     });
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }

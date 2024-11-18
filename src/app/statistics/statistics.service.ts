@@ -1,17 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { ServiceAppointment } from '../appointments/entities/serviceappointment.entity';
 import { Service } from '../services/entities/service.entity';
 
 @Injectable()
 export class StatisticsService {
   constructor(private dataSource: DataSource) {}
   getMember(orgId: number) {
-    const member = this.dataSource
-      .getRepository(ServiceAppointment)
-      .createQueryBuilder('bookingItem')
-      .addSelect('bookingItem.appointment')
-      .getRawMany();
+    return 'hello';
   }
 
   getMostBookingServices(orgId: number) {

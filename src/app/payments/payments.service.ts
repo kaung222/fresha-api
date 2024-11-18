@@ -51,6 +51,7 @@ export class PaymentsService {
   }
 
   async findAll(orgId: number, { page = 1 }: PaginateQuery) {
+    // return 'hello';
     const [data, totalCount] = await this.paymentRepository.findAndCount({
       where: { organization: { id: orgId } },
       relations: { member: true },
@@ -61,6 +62,7 @@ export class PaymentsService {
   }
 
   findOne(id: string, orgId: number) {
+    // return this.paymentRepository.find({ relations: { organization: true } });
     return this.paymentRepository.findOneOrFail({
       where: { id, organization: { id: orgId } },
       relations: ['member', 'services', 'products'],

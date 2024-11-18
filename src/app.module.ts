@@ -35,7 +35,6 @@ import { ClientsModule } from './app/clients/clients.module';
 import { OrgReview } from './app/org-reviews/entities/org-review.entity';
 import { Client } from './app/clients/entities/client.entity';
 import { Appointment } from './app/appointments/entities/appointment.entity';
-import { ServiceAppointment } from './app/appointments/entities/serviceappointment.entity';
 import { Test } from './app/test/entities/test.entity';
 import { Product } from './app/products/entities/product.entity';
 import { MemberScheduleModule } from './app/member-schedule/member-schedule.module';
@@ -88,7 +87,7 @@ import { SaleItem } from './app/sales/entities/sale-item.entity';
         OrgReview,
         Client,
         Appointment,
-        ServiceAppointment,
+
         Test,
         Product,
         MemberSchedule,
@@ -102,7 +101,7 @@ import { SaleItem } from './app/sales/entities/sale-item.entity';
         Payment,
         ProductCategory,
         Sale,
-        SaleItem
+        SaleItem,
       ],
     }),
 

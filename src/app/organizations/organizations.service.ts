@@ -10,10 +10,6 @@ import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { Category } from '../categories/entities/category.entity';
 import { OrgReview } from '../org-reviews/entities/org-review.entity';
-import { CreateAppointmentDto } from '../appointments/dto/create-appointment.dto';
-import { Appointment } from '../appointments/entities/appointment.entity';
-import { ServiceAppointment } from '../appointments/entities/serviceappointment.entity';
-import { AddAppointmentDto } from '../clients/dto/create-appointment.dto';
 @Injectable()
 export class OrganizationsService {
   constructor(

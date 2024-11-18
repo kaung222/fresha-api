@@ -8,10 +8,10 @@ import { DataSource, In, Repository } from 'typeorm';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { CreateAppointmentDto } from '../appointments/dto/create-appointment.dto';
 import { Appointment } from '../appointments/entities/appointment.entity';
-import { ServiceAppointment } from '../appointments/entities/serviceappointment.entity';
 import { AddAppointmentDto } from './dto/create-appointment.dto';
 import { Service } from '../services/entities/service.entity';
 import { User } from '../users/entities/user.entity';
+import { PaginateQuery } from '@/utils/paginate-query.dto';
 
 @Injectable()
 export class ClientsService {
@@ -34,11 +34,19 @@ export class ClientsService {
     };
   }
 
-  async findAll(orgId: number) {
-    let page = 1;
-    const [data, totalCount] = await this.clientRepository.findAndCount({
-      where: { organization: { id: orgId } },
-    });
+  async findAll(orgId: number, paginateQuery: PaginateQuery) {
+    const { page = 1, search } = paginateQuery;
+    const queryBuilder = this.clientRepository
+      .createQueryBuilder('client')
+      .where('client.organization=:orgId', { orgId })
+      .take(10)
+      .skip(10 * (page - 1));
+    if (search)
+      queryBuilder.andWhere(
+        'client.firstName LIKE :search OR client.email=:search',
+        { search },
+      );
+    const [data, totalCount] = await queryBuilder.getManyAndCount();
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
@@ -54,8 +62,6 @@ export class ClientsService {
     const { serviceIds, clientId, start, memberId, ...rest } =
       addAppointmentDto;
     const appointmentRepository = this.dataSource.getRepository(Appointment);
-    const bookingItemRepository =
-      this.dataSource.getRepository(ServiceAppointment);
     const services = await this.dataSource
       .getRepository(Service)
       .findBy({ id: In(serviceIds) });
@@ -70,17 +76,9 @@ export class ClientsService {
       endTime: start + totalTime,
       totalPrice,
       totalTime,
+      services,
     });
-
-    const appointment = await appointmentRepository.save(createAppointment);
-    const createBookingItems = bookingItemRepository.create(
-      serviceIds.map((serviceId) => ({
-        service: { id: serviceId },
-        appointment: { id: appointment.id },
-      })),
-    );
-
-    await bookingItemRepository.save(createBookingItems);
+    await appointmentRepository.save(createAppointment);
     return {
       message: 'Added appointment successfully',
     };

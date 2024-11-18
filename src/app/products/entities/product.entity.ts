@@ -1,6 +1,7 @@
 import { Organization } from '@/app/organizations/entities/organization.entity';
+import { Payment } from '@/app/payments/entities/payment.entity';
 import { IncrementEntity } from '@/utils';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToMany, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Product extends IncrementEntity {
@@ -33,4 +34,7 @@ export class Product extends IncrementEntity {
 
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   organization: Organization;
+
+  @ManyToMany(() => Payment, (payment) => payment.products)
+  payments: Payment[];
 }

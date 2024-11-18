@@ -6,9 +6,7 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
-  OneToMany,
 } from 'typeorm';
-import { ServiceAppointment } from './serviceappointment.entity';
 import { Gender, User } from '@/app/users/entities/user.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Member } from '@/app/members/entities/member.entity';

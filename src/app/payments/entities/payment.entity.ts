@@ -10,6 +10,7 @@ import {
   Entity,
   Generated,
   JoinColumn,
+  JoinTable,
   ManyToMany,
   ManyToOne,
 } from 'typeorm';
@@ -42,10 +43,12 @@ export class Payment extends UUIDEntity {
   @JoinColumn({ name: 'memberId' })
   member: Member;
 
-  @ManyToMany(() => Service, { eager: true })
+  @ManyToMany(() => Service, (service) => service.payments, { cascade: true })
+  @JoinTable()
   services: Service[];
 
-  @ManyToMany(() => Product, { eager: true })
+  @ManyToMany(() => Product, (product) => product.payments, { cascade: true })
+  @JoinTable()
   products: Product[];
 
   @ManyToOne(() => Organization)

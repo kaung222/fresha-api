@@ -8,7 +8,6 @@ import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment, BookingStatus } from './entities/appointment.entity';
 import { DataSource, In, Repository } from 'typeorm';
-import { ServiceAppointment } from './entities/serviceappointment.entity';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Service } from '../services/entities/service.entity';

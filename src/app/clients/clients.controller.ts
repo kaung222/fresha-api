@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
@@ -14,6 +15,7 @@ import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { AddAppointmentDto } from './dto/create-appointment.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { PaginateQuery } from '@/utils/paginate-query.dto';
 
 @Controller('clients')
 @ApiTags('Client')
@@ -31,8 +33,8 @@ export class ClientsController {
 
   @Get()
   @Role(Roles.org)
-  findAll(@User('orgId') orgId: number) {
-    return this.clientsService.findAll(orgId);
+  findAll(@User('orgId') orgId: number, @Query() paginateQuery: PaginateQuery) {
+    return this.clientsService.findAll(orgId, paginateQuery);
   }
 
   @Get(':id')
