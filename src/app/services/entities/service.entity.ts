@@ -5,6 +5,7 @@ import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Package } from '@/app/packages/entities/package.entity';
 import { Payment } from '@/app/payments/entities/payment.entity';
 import { IncrementEntity } from '@/utils/base.entity';
+import { DecimalColumn } from '@/utils/decorators/column.decorators';
 import {
   Entity,
   Column,
@@ -34,7 +35,7 @@ export class Service extends IncrementEntity {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  @DecimalColumn()
   price: number;
 
   @Column({ nullable: true })

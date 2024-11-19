@@ -12,6 +12,7 @@ import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Client } from '@/app/clients/entities/client.entity';
 import { Service } from '@/app/services/entities/service.entity';
+import { Package } from '@/app/packages/entities/package.entity';
 
 export enum BookingStatus {
   pending = 'pending',
@@ -66,6 +67,10 @@ export class Appointment extends IncrementEntity {
   })
   @JoinTable()
   services: Service[];
+
+  @ManyToMany(() => Package, (pack) => pack.appointments)
+  @JoinTable()
+  packages: Package[];
 
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
   user: User;

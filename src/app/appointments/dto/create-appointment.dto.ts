@@ -5,10 +5,12 @@ import {
   IsDateString,
   IsEmail,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsPhoneNumber,
   IsPositive,
+  ValidateIf,
 } from 'class-validator';
 import { BookingStatus } from '../entities/appointment.entity';
 import { Gender } from '@/app/users/entities/user.entity';
@@ -45,10 +47,18 @@ export class CreateAppointmentDto {
   @IsNotEmpty()
   memberId: number;
 
-  @IsNotEmpty()
   @IsArray()
   @ArrayMinSize(1)
+  @IsNotEmpty({ each: true }) // Ensures no element in the array is empty
+  @IsInt({ each: true }) // Ensures every element is an integer
   serviceIds: number[];
+
+  @IsOptional()
+  @ValidateIf((obj) => !obj.serviceIds || obj.serviceIds.length === 0)
+  @IsArray()
+  @IsNotEmpty({ each: true })
+  @IsInt({ each: true })
+  packageIds: number[];
 
   @IsNotEmpty()
   orgId: number;

@@ -5,10 +5,12 @@ import {
   IsDateString,
   IsEmail,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsPhoneNumber,
   IsPositive,
+  ValidateIf,
 } from 'class-validator';
 import { BookingStatus } from '@/app/appointments/entities/appointment.entity';
 import { Gender } from '@/app/users/entities/user.entity';
@@ -48,6 +50,13 @@ export class ClientAppointmentDto {
   @IsArray()
   @ArrayMinSize(1)
   serviceIds: number[];
+
+  @IsOptional()
+  @ValidateIf((obj) => !obj.serviceIds || obj.serviceIds.length === 0)
+  @IsArray()
+  @IsNotEmpty({ each: true })
+  @IsInt({ each: true })
+  packageIds: number[];
 
   @IsNotEmpty()
   @IsPositive()

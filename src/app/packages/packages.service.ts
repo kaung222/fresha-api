@@ -10,7 +10,6 @@ import { Service } from '../services/entities/service.entity';
 export class PackagesService {
   constructor(
     @InjectRepository(Package) private packageRepository: Repository<Package>,
-
     private readonly dataSource: DataSource,
   ) {}
 
@@ -19,13 +18,19 @@ export class PackagesService {
     const { serviceIds, description, discount, discountType, name } =
       createPackageDto;
     const services = await this.getSerices(serviceIds);
+    const { price, duration } = this.calculatePriceAndDuration(
+      services,
+      discount,
+      discountType,
+    );
     const createPackage = this.packageRepository.create({
       description,
       discount,
       discountType,
       name,
       services,
-      price: this.calculatePrice(services, discount, discountType),
+      price,
+      duration,
       organization: { id: orgId },
     });
     return this.packageRepository.save(createPackage);
@@ -47,13 +52,19 @@ export class PackagesService {
     const { serviceIds, discount, discountType, description, name } =
       updatePackageDto;
     const services = await this.getSerices(serviceIds);
+    const { price, duration } = this.calculatePriceAndDuration(
+      services,
+      discount,
+      discountType,
+    );
     const createPackage = this.packageRepository.create({
-      price: this.calculatePrice(services, discount, discountType),
+      price,
       services: services,
       description,
       discount,
       name,
       discountType,
+      duration,
       id,
     });
     return this.packageRepository.save(createPackage);
@@ -67,19 +78,21 @@ export class PackagesService {
     return this.dataSource.getRepository(Service).findBy({ id: In(ids) });
   }
 
-  private calculatePrice(
+  private calculatePriceAndDuration(
     services: Service[],
     discount = 0,
     discountType: DiscountType,
   ) {
+    const duration = services.reduce((pv, cv) => pv + cv.duration, 0);
     if (discountType === DiscountType.free) {
-      return 0;
+      return { price: 0, duration };
     }
     const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
     if (discountType === DiscountType.fixed) {
       totalPrice - discount;
     }
-    const packagePrice = (totalPrice * discount) / 100;
-    return packagePrice;
+    const price = (totalPrice * discount) / 100;
+
+    return { price, duration };
   }
 }

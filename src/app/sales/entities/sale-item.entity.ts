@@ -1,6 +1,7 @@
 import { Product } from '@/app/products/entities/product.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Sale } from './sale.entity';
+import { DecimalColumn } from '@/utils/decorators/column.decorators';
 
 @Entity()
 export class SaleItem {
@@ -10,7 +11,7 @@ export class SaleItem {
   @Column({ nullable: true })
   name: string;
 
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  @DecimalColumn()
   price: number;
 
   @Column('int', { default: 1 })

@@ -24,6 +24,7 @@ import { PaymentMethod } from '../payments/entities/payment.entity';
 import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 import { ClientAppointmentDto } from './dto/create-client-booking.dto';
 import { Client } from '../clients/entities/client.entity';
+import { Package } from '../packages/entities/package.entity';
 
 @Injectable()
 export class AppointmentsService {
@@ -45,8 +46,12 @@ export class AppointmentsService {
       const { serviceIds, memberId, orgId, startTime, ...rest } =
         createAppointmentDto;
       const services = await this.getServicesByIds(serviceIds, orgId);
+      const packages = await this.getPackagesByIds(rest.packageIds, orgId);
       const member = await this.getMemberById(memberId, orgId);
-      const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+      const { totalPrice, totalTime } = this.calculateTimeAndPrice(
+        services,
+        packages,
+      );
       const newAppointment = this.appointmentRepository.create({
         ...rest,
         user: { id: userId },
@@ -57,6 +62,7 @@ export class AppointmentsService {
         totalTime,
         totalPrice,
         services,
+        packages,
       });
       const appointment = await this.appointmentRepository.save(newAppointment);
       await queryRunner.commitTransaction();
@@ -82,7 +88,11 @@ export class AppointmentsService {
     const appointmentRepository = this.dataSource.getRepository(Appointment);
     const client = await this.getClientById(clientId, orgId);
     const services = await this.getServicesByIds(serviceIds, orgId);
-    const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+    const packages = await this.getPackagesByIds(rest.packageIds, orgId);
+    const { totalPrice, totalTime } = this.calculateTimeAndPrice(
+      services,
+      packages,
+    );
     const createAppointment = appointmentRepository.create({
       ...rest,
       organization: { id: orgId },
@@ -130,9 +140,22 @@ export class AppointmentsService {
     return services;
   }
 
-  calculateTimeAndPrice(services: Service[]) {
-    const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
-    const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
+  async getPackagesByIds(packageIds: number[], orgId: number) {
+    const packages = await this.dataSource
+      .getRepository(Package)
+      .findBy({ id: In(packageIds), orgId });
+    if (packageIds.length !== packages.length)
+      throw new NotFoundException('Some packages are missing');
+    return packages;
+  }
+
+  calculateTimeAndPrice(services: Service[], packages: Package[]) {
+    const serviceTime = services.reduce((pv, cv) => pv + cv.duration, 0);
+    const servicePrice = services.reduce((pv, cv) => pv + cv.price, 0);
+    const packageTime = packages.reduce((pv, cv) => pv + cv.duration, 0);
+    const packagePrice = packages.reduce((pv, cv) => pv + cv.price, 0);
+    const totalTime = serviceTime + packageTime;
+    const totalPrice = servicePrice + packagePrice;
     return {
       totalPrice,
       totalTime,
@@ -145,7 +168,11 @@ export class AppointmentsService {
   ) {
     const { serviceIds, startTime, ...rest } = quickAppointment;
     const services = await this.getServicesByIds(serviceIds, orgId);
-    const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+    const packages = await this.getPackagesByIds(rest.packageIds, orgId);
+    const { totalPrice, totalTime } = this.calculateTimeAndPrice(
+      services,
+      packages,
+    );
     const createAppointment = this.appointmentRepository.create({
       ...rest,
       services,
@@ -193,7 +220,11 @@ export class AppointmentsService {
     try {
       const { serviceIds, ...rest } = updateAppointmentDto;
       const services = await this.getServicesByIds(serviceIds, orgId);
-      const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+      const packages = await this.getPackagesByIds(serviceIds, orgId);
+      const { totalPrice, totalTime } = this.calculateTimeAndPrice(
+        services,
+        packages,
+      );
       appointment.services = services;
       appointment.totalTime = totalTime;
       appointment.endTime = rest.startTime + totalTime;
