@@ -9,42 +9,45 @@ import {
   IsOptional,
   IsPhoneNumber,
   IsPositive,
+  IsString,
 } from 'class-validator';
 import { BookingStatus } from '../entities/appointment.entity';
 import { Gender } from '@/app/users/entities/user.entity';
 
 export class UpdateAppointmentDto {
-  @IsOptional()
+  @IsNotEmpty()
+  @IsString()
   username: string;
 
-  @IsOptional()
+  @IsNotEmpty()
+  @IsString()
   notes: string;
 
   @IsEnum(BookingStatus)
-  @IsOptional()
+  @IsNotEmpty()
   status: BookingStatus;
 
   @IsPhoneNumber()
-  @IsOptional()
+  @IsNotEmpty()
   phone: string;
 
   @IsEnum(Gender)
-  @IsOptional()
+  @IsNotEmpty()
   gender: Gender;
 
   @IsEmail()
-  @IsOptional()
+  @IsNotEmpty()
   email: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   memberId: number;
 
   @IsArray()
   @ArrayMinSize(1)
-  @IsOptional()
+  @IsNotEmpty()
   serviceIds: number[];
 
   @IsPositive()
-  @IsOptional()
+  @IsNotEmpty()
   startTime: number;
 }

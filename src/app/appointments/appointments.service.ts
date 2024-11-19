@@ -30,7 +30,6 @@ export class AppointmentsService {
     private eventEmitter: EventEmitter2,
     @InjectQueue('emailQueue') private emailQueue: Queue,
     @InjectQueue('notificationQueue') private notificationQueue: Queue,
-
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
     private readonly paymentService: PaymentsService,
@@ -39,18 +38,14 @@ export class AppointmentsService {
   // create new appointment by user
   async create(createAppointmentDto: CreateAppointmentDto, userId: number) {
     const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
     try {
-      queryRunner.startTransaction();
       const { serviceIds, memberId, orgId, startTime, ...rest } =
         createAppointmentDto;
-      const services = await this.getServicesByIds(serviceIds);
-      const member = await this.dataSource
-        .getRepository(Member)
-        .findOneBy({ id: memberId, organization: { id: orgId } });
-      if (!services || !member)
-        throw new NotFoundException('service or member not found');
+      const services = await this.getServicesByIds(serviceIds, orgId);
+      const member = await this.getMemberById(memberId, orgId);
       const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
-      const createAppointment = this.appointmentRepository.create({
+      const newAppointment = this.appointmentRepository.create({
         ...rest,
         user: { id: userId },
         organization: { id: orgId },
@@ -61,17 +56,9 @@ export class AppointmentsService {
         totalPrice,
         services,
       });
-      const appointment =
-        await this.appointmentRepository.save(createAppointment);
+      const appointment = await this.appointmentRepository.save(newAppointment);
       await queryRunner.commitTransaction();
-      // emit an event to create a client
-      this.eventEmitter.emit('appointment.created', { userId, orgId });
-      this.sendEmail({
-        to: member.email,
-        recipientName: member.firstName,
-        subject: 'Appointment received',
-        text: `A user make an appointment to you on ${format(new Date(createAppointment.date), 'dd-MM-YYYY')}`,
-      });
+      this.sendEmailToMember(member, appointment.date);
       return {
         message: 'Book an appointment successfully',
         appointment,
@@ -84,10 +71,25 @@ export class AppointmentsService {
     }
   }
 
-  async getServicesByIds(serviceIds: number[]) {
+  private async sendEmailToMember(member: Member, appointmentDate: string) {
+    this.sendEmail({
+      to: member.email,
+      recipientName: member.firstName,
+      subject: 'Appointment received',
+      text: `A user make an appointment to you on ${format(new Date(appointmentDate), 'dd-MM-YYYY')}`,
+    });
+  }
+
+  private async getMemberById(memberId: number, orgId: number) {
+    return await this.dataSource
+      .getRepository(Member)
+      .findOneByOrFail({ id: memberId, organization: { id: orgId } });
+  }
+
+  async getServicesByIds(serviceIds: number[], orgId: number) {
     return await this.dataSource
       .getRepository(Service)
-      .findBy({ id: In(serviceIds) });
+      .findBy({ id: In(serviceIds), organization: { id: orgId } });
   }
 
   calculateTimeAndPrice(services: Service[]) {
@@ -104,7 +106,7 @@ export class AppointmentsService {
     quickAppointment: CreateQuickAppointment,
   ) {
     const { serviceIds, startTime, ...rest } = quickAppointment;
-    const services = await this.getServicesByIds(serviceIds);
+    const services = await this.getServicesByIds(serviceIds, orgId);
     const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
     const createAppointment = this.appointmentRepository.create({
       ...rest,
@@ -142,26 +144,23 @@ export class AppointmentsService {
     });
   }
 
-  async update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
+  async update(
+    id: number,
+    updateAppointmentDto: UpdateAppointmentDto,
+    orgId: number,
+  ) {
+    const appointment = await this.checkOwnership(id, orgId);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
     try {
       const { serviceIds, ...rest } = updateAppointmentDto;
-      const appointment = await this.appointmentRepository.findOne({
-        relations: { client: true },
-        where: { id },
-      });
-      if (!appointment) throw new NotFoundException('appointment not found');
-      if (!appointment.client)
-        throw new ForbiddenException("This item can't not be updated");
-      const services = await this.getServicesByIds(serviceIds);
+      const services = await this.getServicesByIds(serviceIds, orgId);
       const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
       appointment.services = services;
       appointment.totalTime = totalTime;
       appointment.endTime = rest.startTime + totalTime;
       appointment.startTime = rest.startTime;
       appointment.totalPrice = totalPrice;
-
       await this.appointmentRepository.save(appointment);
       await queryRunner.commitTransaction();
       return { message: 'Update the appointment successfully' };
@@ -215,6 +214,7 @@ export class AppointmentsService {
     await this.appointmentRepository.update(id, {
       status: BookingStatus.completed,
     });
+    // on complete appointment create payment
     this.paymentService.createPaymentByAppointment({
       amount: appointment.totalPrice,
       clientName: appointment.username,
@@ -236,15 +236,13 @@ export class AppointmentsService {
   }
 
   async checkOwnership(id: number, orgId: number) {
-    const appointment = await this.appointmentRepository.findOneByOrFail({
+    return await this.appointmentRepository.findOneByOrFail({
       organization: { id: orgId },
       id,
     });
-    if (!appointment) throw new NotFoundException('Appointment not found');
-    return appointment;
   }
 
-  sendEmail(emailPayload: SendEmailDto) {
+  async sendEmail(emailPayload: SendEmailDto) {
     this.emailQueue.add('sendEmail', emailPayload);
   }
 

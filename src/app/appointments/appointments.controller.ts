@@ -67,13 +67,12 @@ export class AppointmentsController {
     summary: 'Update booking by org or member, only created ones',
   })
   @Role(Roles.org, Roles.member)
-  async update(
+  update(
     @Param('id') id: string,
     @Body() updateAppointmentDto: UpdateAppointmentDto,
     @User('orgId') orgId: number,
   ) {
-    await this.appointmentsService.checkOwnership(+id, orgId);
-    return this.appointmentsService.update(+id, updateAppointmentDto);
+    return this.appointmentsService.update(+id, updateAppointmentDto, orgId);
   }
 
   @Patch(':id/confirm')

@@ -51,5 +51,5 @@ export class AddAppointmentDto {
 
   @IsNotEmpty()
   @IsPositive()
-  start: number;
+  startTime: number;
 }
