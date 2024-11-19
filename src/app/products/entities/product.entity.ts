@@ -14,7 +14,7 @@ export class Product extends IncrementEntity {
   @Column({ nullable: true })
   code: string;
 
-  @Column('float', {})
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   price: number;
 
   @Column({ nullable: true })

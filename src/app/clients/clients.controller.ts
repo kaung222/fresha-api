@@ -13,17 +13,16 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
-import { AddAppointmentDto } from './dto/create-appointment.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 
 @Controller('clients')
 @ApiTags('Client')
+@Role(Roles.org)
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
   @Post()
-  @Role(Roles.org)
   create(
     @Body() createClientDto: CreateClientDto,
     @User('orgId') orgId: number,
@@ -32,8 +31,8 @@ export class ClientsController {
   }
 
   @Get()
-  @Role(Roles.org)
   findAll(@User('orgId') orgId: number, @Query() paginateQuery: PaginateQuery) {
+    console.log('hello');
     return this.clientsService.findAll(orgId, paginateQuery);
   }
 
@@ -45,15 +44,6 @@ export class ClientsController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateClientDto: UpdateClientDto) {
     return this.clientsService.update(+id, updateClientDto);
-  }
-
-  @Post(':id/appointments')
-  @Role(Roles.org)
-  createAppointment(
-    @User('orgId') orgId: number,
-    @Body() addAppointmentDto: AddAppointmentDto,
-  ) {
-    return this.clientsService.createAppointment(orgId, addAppointmentDto);
   }
 
   @Delete(':id')

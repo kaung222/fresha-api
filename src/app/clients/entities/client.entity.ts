@@ -1,7 +1,7 @@
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Gender } from '@/app/users/entities/user.entity';
 import { IncrementEntity } from '@/utils/base.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Client extends IncrementEntity {
@@ -29,6 +29,11 @@ export class Client extends IncrementEntity {
   @Column({ nullable: true })
   userId: number;
 
+  @Index('orgId')
+  @Column()
+  orgId: number;
+
   @ManyToOne(() => Organization)
+  @JoinColumn({ name: 'orgId' })
   organization: Organization;
 }

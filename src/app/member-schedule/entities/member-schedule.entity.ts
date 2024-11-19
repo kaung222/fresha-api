@@ -51,11 +51,10 @@ export class MemberSchedule {
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
 
-  @OneToMany(() => BreakTime, (breakTime) => breakTime.memberSchedule, {
-    eager: true,
-    cascade: true,
-  })
-  breakTimes: BreakTime[];
+  // @OneToMany(() => BreakTime, (breakTime) => breakTime.memberSchedule, {
+  //   eager: true,
+  // })
+  // breakTimes: BreakTime[];
 }
 
 export class TimePeriod {

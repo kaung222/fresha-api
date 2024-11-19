@@ -29,20 +29,16 @@ export class SalesService {
       organization: { id: orgId },
     });
     const sale = await this.saleRepository.save(createSale);
-    const productIds = saleItems.map((item) => item.productId);
-    const products = await this.getProductsByIds(productIds);
-    if (products.length == 0) throw new NotFoundException('Products not found');
-    const items = await this.saveSaleItems(sale, saleItems, products);
+    const items = await this.saveSaleItems(sale, saleItems);
     const { totalPrice } = this.calculateTotalPrice(items);
     sale.totalPrice = totalPrice;
     return this.saleRepository.save(sale);
   }
 
-  private async saveSaleItems(
-    sale: Sale,
-    saleItems: SaleItemDto[],
-    products: Product[],
-  ) {
+  private async saveSaleItems(sale: Sale, saleItems: SaleItemDto[]) {
+    const productIds = saleItems.map((item) => item.productId);
+    const products = await this.getProductsByIds(productIds);
+    if (products.length == 0) throw new NotFoundException('Products not found');
     const createSaleItems = this.saleItemRepository.create(
       saleItems.map(({ productId, quantity }) => {
         const product = products.find((product) => product.id === productId);

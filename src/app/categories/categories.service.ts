@@ -20,6 +20,7 @@ export class CategoriesService {
   }
 
   findAll(orgId: number) {
+    console.log(orgId);
     return this.categoryRepository.find({
       relations: { services: true },
       where: { organization: { id: orgId } },

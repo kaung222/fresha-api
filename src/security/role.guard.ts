@@ -31,8 +31,12 @@ export class RolesGuard implements CanActivate {
       request.user = user;
       // return requiredRoles.some((role) => user.roles?.includes(role));
       console.log(user, ' allowed roles are ' + requiredRoles);
-      return Array.from(requiredRoles).includes(user.role);
+      const isAuthenticated = Array.from(requiredRoles).includes(user.role);
+      if (!isAuthenticated)
+        throw new UnauthorizedException('Role cannot access!');
+      return true;
     } catch (error) {
+      console.log('error here');
       throw new UnauthorizedException(error.message);
     }
   }

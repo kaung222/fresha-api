@@ -5,7 +5,14 @@ import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Package } from '@/app/packages/entities/package.entity';
 import { Payment } from '@/app/payments/entities/payment.entity';
 import { IncrementEntity } from '@/utils/base.entity';
-import { Entity, Column, ManyToOne, ManyToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  ManyToMany,
+  JoinColumn,
+  Index,
+} from 'typeorm';
 
 export enum TargetGender {
   all = 'all',
@@ -27,7 +34,7 @@ export class Service extends IncrementEntity {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   price: number;
 
   @Column({ nullable: true })
@@ -54,10 +61,15 @@ export class Service extends IncrementEntity {
   @JoinColumn({ name: 'categoryId' })
   category: Category;
 
-  @ManyToOne(() => Organization)
+  @Index('orgId')
+  @Column()
+  orgId: number;
+
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'orgId' })
   organization: Organization;
 
-  @ManyToMany(() => Package, (pack) => pack.services)
+  @ManyToMany(() => Package, (pack) => pack.services, { onDelete: 'NO ACTION' })
   packages: Package[];
 
   @ManyToMany(() => Appointment, (appointment) => appointment.services)

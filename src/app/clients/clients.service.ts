@@ -6,10 +6,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from './entities/client.entity';
 import { DataSource, In, Repository } from 'typeorm';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
-import { CreateAppointmentDto } from '../appointments/dto/create-appointment.dto';
-import { Appointment } from '../appointments/entities/appointment.entity';
-import { AddAppointmentDto } from './dto/create-appointment.dto';
-import { Service } from '../services/entities/service.entity';
 import { User } from '../users/entities/user.entity';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 
@@ -56,32 +52,6 @@ export class ClientsService {
 
   update(id: number, updateClientDto: UpdateClientDto) {
     return this.clientRepository.update(id, updateClientDto);
-  }
-
-  async createAppointment(orgId: number, addAppointmentDto: AddAppointmentDto) {
-    const { serviceIds, clientId, startTime, memberId, ...rest } =
-      addAppointmentDto;
-    const appointmentRepository = this.dataSource.getRepository(Appointment);
-    const services = await this.dataSource
-      .getRepository(Service)
-      .findBy({ id: In(serviceIds) });
-    const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
-    const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
-    const createAppointment = appointmentRepository.create({
-      ...rest,
-      organization: { id: orgId },
-      member: { id: memberId },
-      client: { id: clientId },
-      startTime,
-      endTime: startTime + totalTime,
-      totalPrice,
-      totalTime,
-      services,
-    });
-    await appointmentRepository.save(createAppointment);
-    return {
-      message: 'Added appointment successfully',
-    };
   }
 
   remove(id: number) {

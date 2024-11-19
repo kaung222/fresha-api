@@ -22,6 +22,8 @@ import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { PaymentsService } from '../payments/payments.service';
 import { PaymentMethod } from '../payments/entities/payment.entity';
 import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
+import { ClientAppointmentDto } from './dto/create-client-booking.dto';
+import { Client } from '../clients/entities/client.entity';
 
 @Injectable()
 export class AppointmentsService {
@@ -71,6 +73,39 @@ export class AppointmentsService {
     }
   }
 
+  async createClientAppointment(
+    orgId: number,
+    addAppointmentDto: ClientAppointmentDto,
+  ) {
+    const { serviceIds, clientId, startTime, memberId, ...rest } =
+      addAppointmentDto;
+    const appointmentRepository = this.dataSource.getRepository(Appointment);
+    const client = await this.getClientById(clientId, orgId);
+    const services = await this.getServicesByIds(serviceIds, orgId);
+    const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+    const createAppointment = appointmentRepository.create({
+      ...rest,
+      organization: { id: orgId },
+      member: { id: memberId },
+      client,
+      startTime,
+      endTime: startTime + totalTime,
+      totalPrice,
+      totalTime,
+      services,
+    });
+    await appointmentRepository.save(createAppointment);
+    return {
+      message: 'Added appointment successfully',
+    };
+  }
+
+  async getClientById(clientId: number, orgId: number) {
+    return await this.dataSource
+      .getRepository(Client)
+      .findOneByOrFail({ id: clientId, orgId });
+  }
+
   private async sendEmailToMember(member: Member, appointmentDate: string) {
     this.sendEmail({
       to: member.email,
@@ -83,13 +118,16 @@ export class AppointmentsService {
   private async getMemberById(memberId: number, orgId: number) {
     return await this.dataSource
       .getRepository(Member)
-      .findOneByOrFail({ id: memberId, organization: { id: orgId } });
+      .findOneByOrFail({ id: memberId, orgId });
   }
 
   async getServicesByIds(serviceIds: number[], orgId: number) {
-    return await this.dataSource
+    const services = await this.dataSource
       .getRepository(Service)
-      .findBy({ id: In(serviceIds), organization: { id: orgId } });
+      .findBy({ id: In(serviceIds), orgId });
+    if (serviceIds.length !== services.length)
+      throw new NotFoundException('Some services are missing');
+    return services;
   }
 
   calculateTimeAndPrice(services: Service[]) {
@@ -124,7 +162,7 @@ export class AppointmentsService {
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
     const { date = getCurrentDate() } = getAppointmentDto;
     const data = await this.appointmentRepository.find({
-      where: { organization: { id: orgId }, date },
+      where: { orgId, date },
       relations: {
         services: true,
       },
@@ -229,16 +267,20 @@ export class AppointmentsService {
   }
 
   remove(id: number) {
-    // this.appointmentRepository.delete(id);
+    this.appointmentRepository.delete(id);
     return {
       message: 'Delete booking succesfully',
     };
   }
 
   async checkOwnership(id: number, orgId: number) {
-    return await this.appointmentRepository.findOneByOrFail({
-      organization: { id: orgId },
-      id,
+    return await this.appointmentRepository.findOne({
+      where: {
+        organization: { id: orgId },
+
+        id,
+      },
+      relations: { services: true },
     });
   }
 

@@ -1,11 +1,12 @@
 import { IncrementEntity } from '@/utils';
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
 
 @Entity()
 export class Notification extends IncrementEntity {
   @Column()
   title: string;
 
+  @Index('userId')
   @Column()
   userId: number;
 

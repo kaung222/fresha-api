@@ -1,6 +1,8 @@
 import {
   Column,
   Entity,
+  Index,
+  JoinColumn,
   JoinTable,
   ManyToMany,
   ManyToOne,
@@ -66,7 +68,12 @@ export class Member extends IncrementEntity {
   @Column({ nullable: true })
   memberId: string;
 
+  @Index('orgId')
+  @Column()
+  orgId: number;
+
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'orgId' })
   organization: Organization;
 
   @Column({ type: 'enum', enum: MemberType, default: MemberType.employee })

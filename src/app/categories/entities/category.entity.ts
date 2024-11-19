@@ -4,6 +4,7 @@ import {
   Column,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -20,7 +21,12 @@ export class Category {
   @Column({ nullable: true })
   notes: string;
 
+  @Index('orgId')
+  @Column()
+  orgId: number;
+
   @ManyToOne(() => Organization)
+  @JoinColumn({ name: 'orgId' })
   organization: Organization;
 
   @OneToMany(() => Service, (service) => service.category)

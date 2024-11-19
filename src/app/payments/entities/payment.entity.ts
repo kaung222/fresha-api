@@ -43,11 +43,11 @@ export class Payment extends UUIDEntity {
   @JoinColumn({ name: 'memberId' })
   member: Member;
 
-  @ManyToMany(() => Service, (service) => service.payments, { cascade: true })
+  @ManyToMany(() => Service, (service) => service.payments)
   @JoinTable()
   services: Service[];
 
-  @ManyToMany(() => Product, (product) => product.payments, { cascade: true })
+  @ManyToMany(() => Product, (product) => product.payments)
   @JoinTable()
   products: Product[];
 

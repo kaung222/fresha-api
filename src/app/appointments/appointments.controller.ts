@@ -17,6 +17,7 @@ import { Roles, User } from '@/security/user.decorator';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { CreateQuickAppointment } from './dto/create-quick-appointment.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
+import { ClientAppointmentDto } from './dto/create-client-booking.dto';
 
 @Controller('appointments')
 @ApiTags('Appointment')
@@ -31,6 +32,19 @@ export class AppointmentsController {
     @User('id') userId: number,
   ) {
     return this.appointmentsService.create(createAppointmentDto, userId);
+  }
+
+  @Post('for/client')
+  @ApiOperation({ summary: 'Create booking for client by org' })
+  @Role(Roles.org)
+  createClientBooking(
+    @Body() clientAppointmentDto: ClientAppointmentDto,
+    @User('orgId') orgId: number,
+  ) {
+    return this.appointmentsService.createClientAppointment(
+      orgId,
+      clientAppointmentDto,
+    );
   }
 
   @Post('quick-sale')

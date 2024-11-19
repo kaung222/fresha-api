@@ -36,7 +36,6 @@ export class Package {
 
   @ManyToMany(() => Service, (service) => service.packages, {
     eager: true,
-    cascade: true,
   })
   @JoinColumn()
   services: Service[];

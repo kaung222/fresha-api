@@ -12,7 +12,6 @@ import { OrganizationsService } from './organizations.service';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
-import { AddAppointmentDto } from '../clients/dto/create-appointment.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 

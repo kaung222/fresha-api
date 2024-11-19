@@ -49,7 +49,7 @@ export class Appointment extends IncrementEntity {
   @Column('float', { default: 0 })
   totalTime: number;
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   totalPrice: number;
 
   @Column({ nullable: true })
@@ -61,7 +61,9 @@ export class Appointment extends IncrementEntity {
   @Column('int', { nullable: true })
   endTime: number; // in second
 
-  @ManyToMany(() => Service, (service) => service.appointments, { eager: true })
+  @ManyToMany(() => Service, (service) => service.appointments, {
+    eager: true,
+  })
   @JoinTable()
   services: Service[];
 
