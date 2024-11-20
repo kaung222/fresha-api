@@ -92,12 +92,8 @@ export class AppointmentsController {
   @Patch(':id/confirm')
   @Role(Roles.org, Roles.member)
   @ApiOperation({ summary: 'Confirm booking by org or member' })
-  async confirmBooking(@Param('id') id: string, @User('orgId') orgId: number) {
-    const appointment = await this.appointmentsService.checkOwnership(
-      +id,
-      orgId,
-    );
-    return this.appointmentsService.confirmBooking(+id, appointment);
+  confirmBooking(@Param('id') id: string, @User('orgId') orgId: number) {
+    return this.appointmentsService.confirmBooking(+id, orgId);
   }
 
   @Patch(':id/cancel')
@@ -121,8 +117,7 @@ export class AppointmentsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete booking by org or member' })
   @Role(Roles.org, Roles.member)
-  async remove(@Param('id') id: string, @User('orgId') orgId: number) {
-    await this.appointmentsService.checkOwnership(+id, orgId);
-    return this.appointmentsService.remove(+id);
+  remove(@Param('id') id: string, @User('orgId') orgId: number) {
+    return this.appointmentsService.remove(+id, orgId);
   }
 }

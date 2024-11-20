@@ -79,7 +79,8 @@ export class ServicesService {
   async findAll(orgId: number, getServices: GetServicesDto) {
     const queryBuilder = this.serviceRepository
       .createQueryBuilder('service')
-      .where('service.orgId = :orgId', { orgId });
+      .where('service.orgId = :orgId', { orgId })
+      .leftJoinAndSelect('service.category', 'category');
     // If no specific type is provided, return all services
     if (!getServices.type) {
       return queryBuilder.getMany();
@@ -95,12 +96,13 @@ export class ServicesService {
   }
 
   async createPackage(orgId: number, createPackageDto: CreatePackageDto) {
-    const { serviceIds, memberIds, ...rest } = createPackageDto;
+    const { serviceIds, memberIds, categoryId, ...rest } = createPackageDto;
     const { price, duration, services } = await this.calculatePriceAndDuration(
       serviceIds,
       orgId,
     );
     const members = await this.getMembersByIds(memberIds, orgId);
+    const category = await this.getCategoryById(categoryId, orgId);
     const discountPrice = this.calculateDiscountPrice(
       price,
       rest.discount,
@@ -109,6 +111,7 @@ export class ServicesService {
     const newPackage = this.serviceRepository.create({
       ...rest,
       price,
+      category,
       duration,
       discountPrice,
       members,

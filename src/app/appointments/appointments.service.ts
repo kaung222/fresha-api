@@ -131,15 +131,6 @@ export class AppointmentsService {
     return services;
   }
 
-  // async getPackagesByIds(packageIds: number[], orgId: number) {
-  //   const packages = await this.dataSource
-  //     .getRepository(Package)
-  //     .findBy({ id: In(packageIds), orgId });
-  //   if (packageIds.length !== packages.length)
-  //     throw new NotFoundException('Some packages are missing');
-  //   return packages;
-  // }
-
   calculateTimeAndPrice(services: Service[]) {
     const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
     const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
@@ -198,7 +189,7 @@ export class AppointmentsService {
     updateAppointmentDto: UpdateAppointmentDto,
     orgId: number,
   ) {
-    const appointment = await this.checkOwnership(id, orgId);
+    const appointment = await this.getBookingById(id, orgId);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
     try {
@@ -221,7 +212,8 @@ export class AppointmentsService {
     }
   }
 
-  async confirmBooking(id: number, appointment: Appointment) {
+  async confirmBooking(id: number, orgId: number) {
+    const appointment = await this.getBookingById(id, orgId);
     this.appointmentRepository.update(id, { status: BookingStatus.confirmed });
     // send email about booking confirmation
     this.sendEmail({
@@ -240,7 +232,7 @@ export class AppointmentsService {
     cancelBookingDto: CancelBookingDto,
     orgId: number,
   ) {
-    const appointment = await this.checkOwnership(id, orgId);
+    const appointment = await this.getBookingById(id, orgId);
     this.appointmentRepository.update(id, { status: BookingStatus.cancelled });
     // send email about booking cancelation
     this.sendEmail({
@@ -277,25 +269,24 @@ export class AppointmentsService {
     };
   }
 
-  remove(id: number) {
+  async remove(id: number, orgId: number) {
+    await this.getBookingById(id, orgId);
     this.appointmentRepository.delete(id);
     return {
       message: 'Delete booking succesfully',
     };
   }
 
-  async checkOwnership(id: number, orgId: number) {
-    return await this.appointmentRepository.findOne({
-      where: {
-        organization: { id: orgId },
-
-        id,
-      },
-      relations: { services: true },
+  async getBookingById(bookingId: number, orgId: number) {
+    const appointment = await this.appointmentRepository.findOneBy({
+      orgId,
+      id: bookingId,
     });
+    if (!appointment) throw new NotFoundException('Appointment not found');
+    return appointment;
   }
 
-  async sendEmail(emailPayload: SendEmailDto) {
+  sendEmail(emailPayload: SendEmailDto) {
     this.emailQueue.add('sendEmail', emailPayload);
   }
 
