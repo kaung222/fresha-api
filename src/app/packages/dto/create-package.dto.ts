@@ -1,21 +1,21 @@
-import { ArrayMinSize, IsEnum, IsNotEmpty } from 'class-validator';
-import { DiscountType } from '../entities/package.entity';
+// import { ArrayMinSize, IsEnum, IsNotEmpty } from 'class-validator';
+// import { DiscountType } from '../entities/package.entity';
 
-export class CreatePackageDto {
-  @IsNotEmpty()
-  name: string;
+// export class CreatePackageDto {
+//   @IsNotEmpty()
+//   name: string;
 
-  @IsNotEmpty()
-  description: string;
+//   @IsNotEmpty()
+//   description: string;
 
-  @IsNotEmpty()
-  discount: number;
+//   @IsNotEmpty()
+//   discount: number;
 
-  @IsNotEmpty()
-  @IsEnum(DiscountType)
-  discountType: DiscountType;
+//   @IsNotEmpty()
+//   @IsEnum(DiscountType)
+//   discountType: DiscountType;
 
-  @IsNotEmpty()
-  @ArrayMinSize(1)
-  serviceIds: number[];
-}
+//   @IsNotEmpty()
+//   @ArrayMinSize(1)
+//   serviceIds: number[];
+// }

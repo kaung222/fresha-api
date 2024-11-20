@@ -2,7 +2,6 @@ import { Appointment } from '@/app/appointments/entities/appointment.entity';
 import { Category } from '@/app/categories/entities/category.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
-import { Package } from '@/app/packages/entities/package.entity';
 import { Payment } from '@/app/payments/entities/payment.entity';
 import { IncrementEntity } from '@/utils/base.entity';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
@@ -13,6 +12,7 @@ import {
   ManyToMany,
   JoinColumn,
   Index,
+  JoinTable,
 } from 'typeorm';
 
 export enum TargetGender {
@@ -24,6 +24,17 @@ export enum TargetGender {
 export enum PriceType {
   fixed = 'fixed',
   from = 'from',
+  free = 'free',
+}
+
+export enum ServiceType {
+  service = 'Single Service',
+  package = 'Package',
+}
+
+export enum DiscountType {
+  fixed = 'fixed',
+  percent = 'percent',
   free = 'free',
 }
 
@@ -45,33 +56,43 @@ export class Service extends IncrementEntity {
   targetGender: TargetGender;
 
   @Column({ nullable: true })
-  duration?: number; // in minutes
+  duration: number;
 
-  @ManyToMany(() => Member, (member) => member.services, {
-    onDelete: 'CASCADE',
-  })
-  members: Member[];
+  @Column('int', { default: 0 })
+  discount: number;
+
+  @Column('int', { default: 0 })
+  discountPrice: number;
+
+  @Column('enum', { enum: DiscountType, default: DiscountType.fixed })
+  discountType: DiscountType;
 
   @Column('enum', { enum: PriceType, default: PriceType.fixed })
   priceType: PriceType;
 
-  @Column({ nullable: true })
-  categoryId: number;
-
-  @ManyToOne(() => Category, { onDelete: 'SET NULL', eager: true })
-  @JoinColumn({ name: 'categoryId' })
-  category: Category;
+  @Column('enum', { enum: ServiceType, default: ServiceType.service })
+  type: ServiceType;
 
   @Index('orgId')
   @Column()
   orgId: number;
 
+  @ManyToOne(() => Category, { onDelete: 'SET NULL', eager: true })
+  @JoinColumn({ name: 'categoryId' })
+  category: Category;
+
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orgId' })
   organization: Organization;
+  @ManyToMany(() => Member, (member) => member.services)
+  members: Member[];
 
-  @ManyToMany(() => Package, (pack) => pack.services, { onDelete: 'NO ACTION' })
-  packages: Package[];
+  @ManyToMany(() => Service, (service) => service.services)
+  @JoinTable({ name: 'service_package' })
+  packages: Service[];
+
+  @ManyToMany(() => Service, (service) => service.packages)
+  services: Service[];
 
   @ManyToMany(() => Appointment, (appointment) => appointment.services)
   appointments: Appointment[];

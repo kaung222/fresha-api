@@ -44,13 +44,11 @@ import { BreakTime } from './app/member-schedule/entities/break-time.entity';
 import { OrgSchedule } from './app/org-schedule/entities/org-schedule.entity';
 import { NotificationsModule } from './app/notifications/notifications.module';
 import { Notification } from './app/notifications/entities/notification.entity';
-import { PackagesModule } from './app/packages/packages.module';
 import { StatisticsModule } from './app/statistics/statistics.module';
 import { ClosedDaysModule } from './app/closed-days/closed-days.module';
 import { ClosedDay } from './app/closed-days/entities/closed-day.entity';
 import { LeavesModule } from './app/leaves/leaves.module';
 import { Leave } from './app/leaves/entities/leave.entity';
-import { Package } from './app/packages/entities/package.entity';
 import { PublicationModule } from './app/publication/publication.module';
 import { BrandsModule } from './app/brands/brands.module';
 import { ProductCategoryModule } from './app/product-category/product-category.module';
@@ -96,7 +94,7 @@ import { SaleItem } from './app/sales/entities/sale-item.entity';
         Notification,
         ClosedDay,
         Leave,
-        Package,
+
         Brand,
         Payment,
         ProductCategory,
@@ -149,7 +147,6 @@ import { SaleItem } from './app/sales/entities/sale-item.entity';
     MemberScheduleModule,
     OrgScheduleModule,
     NotificationsModule,
-    PackagesModule,
     StatisticsModule,
     ClosedDaysModule,
     LeavesModule,

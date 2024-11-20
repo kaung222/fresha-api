@@ -1,37 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   ArrayMinSize,
+  IsArray,
   IsEnum,
   IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
-  IsPositive,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
-import {
-  DiscountType,
-  PriceType,
-  TargetGender,
-} from '../entities/service.entity';
+import { DiscountType, TargetGender } from '../entities/service.entity';
 
-export class CreateServiceDto {
+export class CreatePackageDto {
   @IsNotEmpty()
   name: string;
 
   @IsNotEmpty()
   categoryId: number;
-
-  @IsNotEmpty()
-  @Min(0)
-  @Max(1000000)
-  price: number;
-
-  @IsNotEmpty()
-  @IsNumber()
-  @IsPositive()
-  duration: number;
 
   @ApiProperty({ default: TargetGender.all, enum: TargetGender })
   @IsEnum(TargetGender)
@@ -40,17 +26,22 @@ export class CreateServiceDto {
   @IsOptional()
   description: string;
 
+  @IsNotEmpty({ each: true })
+  @IsArray()
+  @ArrayMinSize(2)
+  serviceIds: number[];
+
   @ApiProperty({ example: '[memberId1,memberId2]' })
-  @IsNotEmpty()
+  @IsArray()
+  @IsNotEmpty({ each: true })
   @ArrayMinSize(1)
   memberIds: number[];
 
   @IsNotEmpty()
-  @IsEnum(PriceType)
-  priceType: PriceType;
-
-  @IsNotEmpty()
   @IsInt()
+  @Min(0)
+  @ValidateIf((o) => o.discountType !== DiscountType.percent)
+  @Max(100)
   discount: number;
 
   @IsEnum(DiscountType)

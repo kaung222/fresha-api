@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { CreateServiceDto } from './dto/create-service.dto';
@@ -13,6 +14,9 @@ import { UpdateServiceDto } from './dto/update-service.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { Roles, User } from '@/security/user.decorator';
 import { Role } from '@/security/role.decorator';
+import { CreatePackageDto } from './dto/create-package.dto';
+import { UpdatePackageDto } from './dto/update-package.dto';
+import { GetServicesDto } from './dto/get-service.dto';
 
 @Controller('services')
 @ApiTags('Service')
@@ -28,9 +32,26 @@ export class ServicesController {
     return this.servicesService.create(createServiceDto, orgId);
   }
 
+  @Post('package')
+  createPackage(
+    @Body() createPackageDto: CreatePackageDto,
+    @User('orgId') orgId: number,
+  ) {
+    return this.servicesService.createPackage(orgId, createPackageDto);
+  }
+
+  @Patch('package/:id')
+  updatePackage(
+    @Param('id') id: string,
+    @Body() updatePackageDto: UpdatePackageDto,
+    @User('orgId') orgId: number,
+  ) {
+    return this.servicesService.updatePackage(+id, updatePackageDto, orgId);
+  }
+
   @Get()
-  findAll(@User('orgId') orgId: number) {
-    return this.servicesService.findAll(orgId);
+  findAll(@User('orgId') orgId: number, @Query() getServices: GetServicesDto) {
+    return this.servicesService.findAll(orgId, getServices);
   }
 
   @Get(':id')
