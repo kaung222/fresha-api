@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
 import { Repository } from 'typeorm';
 import { CacheService, CacheTTL } from '@/global/cache.service';
+import { findAll } from '@/utils/paginate-query.dto';
 
 @Injectable()
 export class CategoriesService {

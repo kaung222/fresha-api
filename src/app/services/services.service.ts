@@ -185,7 +185,7 @@ export class ServicesService {
 
   findOne(id: number) {
     return this.serviceRepository.findOne({
-      relations: { members: true, services: true },
+      relations: { members: true, services: true, category: true },
       where: { id },
     });
   }
@@ -215,7 +215,10 @@ export class ServicesService {
       service.services = [];
     }
     await this.serviceRepository.save(service);
-    return this.serviceRepository.delete(id);
+    await this.serviceRepository.delete({ id });
+    return {
+      message: 'Deleted service successfully',
+    };
   }
 
   async checkOwnership(serviceId: number, orgId: number): Promise<Service> {

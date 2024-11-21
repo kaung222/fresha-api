@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSaleDto } from './dto/create-sale.dto';
-import { UpdateSaleDto } from './dto/update-sale.dto';
+import { UpdateQuickSaleDto } from './dto/update-sale.dto';
 import { CreateQuickSaleDto, SaleItemDto } from './dto/create-quick-sale.dto';
 import { DataSource, In, Repository } from 'typeorm';
 import { Product } from '../products/entities/product.entity';
@@ -18,21 +18,42 @@ export class SalesService {
     @InjectRepository(SaleItem)
     private saleItemRepository: Repository<SaleItem>,
   ) {}
-  create(userId: number, createSaleDto: CreateSaleDto) {
-    return this.saleRepository.create(createSaleDto);
-  }
-
-  async createQuickSale(orgId: number, createQuickSaleDto: CreateQuickSaleDto) {
-    const { saleItems, ...rest } = createQuickSaleDto;
+  async create(orgId: number, createSaleDto: CreateSaleDto) {
+    const { saleItems, ...rest } = createSaleDto;
     const createSale = this.saleRepository.create({
       ...rest,
-      organization: { id: orgId },
+      orgId,
     });
     const sale = await this.saleRepository.save(createSale);
     const items = await this.saveSaleItems(sale, saleItems);
     const { totalPrice } = this.calculateTotalPrice(items);
     sale.totalPrice = totalPrice;
     return this.saleRepository.save(sale);
+  }
+
+  async createQuickSale(orgId: number, createQuickSaleDto: CreateQuickSaleDto) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
+    try {
+      const { saleItems, ...rest } = createQuickSaleDto;
+      const createSale = this.saleRepository.create({
+        ...rest,
+        organization: { id: orgId },
+      });
+      const sale = await this.saleRepository.save(createSale);
+      const items = await this.saveSaleItems(sale, saleItems);
+      const { totalPrice } = this.calculateTotalPrice(items);
+      sale.totalPrice = totalPrice;
+      await this.saleRepository.save(sale);
+      await queryRunner.commitTransaction();
+      return {
+        message: 'Create sale successfully',
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   private async saveSaleItems(sale: Sale, saleItems: SaleItemDto[]) {
@@ -89,18 +110,30 @@ export class SalesService {
     });
   }
 
-  update(id: number, updateSaleDto: UpdateSaleDto) {
-    return `This action updates a #${id} sale`;
+  async update(id: number, updateSaleDto: UpdateQuickSaleDto, orgId: number) {
+    const { saleItems, ...rest } = updateSaleDto;
+    const sale = await this.getSaleById(id, orgId, true);
+    const items = await this.saveSaleItems(sale, saleItems);
+    Object.assign(sale, rest);
+    sale.saleItems = items;
+    return this.saleRepository.save(sale);
   }
 
-  remove(id: number) {
+  async remove(id: number, orgId: number) {
+    await this.getSaleById(id, orgId);
     return this.saleRepository.delete({ id });
   }
 
-  async checkOwnership(saleId: number, orgId: number) {
-    return await this.saleRepository.findOneByOrFail({
-      organization: { id: orgId },
-      id: saleId,
+  async getSaleById(
+    saleId: number,
+    orgId: number,
+    saleItems_include?: boolean,
+  ) {
+    return await this.saleRepository.findOne({
+      where: { id: saleId, orgId },
+      relations: {
+        saleItems: saleItems_include,
+      },
     });
   }
 }

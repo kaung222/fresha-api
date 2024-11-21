@@ -1,4 +1,32 @@
-import { PartialType } from '@nestjs/swagger';
-import { CreateSaleDto } from './create-sale.dto';
+import { Type } from 'class-transformer';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsPositive,
+  ValidateNested,
+} from 'class-validator';
 
-export class UpdateSaleDto extends PartialType(CreateSaleDto) {}
+export class SaleItemDto {
+  @IsNotEmpty()
+  productId: number;
+
+  @IsNotEmpty()
+  @IsPositive()
+  quantity: number;
+}
+export class UpdateQuickSaleDto {
+  @IsOptional()
+  notes: string;
+
+  @IsOptional()
+  username: string;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @IsArray()
+  @ArrayMinSize(1)
+  @Type(() => SaleItemDto)
+  saleItems: SaleItemDto[];
+}

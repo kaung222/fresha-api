@@ -10,20 +10,20 @@ import {
 } from '@nestjs/common';
 import { SalesService } from './sales.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
-import { UpdateSaleDto } from './dto/update-sale.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { CreateQuickSaleDto } from './dto/create-quick-sale.dto';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
+import { UpdateQuickSaleDto } from './dto/update-sale.dto';
 
 @Controller('sales')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
   @Post()
-  @Role(Roles.user)
-  create(@User('id') userId: number, @Body() createSaleDto: CreateSaleDto) {
-    return this.salesService.create(userId, createSaleDto);
+  @Role(Roles.org)
+  create(@User('orgId') orgId: number, @Body() createSaleDto: CreateSaleDto) {
+    return this.salesService.create(orgId, createSaleDto);
   }
 
   @Post('quick-sale')
@@ -47,18 +47,16 @@ export class SalesController {
   }
 
   @Patch(':id')
-  async update(
+  update(
     @Param('id') id: string,
-    @Body() updateSaleDto: UpdateSaleDto,
+    @Body() updateSaleDto: UpdateQuickSaleDto,
     @User('orgId') orgId: number,
   ) {
-    await this.salesService.checkOwnership(+id, orgId);
-    return this.salesService.update(+id, updateSaleDto);
+    return this.salesService.update(+id, updateSaleDto, orgId);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @User('orgId') orgId: number) {
-    await this.salesService.checkOwnership(+id, orgId);
-    return this.salesService.remove(+id);
+  remove(@Param('id') id: string, @User('orgId') orgId: number) {
+    return this.salesService.remove(+id, orgId);
   }
 }
