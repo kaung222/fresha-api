@@ -27,12 +27,14 @@ import { GetAvailableTimes } from './dto/get-available-time.dto';
 import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 import { Leave } from '../leaves/entities/leave.entity';
 import { ClosedDay } from '../closed-days/entities/closed-day.entity';
+import { CacheService, CacheTTL } from '@/global/cache.service';
 
 @Injectable()
 export class MembersService {
   constructor(
     private eventEmitter: EventEmitter2,
     private dataSource: DataSource,
+    private readonly cacheService: CacheService,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
   ) {}
@@ -57,32 +59,50 @@ export class MembersService {
   // create new member
   async create(createMemberDto: CreateMemberDto, orgId: number) {
     const { serviceIds, ...rest } = createMemberDto;
+    const services = await this.getServicesByIds(serviceIds, orgId);
     const createMember = this.memberRepository.create({
       ...rest,
-      services: serviceIds?.map((id) => ({ id })),
+      services,
       organization: { id: orgId },
     });
     const member = await this.memberRepository.save(createMember);
     this.memberCreateEvent(orgId, member);
+    await this.clearCache(orgId);
     return {
       message: 'Create member successfully',
     };
   }
 
+  async getServicesByIds(serviceIds: number[], orgId: number) {
+    const services = await this.dataSource
+      .getRepository(Service)
+      .findBy({ id: In(serviceIds), orgId });
+    if (serviceIds.length !== services.length)
+      throw new NotFoundException('Some services are missing');
+    return services;
+  }
+
   // find many
   async findAll(orgId: number) {
-    let page = 1;
-    const response = await this.memberRepository.find({
-      skip: 10 * (page - 1),
-      take: 10,
-      order: {
-        firstName: 'ASC',
-      },
+    const cacheKey = this.getCacheKey(orgId);
+    const memberCache = await this.cacheService.get(cacheKey);
+    if (memberCache) return memberCache;
+    const members = await this.memberRepository.find({
       where: {
-        organization: { id: orgId },
+        orgId,
       },
     });
-    return response;
+    await this.cacheService.set(cacheKey, members, CacheTTL.long);
+    return members;
+  }
+
+  private getCacheKey(orgId: number) {
+    return `${orgId}:members`;
+  }
+
+  private clearCache(orgId: number) {
+    const cacheKey = this.getCacheKey(orgId);
+    return this.cacheService.del(cacheKey);
   }
 
   findOne(id: number) {
@@ -96,7 +116,7 @@ export class MembersService {
     return this.memberRepository.findOneBy({ id });
   }
 
-  async update(id: number, updateMemberDto: UpdateMemberDto) {
+  async update(id: number, updateMemberDto: UpdateMemberDto, orgId: number) {
     const { serviceIds, profilePictureUrl } = updateMemberDto;
     // Find the member with the relations (services)
     const member = await this.memberRepository.findOne({
@@ -112,9 +132,7 @@ export class MembersService {
     }
 
     // Fetch the services based on the provided service IDs
-    const services = await this.dataSource
-      .getRepository(Service)
-      .findBy({ id: In(serviceIds) });
+    const services = await this.getServicesByIds(serviceIds, orgId);
 
     // Update the member's services and other fields
     member.services = services;
@@ -124,6 +142,7 @@ export class MembersService {
     await this.memberRepository.save(member);
     this.eventEmitter.emit('files.used', { ids: [profilePictureUrl] });
     this.eventEmitter.emit('files.unused', { ids: [member.profilePictureUrl] });
+    await this.clearCache(orgId);
     return {
       message: 'success',
     };
@@ -215,8 +234,13 @@ export class MembersService {
     };
   }
 
-  remove(id: number) {
-    return this.memberRepository.delete(id);
+  async remove(id: number, orgId: number) {
+    await this.getMemberById(id, orgId);
+    await this.memberRepository.delete(id);
+    await this.clearCache(orgId);
+    return {
+      message: 'Delete member successfully',
+    };
   }
 
   restore(id: number) {
@@ -227,9 +251,9 @@ export class MembersService {
     return this.memberRepository.restore(ids);
   }
 
-  async checkOwnership(memberId: number, userId: number): Promise<Member> {
+  async getMemberById(memberId: number, orgId: number): Promise<Member> {
     const member = await this.memberRepository.findOne({
-      where: { organization: { id: userId }, id: memberId },
+      where: { orgId, id: memberId },
     });
     if (member.role === Roles.org) {
       throw new ForbiddenException('this account cannot be deleted');

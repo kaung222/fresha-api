@@ -48,8 +48,12 @@ export class MembersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMemberDto: UpdateMemberDto) {
-    return this.membersService.update(+id, updateMemberDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateMemberDto: UpdateMemberDto,
+    @User('orgId') orgId: number,
+  ) {
+    return this.membersService.update(+id, updateMemberDto, orgId);
   }
 
   @Get(':id/available-times')
@@ -61,12 +65,12 @@ export class MembersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.membersService.remove(+id);
+  remove(@Param('id') id: string, @User('orgId') orgId: number) {
+    return this.membersService.remove(+id, orgId);
   }
 
   @Get(':id/restore')
-  restore(@Param('id') id: string) {
-    return this.membersService.remove(+id);
+  restore(@Param('id') id: string, @User('orgId') orgId: number) {
+    return this.membersService.restore(+id);
   }
 }

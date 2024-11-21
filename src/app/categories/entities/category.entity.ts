@@ -21,6 +21,9 @@ export class Category {
   @Column({ nullable: true })
   notes: string;
 
+  @Column('int', { default: 0 })
+  serviceCount: number;
+
   @Index('orgId')
   @Column()
   orgId: number;

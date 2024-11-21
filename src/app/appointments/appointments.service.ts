@@ -46,12 +46,14 @@ export class AppointmentsService {
         createAppointmentDto;
       const services = await this.getServicesByIds(serviceIds, orgId);
       const member = await this.getMemberById(memberId, orgId);
-      const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+      const { totalPrice, totalTime, discountPrice } =
+        this.calculateTimeAndPrice(services);
       const newAppointment = this.appointmentRepository.create({
         ...rest,
         user: { id: userId },
         organization: { id: orgId },
-        member: { id: memberId },
+        member,
+        discountPrice,
         endTime: startTime + totalTime,
         startTime,
         totalTime,
@@ -82,18 +84,21 @@ export class AppointmentsService {
     const appointmentRepository = this.dataSource.getRepository(Appointment);
     const client = await this.getClientById(clientId, orgId);
     const services = await this.getServicesByIds(serviceIds, orgId);
-
-    const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+    const member = await this.getMemberById(memberId, orgId);
+    // calculate time and price
+    const { totalPrice, totalTime, discountPrice } =
+      this.calculateTimeAndPrice(services);
     const createAppointment = appointmentRepository.create({
       ...rest,
       organization: { id: orgId },
-      member: { id: memberId },
+      member,
       client,
       startTime,
       endTime: startTime + totalTime,
       totalPrice,
       totalTime,
       services,
+      discountPrice,
     });
     await appointmentRepository.save(createAppointment);
     return {
@@ -107,7 +112,7 @@ export class AppointmentsService {
       .findOneByOrFail({ id: clientId, orgId });
   }
 
-  private async sendEmailToMember(member: Member, appointmentDate: string) {
+  private sendEmailToMember(member: Member, appointmentDate: string) {
     this.sendEmail({
       to: member.email,
       recipientName: member.firstName,
@@ -134,10 +139,11 @@ export class AppointmentsService {
   calculateTimeAndPrice(services: Service[]) {
     const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
     const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
-
+    const discountPrice = services.reduce((pv, cv) => pv + cv.discountPrice, 0);
     return {
       totalPrice,
       totalTime,
+      discountPrice,
     };
   }
 
@@ -147,10 +153,12 @@ export class AppointmentsService {
   ) {
     const { serviceIds, startTime, ...rest } = quickAppointment;
     const services = await this.getServicesByIds(serviceIds, orgId);
-    const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+    const { totalPrice, totalTime, discountPrice } =
+      this.calculateTimeAndPrice(services);
     const createAppointment = this.appointmentRepository.create({
       ...rest,
       services,
+      discountPrice,
       organization: { id: orgId },
       startTime,
       endTime: startTime + totalTime,
@@ -163,13 +171,12 @@ export class AppointmentsService {
   // find all appointment by org for a given date
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
     const { date = getCurrentDate() } = getAppointmentDto;
-    const data = await this.appointmentRepository.find({
+    return await this.appointmentRepository.find({
       where: { orgId, date },
       relations: {
         services: true,
       },
     });
-    return data;
   }
 
   // get appointment detail
@@ -195,12 +202,14 @@ export class AppointmentsService {
     try {
       const { serviceIds, ...rest } = updateAppointmentDto;
       const services = await this.getServicesByIds(serviceIds, orgId);
-      const { totalPrice, totalTime } = this.calculateTimeAndPrice(services);
+      const { totalPrice, totalTime, discountPrice } =
+        this.calculateTimeAndPrice(services);
       appointment.services = services;
       appointment.totalTime = totalTime;
       appointment.endTime = rest.startTime + totalTime;
       appointment.startTime = rest.startTime;
       appointment.totalPrice = totalPrice;
+      appointment.discountPrice = discountPrice;
       await this.appointmentRepository.save(appointment);
       await queryRunner.commitTransaction();
       return { message: 'Update the appointment successfully' };

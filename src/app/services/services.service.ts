@@ -101,6 +101,8 @@ export class ServicesService {
       serviceIds,
       orgId,
     );
+    const serviceNames = services.map((service) => service.name);
+    const serviceCount = services.length;
     const members = await this.getMembersByIds(memberIds, orgId);
     const category = await this.getCategoryById(categoryId, orgId);
     const discountPrice = this.calculateDiscountPrice(
@@ -115,6 +117,8 @@ export class ServicesService {
       duration,
       discountPrice,
       members,
+      serviceCount,
+      serviceNames,
       type: ServiceType.package,
       services,
       orgId,
@@ -127,12 +131,17 @@ export class ServicesService {
     createPackageDto: CreatePackageDto,
     orgId: number,
   ) {
-    const { serviceIds, memberIds, ...rest } = createPackageDto;
+    const { serviceIds, memberIds, categoryId, ...rest } = createPackageDto;
+    const category = await this.getCategoryById(categoryId, orgId);
     const myPackage = await this.getPackageById(id, orgId);
+
     const { price, duration, services } = await this.calculatePriceAndDuration(
       serviceIds,
       orgId,
     );
+    // get serviceCount and names array to save in package detail
+    const serviceNames = services.map((service) => service.name);
+    const serviceCount = services.length;
     const members = await this.getMembersByIds(memberIds, orgId);
     const discountPrice = this.calculateDiscountPrice(
       price,
@@ -141,6 +150,9 @@ export class ServicesService {
     );
     (myPackage.services = services), (myPackage.members = members);
     myPackage.price = price;
+    myPackage.serviceNames = serviceNames;
+    myPackage.serviceCount = serviceCount;
+    myPackage.category = category;
     myPackage.duration = duration;
     myPackage.discountPrice = discountPrice;
     Object.assign(myPackage, rest);
@@ -173,13 +185,9 @@ export class ServicesService {
 
   findOne(id: number) {
     return this.serviceRepository.findOne({
-      relations: { members: true },
+      relations: { members: true, services: true },
       where: { id },
     });
-  }
-
-  findByIds(ids: number[]) {
-    return this.serviceRepository.findBy({ id: In(ids) });
   }
 
   async update(id: number, updateServiceDto: UpdateServiceDto, orgId: number) {

@@ -12,6 +12,7 @@ import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Client } from '@/app/clients/entities/client.entity';
 import { Service } from '@/app/services/entities/service.entity';
+import { DecimalColumn } from '@/utils/decorators/column.decorators';
 
 export enum BookingStatus {
   pending = 'pending',
@@ -49,8 +50,11 @@ export class Appointment extends IncrementEntity {
   @Column('float', { default: 0 })
   totalTime: number;
 
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  @DecimalColumn()
   totalPrice: number;
+
+  @DecimalColumn()
+  discountPrice: number;
 
   @Column({ nullable: true })
   memberId: number;

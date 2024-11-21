@@ -73,11 +73,19 @@ export class Service extends IncrementEntity {
   @Column('enum', { enum: ServiceType, default: ServiceType.service })
   type: ServiceType;
 
+  // in package , number of services included
+  @Column('int', { default: 0 })
+  serviceCount: number;
+
+  // in package , name of services included
+  @Column('simple-array', { nullable: true })
+  serviceNames: string[];
+
   @Index('orgId')
   @Column()
   orgId: number;
 
-  @ManyToOne(() => Category, { onDelete: 'SET NULL', eager: true })
+  @ManyToOne(() => Category, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'categoryId' })
   category: Category;
 

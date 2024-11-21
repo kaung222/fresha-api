@@ -40,18 +40,16 @@ export class CategoriesController {
   }
 
   @Patch(':id')
-  async update(
+  update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
     @User('orgId') orgId: number,
   ) {
-    await this.categoriesService.checkOwnership(+id, orgId);
-    return this.categoriesService.update(+id, updateCategoryDto);
+    return this.categoriesService.update(+id, updateCategoryDto, orgId);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string, @User('orgId') orgId: number) {
-    await this.categoriesService.checkOwnership(+id, orgId);
-    return this.categoriesService.remove(+id);
+    return this.categoriesService.remove(+id, orgId);
   }
 }

@@ -4,47 +4,111 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
 import { Repository } from 'typeorm';
+import { CacheService, CacheTTL } from '@/global/cache.service';
 
 @Injectable()
 export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    private readonly cacheService: CacheService,
   ) {}
-  create(createCategoryDto: CreateCategoryDto, orgId: number) {
-    const createCategory = this.categoryRepository.create({
+
+  /**
+   * Create a new category and clear the cache for the organization.
+   */
+  async create(createCategoryDto: CreateCategoryDto, orgId: number) {
+    const newCategory = this.categoryRepository.create({
       ...createCategoryDto,
       organization: { id: orgId },
     });
-    return this.categoryRepository.save(createCategory);
+
+    const category = await this.categoryRepository.save(newCategory);
+    await this.clearCategoryCache(orgId);
+
+    return {
+      category,
+      message: 'Category created successfully',
+    };
   }
 
-  findAll(orgId: number) {
-    console.log(orgId);
-    return this.categoryRepository.find({
+  /**
+   * Retrieve all categories for the given organization, using cache if available.
+   */
+  async findAll(orgId: number) {
+    const cacheKey = this.getCategoryCacheKey(orgId);
+    const cachedCategories = await this.cacheService.get(cacheKey);
+    if (cachedCategories) return cachedCategories;
+
+    const categories = await this.categoryRepository.find({
       relations: { services: true },
       where: { organization: { id: orgId } },
     });
+
+    await this.cacheService.set(cacheKey, categories, CacheTTL.long);
+    return categories;
   }
 
-  findOne(id: number) {
-    return this.categoryRepository.findOneBy({ id });
-  }
-
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return this.categoryRepository.update(id, updateCategoryDto);
-  }
-
-  remove(id: number) {
-    return this.categoryRepository.delete(id);
-  }
-
-  async checkOwnership(id: number, orgId: number): Promise<boolean> {
-    const category = await this.categoryRepository.findOneBy({
-      id,
-      organization: { id: orgId },
+  /**
+   * Find a category by its ID.
+   */
+  async findOne(id: number) {
+    const category = await this.categoryRepository.findOne({
+      where: { id },
+      relations: { services: { services: true } },
     });
-    if (!category) throw new NotFoundException('category not found');
-    return true;
+    if (!category)
+      throw new NotFoundException(`Category with ID ${id} not found`);
+    return category;
+  }
+
+  /**
+   * Update a category by its ID.
+   */
+  async update(
+    id: number,
+    updateCategoryDto: UpdateCategoryDto,
+    orgId: number,
+  ) {
+    await this.getCategoryById(id, orgId);
+    await this.categoryRepository.update(id, updateCategoryDto);
+    await this.clearCategoryCache(orgId);
+    return { message: 'Category updated successfully' };
+  }
+
+  /**
+   * Remove a category by its ID.
+   */
+  async remove(id: number, orgId: number) {
+    await this.getCategoryById(id, orgId);
+    await this.categoryRepository.delete(id);
+    await this.clearCategoryCache(orgId);
+    return { message: 'Category removed successfully' };
+  }
+
+  /**
+   * Check if a category belongs to the given organization.
+   */
+  private async getCategoryById(id: number, orgId: number): Promise<Category> {
+    const category = await this.categoryRepository.findOne({
+      where: { id, orgId },
+    });
+    if (!category) throw new NotFoundException('Category not found');
+    return category;
+  }
+
+  /**
+   * Generate a cache key for categories.
+   */
+  private getCategoryCacheKey(orgId: number): string {
+    return `${orgId}:categories`;
+  }
+
+  /**
+   * Clear the cache for categories.
+   */
+  private async clearCategoryCache(orgId: number): Promise<void> {
+    const cacheKey = this.getCategoryCacheKey(orgId);
+    await this.cacheService.del(cacheKey);
   }
 }
