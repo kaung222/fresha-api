@@ -58,13 +58,10 @@ export class MemberScheduleService {
   }
 
   async findAll(orgId: number) {
-    // return this.memberScheduleRepository.findBy({
-    //   organization: { id: orgId },
-    // });
     return this.dataSource.getRepository(Member).find({
       relations: { schedules: true },
       where: {
-        organization: { id: orgId },
+        orgId,
       },
     });
   }

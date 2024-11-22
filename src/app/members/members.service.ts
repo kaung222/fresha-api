@@ -28,6 +28,7 @@ import { CreateNotificationDto } from '../notifications/dto/create-notification.
 import { Leave } from '../leaves/entities/leave.entity';
 import { ClosedDay } from '../closed-days/entities/closed-day.entity';
 import { CacheService, CacheTTL } from '@/global/cache.service';
+import { GetAppointmentDto } from './dto/get-appointments.dto';
 
 @Injectable()
 export class MembersService {
@@ -96,6 +97,17 @@ export class MembersService {
     return members;
   }
 
+  async getAppointments(
+    memberId: number,
+    getAppointmentDto: GetAppointmentDto,
+  ) {
+    const { startDate, endDate } = getAppointmentDto;
+    const dates = getDatesBetweenDates(startDate, endDate);
+    return this.dataSource
+      .getRepository(Appointment)
+      .findBy({ memberId, date: In(dates) });
+  }
+
   private getCacheKey(orgId: number) {
     return `${orgId}:members`;
   }
@@ -105,6 +117,7 @@ export class MembersService {
     return this.cacheService.del(cacheKey);
   }
 
+  // get Member details and services offered
   findOne(id: number) {
     return this.memberRepository.findOne({
       where: { id },
@@ -112,6 +125,7 @@ export class MembersService {
     });
   }
 
+  // get member detail by access token
   getProfile(id: number) {
     return this.memberRepository.findOneBy({ id });
   }
@@ -150,88 +164,86 @@ export class MembersService {
 
   // get available time slots of a member
   async getAvailableTimeSlots(memberId: number, getTimes: GetAvailableTimes) {
-    // Fetch member's schedule for the given day of the week
-    // const {startDate,endDate} = getTimes
-    const currentDate = getCurrentDate();
-    const date = new Date(currentDate);
-    const schedule = await this.dataSource
+    const { startDate, endDate } = getTimes;
+    const dates = getDatesBetweenDates(startDate, endDate);
+    const schedules = await this.dataSource
       .getRepository(MemberSchedule)
-      .findOneBy({
-        member: { id: memberId },
-        dayOfWeek: getCurrentDayOfWeek(currentDate),
-      });
-
-    const dayInfo = {
-      iso: format(date, 'yyyy-MM-dd'),
-      dayOfMonth: date.getDate(),
-      formattedDayOfMonth: date.getDate().toString(),
-      formattedYear: format(date, 'yyyy'),
-      monthName: format(date, 'MMMM'),
-      dayName: format(date, 'EEEE'),
-    };
-
-    const leaves = await this.dataSource
-      .getRepository(Leave)
-      // @ts-expect-error
-      .findBy({ member: { id: memberId }, startDate: MoreThan(new Date()) });
-    const leaveDays = leaves.map(({ startDate, endDate }) =>
-      getDatesBetweenDates(startDate, endDate),
-    );
-
-    const isMemberLeave = leaveDays[0].includes(currentDate);
-
-    // const checkIsPublicHoliday = await this.dataSource.getRepository(ClosedDay).findOneBy({organization: {id: orgId}})
-
-    // Check if the day is marked as a business off day or leave
-    if (!schedule || isMemberLeave) {
-      return {
-        day: dayInfo,
-        slots: [], // Empty slots array for non-working days
-        message: 'Member is not available',
-      };
-    }
-    // Fetch existing appointments for the member on the specified date
-    const appointments = await this.dataSource
-      .getRepository(Appointment)
       .findBy({
-        member: { id: memberId },
-        date: currentDate,
+        memberId,
       });
 
-    const slots = [];
-    const slotInterval = 1800; // 30 minutes in seconds
-    let slotTime = schedule.startTime;
+    const schedule = schedules[0];
 
-    while (slotTime < schedule.endTime) {
-      const startTimeInSeconds = slotTime;
-      const formattedTime = format(new Date(slotTime * 1000), 'HH:mm');
+    const appointments = await this.getAppointments(memberId, getTimes);
 
-      // Check if the current slot is overlapping with any appointment
-      const isBooked = appointments.some(
-        (appointment) =>
-          startTimeInSeconds >= appointment.startTime &&
-          startTimeInSeconds < appointment.endTime,
+    dates.map(async (d) => {
+      const date = new Date(d);
+
+      const dayInfo = {
+        iso: format(date, 'yyyy-MM-dd'),
+        dayOfMonth: date.getDate(),
+        formattedDayOfMonth: date.getDate().toString(),
+        formattedYear: format(date, 'yyyy'),
+        monthName: format(date, 'MMMM'),
+        dayName: format(date, 'EEEE'),
+      };
+
+      const leaves = await this.dataSource
+        .getRepository(Leave)
+        // @ts-expect-error
+        .findBy({ member: { id: memberId }, startDate: MoreThan(new Date()) });
+      const leaveDays = leaves.map(({ startDate, endDate }) =>
+        getDatesBetweenDates(startDate, endDate),
       );
 
-      if (!isBooked) {
-        slots.push({
-          startTimeInSeconds,
-          formattedTime,
-          formattedRetailPrice: null,
-          formattedNonDiscountedPrice: null,
-          formattedDiscountInfo: null,
-          isHighDemanded: false,
-        });
+      const isMemberLeave = leaveDays[0].includes(d);
+
+      // const checkIsPublicHoliday = await this.dataSource.getRepository(ClosedDay).findOneBy({organization: {id: orgId}})
+
+      // Check if the day is marked as a business off day or leave
+      // if (!schedule || isMemberLeave) {
+      //   return {
+      //     day: dayInfo,
+      //     slots: [], // Empty slots array for non-working days
+      //     message: 'Member is not available',
+      //   };
+      // }
+
+      const slots = [];
+      const slotInterval = 1800; // 30 minutes in seconds
+      let slotTime = schedule.startTime;
+
+      while (slotTime < schedule.endTime) {
+        const startTimeInSeconds = slotTime;
+        const formattedTime = format(new Date(slotTime * 1000), 'HH:mm');
+
+        // Check if the current slot is overlapping with any appointment
+        const isBooked = appointments.some(
+          (appointment) =>
+            startTimeInSeconds >= appointment.startTime &&
+            startTimeInSeconds < appointment.endTime,
+        );
+
+        if (!isBooked) {
+          slots.push({
+            startTimeInSeconds,
+            formattedTime,
+            formattedRetailPrice: null,
+            formattedNonDiscountedPrice: null,
+            formattedDiscountInfo: null,
+            isHighDemanded: false,
+          });
+        }
+
+        // Move to the next slot
+        slotTime += slotInterval;
       }
 
-      // Move to the next slot
-      slotTime += slotInterval;
-    }
-
-    return {
-      day: dayInfo,
-      slots,
-    };
+      return {
+        day: dayInfo,
+        slots,
+      };
+    });
   }
 
   async remove(id: number, orgId: number) {

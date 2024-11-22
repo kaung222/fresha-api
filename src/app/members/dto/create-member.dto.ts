@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Gender } from '@/app/users/entities/user.entity';
-import { MemberType } from '../entities/member.entity';
+import { CommissionFeesType, MemberType } from '../entities/member.entity';
 
 export class CreateMemberDto {
   @IsNotEmpty()
@@ -32,6 +32,14 @@ export class CreateMemberDto {
   @IsDateString()
   @IsOptional()
   dob: Date;
+
+  @IsOptional()
+  @IsNumber()
+  commissionFees: number;
+
+  @IsOptional()
+  @IsEnum(CommissionFeesType)
+  commissionFeesType: CommissionFeesType;
 
   @IsUrl()
   @IsOptional()

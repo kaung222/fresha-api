@@ -2,7 +2,6 @@ import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Payment } from '@/app/payments/entities/payment.entity';
 import { IncrementEntity } from '@/utils';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
-import { ParseIntPipe } from '@nestjs/common';
 import { Column, Entity, ManyToMany, ManyToOne } from 'typeorm';
 
 @Entity()
@@ -15,13 +14,14 @@ export class Product extends IncrementEntity {
 
   @Column({ nullable: true })
   code: string;
+
   @DecimalColumn()
   price: number;
 
   @Column({ nullable: true })
   brand: string;
 
-  @Column('text')
+  @Column('text', { nullable: true })
   description: string;
 
   @Column({ nullable: true })

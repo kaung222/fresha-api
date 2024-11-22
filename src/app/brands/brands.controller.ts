@@ -36,18 +36,16 @@ export class BrandsController {
   }
 
   @Patch(':id')
-  async update(
+  update(
     @Param('id') id: string,
     @Body() updateBrandDto: UpdateBrandDto,
     @User('orgId') orgId: number,
   ) {
-    await this.brandsService.checkOwnership(+id, orgId);
-    return this.brandsService.update(+id, updateBrandDto);
+    return this.brandsService.update(+id, updateBrandDto, orgId);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @User('orgId') orgId: number) {
-    await this.brandsService.checkOwnership(+id, orgId);
-    return this.brandsService.remove(+id);
+  remove(@Param('id') id: string, @User('orgId') orgId: number) {
+    return this.brandsService.remove(+id, orgId);
   }
 }

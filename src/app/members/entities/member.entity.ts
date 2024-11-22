@@ -20,6 +20,11 @@ export enum MemberType {
   self_employed = 'self-employed',
 }
 
+export enum CommissionFeesType {
+  fixed = 'fixed',
+  percent = 'percent',
+}
+
 @Entity()
 export class Member extends IncrementEntity {
   @Column()
@@ -68,14 +73,6 @@ export class Member extends IncrementEntity {
   @Column({ nullable: true })
   memberId: string;
 
-  @Index('orgId')
-  @Column()
-  orgId: number;
-
-  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'orgId' })
-  organization: Organization;
-
   @Column({ type: 'enum', enum: MemberType, default: MemberType.employee })
   type: MemberType;
 
@@ -83,8 +80,17 @@ export class Member extends IncrementEntity {
   @Column('float', { default: 0 })
   rating: number;
 
-  @Column({ default: 0 })
+  @Column('int', { default: 0 })
   ratingCount: number;
+
+  @Column('int', { default: 0 })
+  commissionFees: number;
+
+  @Column('enum', {
+    enum: CommissionFeesType,
+    default: CommissionFeesType.percent,
+  })
+  commissionFeesType: CommissionFeesType;
 
   @Column({ nullable: true, select: false })
   password: string;
@@ -100,6 +106,14 @@ export class Member extends IncrementEntity {
 
   //   @OneToMany(() => Review, (review) => review.doctor)
   //   reviews: Review[];
+
+  @Index('orgId')
+  @Column()
+  orgId: number;
+
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'orgId' })
+  organization: Organization;
 
   @OneToMany(() => MemberSchedule, (schedule) => schedule.member)
   schedules: MemberSchedule[];

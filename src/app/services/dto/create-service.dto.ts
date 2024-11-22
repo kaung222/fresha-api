@@ -9,6 +9,7 @@ import {
   IsPositive,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import {
   DiscountType,
@@ -51,6 +52,19 @@ export class CreateServiceDto {
 
   @IsNotEmpty()
   @IsInt()
+  @Min(0)
+  @ValidateIf((o) => o.discountType === DiscountType.percent, {
+    message: 'Discount percent must not greater than 100',
+  })
+  @ValidateIf(
+    (obj, val) => {
+      if (obj.discountType === DiscountType.fixed) return val > obj.price;
+    },
+    {
+      message: 'Discount should not greater than the price',
+    },
+  )
+  @Max(100)
   discount: number;
 
   @IsEnum(DiscountType)

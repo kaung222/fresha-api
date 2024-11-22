@@ -28,7 +28,7 @@ export class SalesService {
     const items = await this.saveSaleItems(sale, saleItems);
     const { totalPrice } = this.calculateTotalPrice(items);
     sale.totalPrice = totalPrice;
-    return this.saleRepository.save(sale);
+    return await this.saleRepository.save(sale);
   }
 
   async createQuickSale(orgId: number, createQuickSaleDto: CreateQuickSaleDto) {
@@ -95,6 +95,7 @@ export class SalesService {
     const { page } = paginateQuery;
     const [data, totalCount] = await this.saleRepository.findAndCount({
       where: { organization: { id: orgId } },
+      relations: { saleItems: true },
       take: 10,
       skip: 10 * (page - 1),
     });
@@ -106,6 +107,7 @@ export class SalesService {
       where: { id, organization: { id: orgId } },
       relations: {
         client: true,
+        saleItems: true,
       },
     });
   }

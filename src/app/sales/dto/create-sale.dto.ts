@@ -19,9 +19,6 @@ export class SaleItemDto {
 
 export class CreateSaleDto {
   @IsNotEmpty()
-  totalPrice: number;
-
-  @IsNotEmpty()
   username: string;
 
   @IsOptional()

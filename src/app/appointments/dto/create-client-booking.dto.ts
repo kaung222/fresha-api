@@ -51,13 +51,6 @@ export class ClientAppointmentDto {
   @ArrayMinSize(1)
   serviceIds: number[];
 
-  @IsOptional()
-  @ValidateIf((obj) => !obj.serviceIds || obj.serviceIds.length === 0)
-  @IsArray()
-  @IsNotEmpty({ each: true })
-  @IsInt({ each: true })
-  packageIds: number[];
-
   @IsNotEmpty()
   @IsPositive()
   startTime: number;

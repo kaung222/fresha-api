@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CacheService, CacheTTL } from '@/global/cache.service';
-import { findAll } from '@/utils/paginate-query.dto';
 
 @Injectable()
 export class CategoriesService {
@@ -19,18 +22,29 @@ export class CategoriesService {
    * Create a new category and clear the cache for the organization.
    */
   async create(createCategoryDto: CreateCategoryDto, orgId: number) {
+    await this.IsExistingBrand(createCategoryDto.name, orgId);
     const newCategory = this.categoryRepository.create({
       ...createCategoryDto,
       organization: { id: orgId },
     });
-
     const category = await this.categoryRepository.save(newCategory);
     await this.clearCategoryCache(orgId);
-
     return {
       category,
       message: 'Category created successfully',
     };
+  }
+
+  /*
+    check exiting category
+   */
+  async IsExistingBrand(categoryName: string, orgId: number): Promise<boolean> {
+    const brand = await this.categoryRepository.findOneBy({
+      name: categoryName,
+      orgId,
+    });
+    if (brand) throw new ForbiddenException('Category already exist');
+    return true;
   }
 
   /**
@@ -40,12 +54,12 @@ export class CategoriesService {
     const cacheKey = this.getCategoryCacheKey(orgId);
     const cachedCategories = await this.cacheService.get(cacheKey);
     if (cachedCategories) return cachedCategories;
-
-    const categories = await this.categoryRepository.find({
-      relations: { services: true },
-      where: { organization: { id: orgId } },
-    });
-
+    const categories = await this.categoryRepository
+      .createQueryBuilder('category')
+      .leftJoinAndSelect('category.services', 'service')
+      .where('category.orgId = :orgId', { orgId })
+      // .andWhere('service.id IS NOT NULL')
+      .getMany();
     await this.cacheService.set(cacheKey, categories, CacheTTL.long);
     return categories;
   }
@@ -72,6 +86,7 @@ export class CategoriesService {
     orgId: number,
   ) {
     await this.getCategoryById(id, orgId);
+    await this.IsExistingBrand(updateCategoryDto.name, orgId);
     await this.categoryRepository.update(id, updateCategoryDto);
     await this.clearCategoryCache(orgId);
     return { message: 'Category updated successfully' };

@@ -15,6 +15,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { GetAvailableTimes } from './dto/get-available-time.dto';
+import { GetAppointmentDto } from './dto/get-appointments.dto';
 
 @Controller('members')
 @ApiTags('Member')
@@ -42,7 +43,7 @@ export class MembersController {
   }
 
   @Get(':id/profile')
-  @Role(Roles.org)
+  @Role(Roles.org, Roles.member)
   getProfile(@User('id') id: number) {
     return this.membersService.getProfile(id);
   }
@@ -62,6 +63,22 @@ export class MembersController {
     @Query() getTimes: GetAvailableTimes,
   ) {
     return this.membersService.getAvailableTimeSlots(memberId, getTimes);
+  }
+
+  @Get(':id/appointments')
+  getAppointments(
+    @Param('id') memberId: number,
+    @Query() getAppointmentDto: GetAppointmentDto,
+  ) {
+    return this.membersService.getAppointments(memberId, getAppointmentDto);
+  }
+
+  @Get(':id/reviews')
+  getReviews(
+    @Param('id') memberId: number,
+    @Query() getAppointmentDto: GetAppointmentDto,
+  ) {
+    return this.membersService.getAppointments(memberId, getAppointmentDto);
   }
 
   @Delete(':id')

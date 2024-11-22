@@ -2,21 +2,24 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   ArrayMinSize,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsPositive,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
-import { PriceType, TargetGender } from '../entities/service.entity';
+import {
+  DiscountType,
+  PriceType,
+  TargetGender,
+} from '../entities/service.entity';
 
 export class UpdateServiceDto {
   @IsNotEmpty()
   name: string;
-
-  @IsNotEmpty()
-  type: string;
 
   @IsNotEmpty()
   categoryId: number;
@@ -46,4 +49,16 @@ export class UpdateServiceDto {
   @IsNotEmpty()
   @IsEnum(PriceType)
   priceType: PriceType;
+
+  @IsNotEmpty()
+  @IsInt()
+  @Min(0)
+  @ValidateIf((o) => o.discountType === DiscountType.percent, {
+    message: 'Discount percent must not greater than 100',
+  })
+  @Max(100)
+  discount: number;
+
+  @IsEnum(DiscountType)
+  discountType: DiscountType;
 }

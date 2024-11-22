@@ -40,7 +40,9 @@ export class UpdatePackageDto {
   @IsNotEmpty()
   @IsInt()
   @Min(0)
-  @ValidateIf((o) => o.discountType !== DiscountType.percent)
+  @ValidateIf((o) => o.discountType === DiscountType.percent, {
+    message: 'Discount percent must not greater than 100',
+  })
   @Max(100)
   discount: number;
 

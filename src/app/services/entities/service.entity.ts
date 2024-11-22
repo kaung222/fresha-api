@@ -35,7 +35,6 @@ export enum ServiceType {
 export enum DiscountType {
   fixed = 'fixed',
   percent = 'percent',
-  free = 'free',
 }
 
 @Entity()
@@ -85,7 +84,7 @@ export class Service extends IncrementEntity {
   @Column()
   orgId: number;
 
-  @ManyToOne(() => Category, { onDelete: 'SET NULL' })
+  @ManyToOne(() => Category, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'categoryId' })
   category: Category;
 

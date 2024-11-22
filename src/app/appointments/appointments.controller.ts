@@ -18,6 +18,7 @@ import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { CreateQuickAppointment } from './dto/create-quick-appointment.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { ClientAppointmentDto } from './dto/create-client-booking.dto';
+import { CompleteAppointmentDto } from './dto/complete-booking.dto';
 
 @Controller('appointments')
 @ApiTags('Appointment')
@@ -44,6 +45,20 @@ export class AppointmentsController {
     return this.appointmentsService.createClientAppointment(
       orgId,
       clientAppointmentDto,
+    );
+  }
+
+  @Post('of/member/:memberId')
+  @ApiOperation({
+    summary: 'Get bookings by memberId within the given date range',
+  })
+  getAppointmentByMemberId(
+    @Param('memberId') memberId: number,
+    @Query() getAppointment: GetAppointmentDto,
+  ) {
+    return this.appointmentsService.getBookingsByMemberId(
+      memberId,
+      getAppointment,
     );
   }
 
@@ -110,8 +125,16 @@ export class AppointmentsController {
   @Patch(':id/complete')
   @Role(Roles.org, Roles.member)
   @ApiOperation({ summary: 'Mark as complete booking by org or member' })
-  completeBooking(@Param('id') id: string, @User('orgId') orgId: number) {
-    return this.appointmentsService.completeBooking(+id, orgId);
+  completeBooking(
+    @Param('id') id: string,
+    @Body() completeBooking: CompleteAppointmentDto,
+    @User('orgId') orgId: number,
+  ) {
+    return this.appointmentsService.completeBooking(
+      +id,
+      completeBooking,
+      orgId,
+    );
   }
 
   @Delete(':id')

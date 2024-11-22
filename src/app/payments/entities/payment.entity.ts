@@ -37,6 +37,9 @@ export class Payment extends UUIDEntity {
   amount: number;
 
   @Column({ nullable: true })
+  notes: string;
+
+  @Column({ nullable: true })
   memberId: number;
 
   @ManyToOne(() => Member)
@@ -51,6 +54,9 @@ export class Payment extends UUIDEntity {
   @JoinTable()
   products: Product[];
 
-  @ManyToOne(() => Organization)
+  @Column('int')
+  orgId: number;
+
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   organization: Organization;
 }

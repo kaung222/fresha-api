@@ -12,6 +12,8 @@ import { Member } from '../members/entities/member.entity';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { Category } from '../categories/entities/category.entity';
 import { GetServicesDto } from './dto/get-service.dto';
+import { CategoriesService } from '../categories/categories.service';
+import { CacheService } from '@/global/cache.service';
 
 @Injectable()
 export class ServicesService {
@@ -19,6 +21,7 @@ export class ServicesService {
     @InjectRepository(Service)
     private readonly serviceRepository: Repository<Service>,
     private readonly dataSource: DataSource,
+    private cacheService: CacheService,
   ) {}
 
   // create new service
@@ -39,17 +42,25 @@ export class ServicesService {
       category,
       organization: { id: orgId },
     });
+    this.clearCache(orgId);
     return await this.serviceRepository.save(newService);
   }
 
-  calculateDiscountPrice(
+  private clearCache(orgId: number) {
+    const cacheKey = this.getCacheKey(orgId);
+    this.cacheService.del(cacheKey);
+  }
+
+  private getCacheKey(orgId: number) {
+    return `${orgId}:categories`;
+  }
+
+  private calculateDiscountPrice(
     price: number,
     discount: number,
     discountType: DiscountType,
   ) {
     switch (discountType) {
-      case DiscountType.free:
-        return 0;
       case DiscountType.fixed:
         return Math.max(price - discount, 0);
       case DiscountType.percent:
@@ -123,6 +134,7 @@ export class ServicesService {
       services,
       orgId,
     });
+    this.clearCache(orgId);
     return this.serviceRepository.save(newPackage);
   }
 
@@ -156,6 +168,7 @@ export class ServicesService {
     myPackage.duration = duration;
     myPackage.discountPrice = discountPrice;
     Object.assign(myPackage, rest);
+    this.clearCache(orgId);
     return this.serviceRepository.save(myPackage);
   }
 
@@ -191,18 +204,25 @@ export class ServicesService {
   }
 
   async update(id: number, updateServiceDto: UpdateServiceDto, orgId: number) {
-    const { memberIds, ...rest } = updateServiceDto;
+    const { memberIds, categoryId, ...rest } = updateServiceDto;
+    const service = await this.getServiceById(id, orgId);
+    const category = await this.getCategoryById(categoryId, orgId);
     const members = await this.getMembersByIds(memberIds, orgId);
-    const service = await this.serviceRepository.findOne({
-      relations: { members: true },
-      where: { id },
-    });
+    const discountPrice = this.calculateDiscountPrice(
+      rest.price,
+      rest.discount,
+      rest.discountType,
+    );
+    console.log(rest);
+    service.category = category;
     service.members = members;
+    service.discountPrice = discountPrice;
     Object.assign(service, rest);
+    this.clearCache(orgId);
     return await this.serviceRepository.save(service);
   }
 
-  async remove(id: number) {
+  async remove(id: number, orgId: number) {
     const service = await this.serviceRepository.findOne({
       where: { id },
       relations: { appointments: true },
@@ -216,14 +236,15 @@ export class ServicesService {
     }
     await this.serviceRepository.save(service);
     await this.serviceRepository.delete({ id });
+    this.clearCache(orgId);
     return {
       message: 'Deleted service successfully',
     };
   }
 
-  async checkOwnership(serviceId: number, orgId: number): Promise<Service> {
+  async getServiceById(serviceId: number, orgId: number): Promise<Service> {
     const service = await this.serviceRepository.findOneBy({
-      organization: { id: orgId },
+      orgId,
       id: serviceId,
     });
     if (!service) throw new NotFoundException('Service not found');

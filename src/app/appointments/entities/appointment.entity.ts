@@ -65,6 +65,12 @@ export class Appointment extends IncrementEntity {
   @Column('int', { nullable: true })
   endTime: number; // in second
 
+  // @Column('int',{default: 0})
+  // tips: number
+
+  // @Column('int',{default: 0})
+  // commissionFees?: number
+
   @ManyToMany(() => Service, (service) => service.appointments, {
     eager: true,
   })

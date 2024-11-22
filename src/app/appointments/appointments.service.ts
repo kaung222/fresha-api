@@ -11,7 +11,11 @@ import { DataSource, In, Repository } from 'typeorm';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Service } from '../services/entities/service.entity';
-import { getCurrentDate, getCurrentDayOfWeek } from '@/utils';
+import {
+  getCurrentDate,
+  getCurrentDayOfWeek,
+  getDatesBetweenDates,
+} from '@/utils';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { SendEmailDto } from '@/global/email.service';
@@ -24,6 +28,7 @@ import { PaymentMethod } from '../payments/entities/payment.entity';
 import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 import { ClientAppointmentDto } from './dto/create-client-booking.dto';
 import { Client } from '../clients/entities/client.entity';
+import { CompleteAppointmentDto } from './dto/complete-booking.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -170,12 +175,24 @@ export class AppointmentsService {
 
   // find all appointment by org for a given date
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
-    const { date = getCurrentDate() } = getAppointmentDto;
+    const { startDate, endDate } = getAppointmentDto;
+    const dates = getDatesBetweenDates(startDate, endDate);
     return await this.appointmentRepository.find({
-      where: { orgId, date },
+      where: { orgId, date: In(dates) },
       relations: {
         services: true,
       },
+    });
+  }
+
+  async getBookingsByMemberId(
+    memberId: number,
+    getAppointmentDto: GetAppointmentDto,
+  ) {
+    const { startDate, endDate } = getAppointmentDto;
+    const dates = getDatesBetweenDates(startDate, endDate);
+    return await this.appointmentRepository.find({
+      where: { memberId, date: In(dates) },
     });
   }
 
@@ -255,7 +272,12 @@ export class AppointmentsService {
     };
   }
 
-  async completeBooking(id: number, orgId: number) {
+  async completeBooking(
+    id: number,
+    completeAppointment: CompleteAppointmentDto,
+    orgId: number,
+  ) {
+    const { comissionFees, notes, paymentMethod, tips } = completeAppointment;
     const appointment = await this.appointmentRepository.findOne({
       where: { id, orgId },
       relations: { services: true },
@@ -267,9 +289,10 @@ export class AppointmentsService {
     // on complete appointment create payment
     this.paymentService.createPaymentByAppointment({
       amount: appointment.totalPrice,
+      tips: tips,
       clientName: appointment.username,
       memberId: appointment.memberId,
-      method: PaymentMethod.cash,
+      method: paymentMethod,
       orgId,
       services: appointment.services,
     });

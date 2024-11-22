@@ -71,6 +71,6 @@ export class ServicesController {
 
   @Delete(':id')
   remove(@Param('id') id: string, @User('orgId') orgId: number) {
-    return this.servicesService.remove(+id);
+    return this.servicesService.remove(+id, orgId);
   }
 }

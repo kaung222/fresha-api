@@ -8,4 +8,8 @@ export class CreateCategoryDto {
   @IsString()
   @IsOptional()
   notes: string;
+
+  @IsString()
+  @IsNotEmpty()
+  colorCode: string;
 }

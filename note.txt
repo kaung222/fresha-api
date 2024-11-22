@@ -3,8 +3,11 @@ create notifications
 
 quiz app or level test app 
 
-change confirm otp endpoint from api/v1/auth/otp to api/v1/auth/otp/confirm
-add forget password and create new password endpoint
-
 add commission fee in member
-create complete appointment logic
+create  appointment complete logic
+create appointment without member
+
+
+fixed later 
+
+// Discount should not greater than the price
