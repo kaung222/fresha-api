@@ -60,6 +60,7 @@ import { SalesModule } from './app/sales/sales.module';
 import { Sale } from './app/sales/entities/sale.entity';
 import { SaleItem } from './app/sales/entities/sale-item.entity';
 import { TimeSlotsModule } from './app/time-slots/time-slots.module';
+import { FeaturesModule } from './app/features/features.module';
 
 @Module({
   imports: [
@@ -157,6 +158,7 @@ import { TimeSlotsModule } from './app/time-slots/time-slots.module';
     PaymentsModule,
     SalesModule,
     TimeSlotsModule,
+    FeaturesModule,
   ],
   controllers: [],
   providers: [

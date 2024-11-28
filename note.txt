@@ -1,11 +1,8 @@
-fix get notifications
-create notifications
-
-quiz app or level test app 
 
 add commission fee in member
 create  appointment complete logic
-create appointment without member
+add price unit in service eg:"MMK"
+add Discount and price unit in product
 
 
 fixed later 

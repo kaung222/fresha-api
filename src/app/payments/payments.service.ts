@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePaymentBySystem } from './dto/create-payment.dto';
+import {
+  CreateBookingPaymentBySystem,
+  CreateSalePayment,
+} from './dto/create-payment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Payment } from './entities/payment.entity';
 import { DataSource, In, Repository } from 'typeorm';
@@ -13,47 +16,30 @@ export class PaymentsService {
     private readonly paymentRepository: Repository<Payment>,
   ) {}
 
-  // manual create payment
-  // create(orgId: number, createPaymentDto: CreatePaymentDto) {
-  //   const createPayment = this.paymentRepository.create({
-  //     ...createPaymentDto,
-  //     organization: { id: orgId },
-  //   });
-  //   return this.paymentRepository.save(createPayment);
-  // }
-
   // on appointment complete create a payment base on it
-  createPaymentByAppointment(createPaymentDto: CreatePaymentBySystem) {
+  createPaymentByAppointment(createPaymentDto: CreateBookingPaymentBySystem) {
     const createPayment = this.paymentRepository.create(createPaymentDto);
     this.paymentRepository.save(createPayment);
   }
 
-  // async createPaymentBySales(createPaymentDto: CreatePaymentBySystem) {
-  //   const { products, orgId, ...rest } = createPaymentDto;
-  //   const createPayment = this.paymentRepository.create({
-  //     ...rest,
-  //     products,
-  //     organization: { id: orgId },
-  //   });
-  //   return this.paymentRepository.save(createPayment);
-  // }
+  createPaymentBySales(createPaymentDto: CreateSalePayment) {
+    const createPayment = this.paymentRepository.create(createPaymentDto);
+    this.paymentRepository.save(createPayment);
+  }
 
   async findAll(orgId: number, { page = 1 }: PaginateQuery) {
-    // return 'hello';
-    // const [data, totalCount] = await this.paymentRepository.findAndCount({
-    //   where: { organization: { id: orgId } },
-    //   relations: { member: true },
-    //   skip: 10 * (page - 1),
-    //   take: 10,
-    // });
-    // return new PaginationResponse({ data, totalCount, page }).toResponse();
+    const [data, totalCount] = await this.paymentRepository.findAndCount({
+      where: { orgId },
+      skip: 10 * (page - 1),
+      take: 10,
+    });
+    return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
   findOne(id: string, orgId: number) {
-    // return this.paymentRepository.find({ relations: { organization: true } });
-    // return this.paymentRepository.findOneOrFail({
-    //   where: { id, organization: { id: orgId } },
-    //   relations: ['member', 'services', 'products'],
-    // });
+    return this.paymentRepository.findOne({
+      where: { orgId, id },
+      relations: { appointment: true, sale: true },
+    });
   }
 }

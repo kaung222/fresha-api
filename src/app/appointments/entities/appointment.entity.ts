@@ -38,7 +38,7 @@ export class Appointment extends IncrementEntity {
   })
   status: BookingStatus;
 
-  @Column({ nullable: true })
+  @Column()
   phone: string;
 
   @Column({ nullable: true })
@@ -59,17 +59,17 @@ export class Appointment extends IncrementEntity {
   @Column({ nullable: true })
   memberId: number;
 
-  @Column('int', { nullable: true })
+  @Column('int')
   startTime: number; // in second
 
-  @Column('int', { nullable: true })
+  @Column('int')
   endTime: number; // in second
 
-  // @Column('int',{default: 0})
-  // tips: number
+  @DecimalColumn({ default: 0 })
+  commissionFees: number;
 
-  // @Column('int',{default: 0})
-  // commissionFees?: number
+  @DecimalColumn({ default: 0 })
+  tips: number;
 
   @ManyToMany(() => Service, (service) => service.appointments, {
     eager: true,

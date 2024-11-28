@@ -1,5 +1,7 @@
+import { DiscountType } from '@/app/services/entities/service.entity';
 import {
   IsBoolean,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsPositive,
@@ -39,4 +41,11 @@ export class CreateProductDto {
   @IsOptional()
   @IsPositive()
   moq: number;
+
+  @IsOptional()
+  discount: number;
+
+  @IsEnum(DiscountType)
+  @IsOptional()
+  dicountPrice: DiscountType;
 }

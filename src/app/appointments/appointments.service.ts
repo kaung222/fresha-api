@@ -9,32 +9,27 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment, BookingStatus } from './entities/appointment.entity';
 import { DataSource, In, Repository } from 'typeorm';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Service } from '../services/entities/service.entity';
-import {
-  getCurrentDate,
-  getCurrentDayOfWeek,
-  getDatesBetweenDates,
-} from '@/utils';
+import { getDatesBetweenDates } from '@/utils';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { SendEmailDto } from '@/global/email.service';
-import { Member } from '../members/entities/member.entity';
+import { CommissionFeesType, Member } from '../members/entities/member.entity';
 import { format } from 'date-fns';
 import { CreateQuickAppointment } from './dto/create-quick-appointment.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { PaymentsService } from '../payments/payments.service';
-import { PaymentMethod } from '../payments/entities/payment.entity';
 import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 import { ClientAppointmentDto } from './dto/create-client-booking.dto';
 import { Client } from '../clients/entities/client.entity';
 import { CompleteAppointmentDto } from './dto/complete-booking.dto';
+import { User } from '../users/entities/user.entity';
+import { createAppointmentByUser } from '../notifications/test';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
     private dataSource: DataSource,
-    private eventEmitter: EventEmitter2,
     @InjectQueue('emailQueue') private emailQueue: Queue,
     @InjectQueue('notificationQueue') private notificationQueue: Queue,
     @InjectRepository(Appointment)
@@ -49,17 +44,26 @@ export class AppointmentsService {
     try {
       const { serviceIds, memberId, orgId, startTime, ...rest } =
         createAppointmentDto;
-      const services = await this.getServicesByIds(serviceIds, orgId);
-      const member = await this.getMemberById(memberId, orgId);
+      const [services, member, user] = await Promise.all([
+        this.getServicesByIds(serviceIds, orgId),
+        this.getMemberById(memberId, orgId),
+        this.getUserById(userId),
+      ]);
       const { totalPrice, totalTime, discountPrice } =
         this.calculateTimeAndPrice(services);
+      const commissionFees = this.calculateCommissionFees(
+        totalPrice,
+        member.commissionFees,
+        member.commissionFeesType,
+      );
       const newAppointment = this.appointmentRepository.create({
         ...rest,
-        user: { id: userId },
+        user,
         organization: { id: orgId },
         member,
         discountPrice,
         endTime: startTime + totalTime,
+        commissionFees,
         startTime,
         totalTime,
         totalPrice,
@@ -67,7 +71,7 @@ export class AppointmentsService {
       });
       const appointment = await this.appointmentRepository.save(newAppointment);
       await queryRunner.commitTransaction();
-      this.sendEmailToMember(member, appointment.date);
+      this.createAppointmentByUserEvent(appointment);
       return {
         message: 'Book an appointment successfully',
         appointment,
@@ -80,28 +84,47 @@ export class AppointmentsService {
     }
   }
 
+  private async createAppointmentByUserEvent(appointment: Appointment) {
+    const { member, date, organization, user } = appointment;
+    this.sendEmailToMember(member, date);
+
+    // generating notification payload
+    const createNotificationDto = createAppointmentByUser(
+      organization.id,
+      user,
+    );
+    // save and send notification
+    this.createNotification(createNotificationDto);
+  }
+
   async createClientAppointment(
     orgId: number,
     addAppointmentDto: ClientAppointmentDto,
   ) {
-    const { serviceIds, clientId, startTime, memberId, ...rest } =
-      addAppointmentDto;
+    const { serviceIds, startTime, memberId, ...rest } = addAppointmentDto;
     const appointmentRepository = this.dataSource.getRepository(Appointment);
-    const client = await this.getClientById(clientId, orgId);
-    const services = await this.getServicesByIds(serviceIds, orgId);
-    const member = await this.getMemberById(memberId, orgId);
+    const [services, member] = await Promise.all([
+      this.getServicesByIds(serviceIds, orgId),
+      this.getMemberById(memberId, orgId),
+    ]);
     // calculate time and price
     const { totalPrice, totalTime, discountPrice } =
       this.calculateTimeAndPrice(services);
+    const commissionFees = this.calculateCommissionFees(
+      totalPrice,
+      member.commissionFees,
+      member.commissionFeesType,
+    );
     const createAppointment = appointmentRepository.create({
       ...rest,
       organization: { id: orgId },
       member,
-      client,
+      // client,
       startTime,
       endTime: startTime + totalTime,
       totalPrice,
       totalTime,
+      commissionFees,
       services,
       discountPrice,
     });
@@ -111,6 +134,21 @@ export class AppointmentsService {
     };
   }
 
+  private calculateCommissionFees(
+    totalPrice: number,
+    fees: number,
+    feeType: CommissionFeesType,
+  ) {
+    switch (feeType) {
+      case (feeType = CommissionFeesType.fixed):
+        return fees;
+      case (feeType = CommissionFeesType.percent):
+        return (totalPrice * fees) / 100;
+    }
+  }
+  private async getUserById(userId: number) {
+    return await this.dataSource.getRepository(User).findOneBy({ id: userId });
+  }
   async getClientById(clientId: number, orgId: number) {
     return await this.dataSource
       .getRepository(Client)
@@ -141,7 +179,7 @@ export class AppointmentsService {
     return services;
   }
 
-  calculateTimeAndPrice(services: Service[]) {
+  private calculateTimeAndPrice(services: Service[]) {
     const totalTime = services.reduce((pv, cv) => pv + cv.duration, 0);
     const totalPrice = services.reduce((pv, cv) => pv + cv.price, 0);
     const discountPrice = services.reduce((pv, cv) => pv + cv.discountPrice, 0);
@@ -150,27 +188,6 @@ export class AppointmentsService {
       totalTime,
       discountPrice,
     };
-  }
-
-  async createQuickAppointment(
-    orgId: number,
-    quickAppointment: CreateQuickAppointment,
-  ) {
-    const { serviceIds, startTime, ...rest } = quickAppointment;
-    const services = await this.getServicesByIds(serviceIds, orgId);
-    const { totalPrice, totalTime, discountPrice } =
-      this.calculateTimeAndPrice(services);
-    const createAppointment = this.appointmentRepository.create({
-      ...rest,
-      services,
-      discountPrice,
-      organization: { id: orgId },
-      startTime,
-      endTime: startTime + totalTime,
-      totalPrice,
-      totalTime,
-    });
-    return await this.appointmentRepository.save(createAppointment);
   }
 
   // find all appointment by org for a given date
@@ -196,14 +213,24 @@ export class AppointmentsService {
     });
   }
 
-  // get appointment detail
+  // get appointment detail by org
   findOne(id: number) {
     return this.appointmentRepository.findOne({
       where: { id },
       relations: {
-        client: true,
         services: true,
         user: true,
+      },
+    });
+  }
+
+  // get appointment detail by user
+  findOneByUser(id: number) {
+    return this.appointmentRepository.findOne({
+      where: { id },
+      relations: {
+        services: true,
+        organization: true,
       },
     });
   }
@@ -217,16 +244,27 @@ export class AppointmentsService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
     try {
-      const { serviceIds, ...rest } = updateAppointmentDto;
-      const services = await this.getServicesByIds(serviceIds, orgId);
+      const { serviceIds, memberId, ...rest } = updateAppointmentDto;
+
+      const [services, member] = await Promise.all([
+        this.getServicesByIds(serviceIds, orgId),
+        this.getMemberById(memberId, orgId),
+      ]);
       const { totalPrice, totalTime, discountPrice } =
         this.calculateTimeAndPrice(services);
+      const commissionFees = this.calculateCommissionFees(
+        totalPrice,
+        member.commissionFees,
+        member.commissionFeesType,
+      );
       appointment.services = services;
       appointment.totalTime = totalTime;
       appointment.endTime = rest.startTime + totalTime;
       appointment.startTime = rest.startTime;
       appointment.totalPrice = totalPrice;
       appointment.discountPrice = discountPrice;
+      appointment.commissionFees = commissionFees;
+      appointment.member = member;
       await this.appointmentRepository.save(appointment);
       await queryRunner.commitTransaction();
       return { message: 'Update the appointment successfully' };
@@ -277,7 +315,7 @@ export class AppointmentsService {
     completeAppointment: CompleteAppointmentDto,
     orgId: number,
   ) {
-    const { comissionFees, notes, paymentMethod, tips } = completeAppointment;
+    const { notes, paymentMethod, commissionFees, tips } = completeAppointment;
     const appointment = await this.appointmentRepository.findOne({
       where: { id, orgId },
       relations: { services: true },
@@ -285,16 +323,17 @@ export class AppointmentsService {
     if (!appointment) throw new NotFoundException('Appointment not found');
     await this.appointmentRepository.update(id, {
       status: BookingStatus.completed,
+      commissionFees,
     });
     // on complete appointment create payment
     this.paymentService.createPaymentByAppointment({
       amount: appointment.totalPrice,
-      tips: tips,
       clientName: appointment.username,
-      memberId: appointment.memberId,
+      appointmentId: id,
       method: paymentMethod,
+      tips,
       orgId,
-      services: appointment.services,
+      notes,
     });
     return {
       message: 'Marked as complete booking succesfully',
@@ -303,7 +342,7 @@ export class AppointmentsService {
 
   async remove(id: number, orgId: number) {
     await this.getBookingById(id, orgId);
-    this.appointmentRepository.delete(id);
+    this.appointmentRepository.delete({ id });
     return {
       message: 'Delete booking succesfully',
     };

@@ -27,8 +27,11 @@ export class ServicesService {
   // create new service
   async create(createServiceDto: CreateServiceDto, orgId: number) {
     const { memberIds, categoryId, ...rest } = createServiceDto;
-    const members = await this.getMembersByIds(memberIds, orgId);
-    const category = await this.getCategoryById(categoryId, orgId);
+    // use parallel query for efficient querying
+    const [category, members] = await Promise.all([
+      this.getCategoryById(categoryId, orgId),
+      this.getMembersByIds(memberIds, orgId),
+    ]);
     const discountPrice = this.calculateDiscountPrice(
       rest.price,
       rest.discount,
@@ -108,14 +111,15 @@ export class ServicesService {
 
   async createPackage(orgId: number, createPackageDto: CreatePackageDto) {
     const { serviceIds, memberIds, categoryId, ...rest } = createPackageDto;
-    const { price, duration, services } = await this.calculatePriceAndDuration(
-      serviceIds,
-      orgId,
-    );
+    // use parallel query for efficient querying
+    const [category, members, { price, duration, services }] =
+      await Promise.all([
+        this.getCategoryById(categoryId, orgId),
+        this.getMembersByIds(memberIds, orgId),
+        this.calculatePriceAndDuration(serviceIds, orgId),
+      ]);
     const serviceNames = services.map((service) => service.name);
     const serviceCount = services.length;
-    const members = await this.getMembersByIds(memberIds, orgId);
-    const category = await this.getCategoryById(categoryId, orgId);
     const discountPrice = this.calculateDiscountPrice(
       price,
       rest.discount,
@@ -144,23 +148,26 @@ export class ServicesService {
     orgId: number,
   ) {
     const { serviceIds, memberIds, categoryId, ...rest } = createPackageDto;
-    const category = await this.getCategoryById(categoryId, orgId);
     const myPackage = await this.getPackageById(id, orgId);
-
-    const { price, duration, services } = await this.calculatePriceAndDuration(
-      serviceIds,
-      orgId,
-    );
+    // use parallel query for efficient querying
+    const [category, { price, duration, services }, members] =
+      await Promise.all([
+        this.getCategoryById(categoryId, orgId),
+        this.calculatePriceAndDuration(serviceIds, orgId),
+        this.getMembersByIds(memberIds, orgId),
+      ]);
     // get serviceCount and names array to save in package detail
     const serviceNames = services.map((service) => service.name);
     const serviceCount = services.length;
-    const members = await this.getMembersByIds(memberIds, orgId);
+
     const discountPrice = this.calculateDiscountPrice(
       price,
       rest.discount,
       rest.discountType,
     );
-    (myPackage.services = services), (myPackage.members = members);
+    myPackage.services = services;
+    myPackage.members = members;
+    myPackage.category = category;
     myPackage.price = price;
     myPackage.serviceNames = serviceNames;
     myPackage.serviceCount = serviceCount;
@@ -203,11 +210,14 @@ export class ServicesService {
     });
   }
 
+  // update service by id
   async update(id: number, updateServiceDto: UpdateServiceDto, orgId: number) {
     const { memberIds, categoryId, ...rest } = updateServiceDto;
     const service = await this.getServiceById(id, orgId);
-    const category = await this.getCategoryById(categoryId, orgId);
-    const members = await this.getMembersByIds(memberIds, orgId);
+    const [members, category] = await Promise.all([
+      this.getMembersByIds(memberIds, orgId),
+      this.getCategoryById(categoryId, orgId),
+    ]);
     const discountPrice = this.calculateDiscountPrice(
       rest.price,
       rest.discount,
@@ -222,6 +232,8 @@ export class ServicesService {
     return await this.serviceRepository.save(service);
   }
 
+  // Remove service by id
+  // delete all relations
   async remove(id: number, orgId: number) {
     const service = await this.serviceRepository.findOne({
       where: { id },
@@ -230,7 +242,6 @@ export class ServicesService {
     if (!service) throw new NotFoundException('Service not found');
     service.appointments = [];
     service.members = [];
-    service.payments = [];
     if (service.type === ServiceType.package) {
       service.services = [];
     }
@@ -242,10 +253,14 @@ export class ServicesService {
     };
   }
 
+  // get services by id
   async getServiceById(serviceId: number, orgId: number): Promise<Service> {
-    const service = await this.serviceRepository.findOneBy({
-      orgId,
-      id: serviceId,
+    const service = await this.serviceRepository.findOne({
+      where: {
+        orgId,
+        id: serviceId,
+      },
+      relations: { members: true, category: true },
     });
     if (!service) throw new NotFoundException('Service not found');
     return service;

@@ -1,18 +1,15 @@
-import { Client } from '@/app/clients/entities/client.entity';
-import { Member } from '@/app/members/entities/member.entity';
+import { Appointment } from '@/app/appointments/entities/appointment.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
-import { Product } from '@/app/products/entities/product.entity';
-import { Service } from '@/app/services/entities/service.entity';
-import { User } from '@/app/users/entities/user.entity';
+import { Sale } from '@/app/sales/entities/sale.entity';
 import { UUIDEntity } from '@/utils';
+import { DecimalColumn } from '@/utils/decorators/column.decorators';
 import {
   Column,
   Entity,
   Generated,
   JoinColumn,
-  JoinTable,
-  ManyToMany,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
 
 export enum PaymentMethod {
@@ -30,29 +27,28 @@ export class Payment extends UUIDEntity {
   @Column({ default: 'unknown' })
   clientName: string;
 
-  @Column('enum', { enum: PaymentMethod })
+  @Column('enum', { enum: PaymentMethod, default: PaymentMethod.cash })
   method: PaymentMethod;
 
-  @Column('decimal')
+  @DecimalColumn()
   amount: number;
 
   @Column({ nullable: true })
   notes: string;
 
   @Column({ nullable: true })
-  memberId: number;
+  appointmentId: number;
 
-  @ManyToOne(() => Member)
-  @JoinColumn({ name: 'memberId' })
-  member: Member;
+  @OneToOne(() => Appointment)
+  @JoinColumn({ name: 'appointmentId' })
+  appointment: Appointment;
 
-  @ManyToMany(() => Service, (service) => service.payments)
-  @JoinTable()
-  services: Service[];
+  @Column({ nullable: true })
+  saleId: number;
 
-  @ManyToMany(() => Product, (product) => product.payments)
-  @JoinTable()
-  products: Product[];
+  @OneToOne(() => Sale)
+  @JoinColumn({ name: 'saleId' })
+  sale: Sale;
 
   @Column('int')
   orgId: number;

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateQuickSaleDto } from './dto/update-sale.dto';
 import { CreateQuickSaleDto, SaleItemDto } from './dto/create-quick-sale.dto';
@@ -9,36 +13,26 @@ import { Sale } from './entities/sale.entity';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { SaleItem } from './entities/sale-item.entity';
+import { CreateSalePayment } from '../payments/dto/create-payment.dto';
+import { PaymentsService } from '../payments/payments.service';
 
 @Injectable()
 export class SalesService {
   constructor(
     private readonly dataSource: DataSource,
+    private readonly paymentService: PaymentsService,
     @InjectRepository(Sale) private readonly saleRepository: Repository<Sale>,
     @InjectRepository(SaleItem)
     private saleItemRepository: Repository<SaleItem>,
   ) {}
   async create(orgId: number, createSaleDto: CreateSaleDto) {
-    const { saleItems, ...rest } = createSaleDto;
-    const createSale = this.saleRepository.create({
-      ...rest,
-      orgId,
-    });
-    const sale = await this.saleRepository.save(createSale);
-    const items = await this.saveSaleItems(sale, saleItems);
-    const { totalPrice } = this.calculateTotalPrice(items);
-    sale.totalPrice = totalPrice;
-    return await this.saleRepository.save(sale);
-  }
-
-  async createQuickSale(orgId: number, createQuickSaleDto: CreateQuickSaleDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
     try {
-      const { saleItems, ...rest } = createQuickSaleDto;
+      const { saleItems, ...rest } = createSaleDto;
       const createSale = this.saleRepository.create({
         ...rest,
-        organization: { id: orgId },
+        orgId,
       });
       const sale = await this.saleRepository.save(createSale);
       const items = await this.saveSaleItems(sale, saleItems);
@@ -56,10 +50,51 @@ export class SalesService {
     }
   }
 
+  async createQuickSale(orgId: number, createQuickSaleDto: CreateQuickSaleDto) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
+    try {
+      const { saleItems, savePayment, paymentNotes, paymentMethod, ...rest } =
+        createQuickSaleDto;
+      const createSale = this.saleRepository.create({
+        ...rest,
+        orgId,
+      });
+      const sale = await this.saleRepository.save(createSale);
+      const items = await this.saveSaleItems(sale, saleItems);
+      const { totalPrice } = this.calculateTotalPrice(items);
+      sale.totalPrice = totalPrice;
+      await this.saleRepository.save(sale);
+      await queryRunner.commitTransaction();
+
+      // create payment on creating quick sale
+      if (savePayment)
+        this.createPayment({
+          amount: totalPrice,
+          clientName: 'unknown',
+          method: paymentMethod,
+          notes: paymentNotes,
+          orgId,
+          saleId: sale.id,
+        });
+      return {
+        message: 'Create sale successfully',
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new ForbiddenException('Creating sale failed');
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  createPayment(createPaymentBySales: CreateSalePayment) {
+    this.paymentService.createPaymentBySales(createPaymentBySales);
+  }
+
   private async saveSaleItems(sale: Sale, saleItems: SaleItemDto[]) {
     const productIds = saleItems.map((item) => item.productId);
     const products = await this.getProductsByIds(productIds);
-    if (products.length == 0) throw new NotFoundException('Products not found');
     const createSaleItems = this.saleItemRepository.create(
       saleItems.map(({ productId, quantity }) => {
         const product = products.find((product) => product.id === productId);
@@ -79,10 +114,15 @@ export class SalesService {
   }
 
   private async getProductsByIds(productIds: number[]) {
-    return await this.dataSource
+    const products = await this.dataSource
       .getRepository(Product)
       .findBy({ id: In(productIds) });
+    if (productIds.length !== products.length)
+      throw new NotFoundException('Some Products are missing');
+    return products;
   }
+
+  // calculate total price by sale itmes
   private calculateTotalPrice(items: SaleItem[]) {
     const totalPrice = items.reduce((pv, cv) => pv + cv.subtotalPrice, 0);
     return {
@@ -91,10 +131,9 @@ export class SalesService {
   }
 
   async findAll(orgId: number, paginateQuery: PaginateQuery) {
-    console.log(paginateQuery);
     const { page } = paginateQuery;
     const [data, totalCount] = await this.saleRepository.findAndCount({
-      where: { organization: { id: orgId } },
+      where: { orgId },
       relations: { saleItems: true },
       take: 10,
       skip: 10 * (page - 1),
@@ -106,19 +145,37 @@ export class SalesService {
     return this.saleRepository.findOneOrFail({
       where: { id, organization: { id: orgId } },
       relations: {
-        client: true,
         saleItems: true,
       },
     });
   }
 
   async update(id: number, updateSaleDto: UpdateQuickSaleDto, orgId: number) {
+    return {
+      error: true,
+      message: 'Cannot update sale',
+    };
     const { saleItems, ...rest } = updateSaleDto;
-    const sale = await this.getSaleById(id, orgId, true);
-    const items = await this.saveSaleItems(sale, saleItems);
-    Object.assign(sale, rest);
-    sale.saleItems = items;
-    return this.saleRepository.save(sale);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
+    try {
+      const sale = await this.getSaleById(id, orgId, true);
+      const items = await this.saveSaleItems(sale, saleItems);
+      Object.assign(sale, rest);
+      sale.saleItems = items;
+      const newSale = await this.saleRepository.save(sale);
+      await queryRunner.commitTransaction();
+      // this.paymentService.update()
+      return {
+        message: 'Update sale successfully',
+        sale: newSale,
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new ForbiddenException('Cannot update sale');
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async remove(id: number, orgId: number) {

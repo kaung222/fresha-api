@@ -7,7 +7,7 @@ import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brand } from './entities/brand.entity';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CacheService, CacheTTL } from '@/global/cache.service';
 
 @Injectable()
@@ -40,11 +40,20 @@ export class BrandsService {
     this.cacheService.del(cacheKey);
   }
   // check exiting brand
-  async IsExistingBrand(brandName: string, orgId: number): Promise<boolean> {
-    const brand = await this.brandRepository.findOneBy({
-      name: brandName,
-      orgId,
-    });
+  async IsExistingBrand(
+    brandName: string,
+    orgId: number,
+    brandId?: number,
+  ): Promise<boolean> {
+    const queryBuilder = this.brandRepository
+      .createQueryBuilder('brand')
+      .where('brand.name=:name AND brand.orgId=:orgId', {
+        name: brandName,
+        orgId,
+      });
+
+    if (brandId) queryBuilder.andWhere('brand.id !=:id', { id: brandId });
+    const brand = await queryBuilder.getOne();
     if (brand) throw new ForbiddenException('Brand already exist');
     return true;
   }
@@ -64,7 +73,7 @@ export class BrandsService {
 
   async update(id: number, updateBrandDto: UpdateBrandDto, orgId: number) {
     await this.getBrandById(id, orgId);
-    await this.IsExistingBrand(updateBrandDto.name, orgId);
+    await this.IsExistingBrand(updateBrandDto.name, orgId, id);
     await this.brandRepository.update({ id }, updateBrandDto);
     this.clearCache(orgId);
     return {

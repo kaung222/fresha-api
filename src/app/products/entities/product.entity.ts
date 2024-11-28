@@ -1,8 +1,7 @@
 import { Organization } from '@/app/organizations/entities/organization.entity';
-import { Payment } from '@/app/payments/entities/payment.entity';
 import { IncrementEntity } from '@/utils';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
-import { Column, Entity, ManyToMany, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Product extends IncrementEntity {
@@ -17,6 +16,12 @@ export class Product extends IncrementEntity {
 
   @DecimalColumn()
   price: number;
+
+  @DecimalColumn()
+  discount: number;
+
+  @DecimalColumn()
+  discountPrice: number;
 
   @Column({ nullable: true })
   brand: string;
@@ -35,7 +40,4 @@ export class Product extends IncrementEntity {
 
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   organization: Organization;
-
-  @ManyToMany(() => Payment, (payment) => payment.products)
-  payments: Payment[];
 }

@@ -86,7 +86,7 @@ export class CategoriesService {
     orgId: number,
   ) {
     await this.getCategoryById(id, orgId);
-    await this.IsExistingBrand(updateCategoryDto.name, orgId);
+    // await this.IsExistingBrand(updateCategoryDto.name, orgId);
     await this.categoryRepository.update(id, updateCategoryDto);
     await this.clearCategoryCache(orgId);
     return { message: 'Category updated successfully' };
@@ -98,7 +98,7 @@ export class CategoriesService {
   async remove(id: number, orgId: number) {
     await this.getCategoryById(id, orgId);
     await this.categoryRepository.delete(id);
-    await this.clearCategoryCache(orgId);
+    this.clearCategoryCache(orgId);
     return { message: 'Category removed successfully' };
   }
 

@@ -11,14 +11,6 @@ import { PaginateQuery } from '@/utils/paginate-query.dto';
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Post()
-  create(
-    @User('orgId') orgId: number,
-    // @Body() createPaymentDto: CreatePaymentDto,
-  ) {
-    // return this.paymentsService.create(orgId, createPaymentDto);
-  }
-
   @Get()
   findAll(@User('orgId') orgId: number, @Query() paginateQuery: PaginateQuery) {
     return this.paymentsService.findAll(orgId, paginateQuery);

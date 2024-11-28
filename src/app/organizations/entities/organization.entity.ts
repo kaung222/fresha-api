@@ -1,3 +1,4 @@
+import { Currency } from '@/app/features/entities/feature.entity';
 import { IncrementEntity } from '@/utils/base.entity';
 import { Column, Entity } from 'typeorm';
 
@@ -32,6 +33,9 @@ export class Organization extends IncrementEntity {
 
   @Column('int', { default: 0 })
   totalReviews: number;
+
+  @Column('enum', { enum: Currency, default: Currency.mmk })
+  currency: Currency;
 
   @Column('boolean', { default: false, select: false })
   isPublished: boolean;

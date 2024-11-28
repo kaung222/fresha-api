@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,6 +14,7 @@ import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { Category } from '../categories/entities/category.entity';
 import { OrgReview } from '../org-reviews/entities/org-review.entity';
+import { UpdateCurrency } from './dto/update-currency';
 @Injectable()
 export class OrganizationsService {
   constructor(
@@ -108,6 +113,15 @@ export class OrganizationsService {
 
   update(id: number, updateOrganizationDto: UpdateOrganizationDto) {
     return this.orgRepository.update(id, updateOrganizationDto);
+  }
+
+  async updateCurrencyDto(id: number, updateCurrencyDto: UpdateCurrency) {
+    const updateRes = await this.orgRepository.update(id, {
+      currency: updateCurrencyDto.currency,
+    });
+    if (updateRes.affected === 1)
+      return { message: 'Change currency successfully' };
+    throw new ForbiddenException();
   }
 
   async gerNearBy(lat: number, lng: number, radius: number) {

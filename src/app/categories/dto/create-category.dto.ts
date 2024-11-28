@@ -10,6 +10,6 @@ export class CreateCategoryDto {
   notes: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   colorCode: string;
 }

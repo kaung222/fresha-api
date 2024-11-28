@@ -51,6 +51,7 @@ export class CreateServiceDto {
   priceType: PriceType;
 
   @IsNotEmpty()
+  @IsNotEmpty()
   @IsInt()
   @Min(0)
   @ValidateIf((o) => o.discountType === DiscountType.percent, {

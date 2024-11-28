@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsEnum,
@@ -29,6 +30,7 @@ export class CreatePackageDto {
   @IsNotEmpty({ each: true })
   @IsArray()
   @ArrayMinSize(2)
+  @ArrayMaxSize(10)
   serviceIds: number[];
 
   @ApiProperty({ example: '[memberId1,memberId2]' })

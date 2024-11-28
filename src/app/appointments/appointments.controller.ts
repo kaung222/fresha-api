@@ -48,7 +48,7 @@ export class AppointmentsController {
     );
   }
 
-  @Post('of/member/:memberId')
+  @Get('of/member/:memberId')
   @ApiOperation({
     summary: 'Get bookings by memberId within the given date range',
   })
@@ -59,19 +59,6 @@ export class AppointmentsController {
     return this.appointmentsService.getBookingsByMemberId(
       memberId,
       getAppointment,
-    );
-  }
-
-  @Post('quick-sale')
-  @ApiOperation({ summary: 'Create Quick booking by org' })
-  @Role(Roles.org)
-  createQuickSale(
-    @User('orgId') orgId: number,
-    @Body() quickAppointment: CreateQuickAppointment,
-  ) {
-    return this.appointmentsService.createQuickAppointment(
-      orgId,
-      quickAppointment,
     );
   }
 

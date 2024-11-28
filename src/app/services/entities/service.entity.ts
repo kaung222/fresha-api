@@ -13,6 +13,7 @@ import {
   JoinColumn,
   Index,
   JoinTable,
+  BeforeInsert,
 } from 'typeorm';
 
 export enum TargetGender {
@@ -104,6 +105,8 @@ export class Service extends IncrementEntity {
   @ManyToMany(() => Appointment, (appointment) => appointment.services)
   appointments: Appointment[];
 
-  @ManyToMany(() => Payment, (payment) => payment.services)
-  payments: Payment[];
+  @BeforeInsert()
+  calculateDiscountPrice() {
+    // this.discountPrice = this.price;
+  }
 }

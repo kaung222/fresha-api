@@ -26,7 +26,6 @@ import { Service } from '../services/entities/service.entity';
 import { GetAvailableTimes } from './dto/get-available-time.dto';
 import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 import { Leave } from '../leaves/entities/leave.entity';
-import { ClosedDay } from '../closed-days/entities/closed-day.entity';
 import { CacheService, CacheTTL } from '@/global/cache.service';
 import { GetAppointmentDto } from './dto/get-appointments.dto';
 

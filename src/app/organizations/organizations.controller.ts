@@ -14,6 +14,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
+import { UpdateCurrency } from './dto/update-currency';
 
 @Controller('organizations')
 @ApiTags('Organization')
@@ -58,10 +59,20 @@ export class OrganizationsController {
   @ApiOperation({ summary: 'Update the organization details' })
   @Role(Roles.org)
   update(
-    @Param('id') id: string,
+    @User('id') id: string,
     @Body() updateOrganizationDto: UpdateOrganizationDto,
   ) {
     return this.organizationsService.update(+id, updateOrganizationDto);
+  }
+
+  @Post('currency')
+  @ApiOperation({ summary: 'Change the currency' })
+  @Role(Roles.org)
+  updateCurrency(
+    @User('id') id: string,
+    @Body() updateCurrencyDto: UpdateCurrency,
+  ) {
+    return this.organizationsService.updateCurrencyDto(+id, updateCurrencyDto);
   }
 
   @Delete(':id')

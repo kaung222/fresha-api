@@ -1,22 +1,20 @@
-import { Product } from '@/app/products/entities/product.entity';
 import { PaymentMethod } from '../entities/payment.entity';
-import { Service } from '@/app/services/entities/service.entity';
 
-export class CreatePaymentBySystem {
-  tips: number;
-  commissionFees?: number;
+export class CreateBookingPaymentBySystem {
   clientName: string;
   method: PaymentMethod;
   amount: number;
-  memberId: number;
-  services?: Service[];
+  appointmentId: number;
   orgId: number;
+  tips: number;
+  notes?: string;
 }
 
-export class CreateProductPayment {
+export class CreateSalePayment {
+  notes?: string;
   clientName: string;
   method: PaymentMethod;
   amount: number;
-  products?: Product[];
+  saleId: number;
   orgId: number;
 }
