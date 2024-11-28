@@ -6,7 +6,6 @@ export class CreateBookingPaymentBySystem {
   amount: number;
   appointmentId: number;
   orgId: number;
-  tips: number;
   notes?: string;
 }
 

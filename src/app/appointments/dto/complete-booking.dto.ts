@@ -1,5 +1,11 @@
 import { PaymentMethod } from '@/app/payments/entities/payment.entity';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CompleteAppointmentDto {
   @IsNotEmpty()
@@ -11,7 +17,7 @@ export class CompleteAppointmentDto {
   notes: string;
 
   @IsNotEmpty()
-  @IsNotEmpty()
+  @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
 
   @IsNotEmpty()

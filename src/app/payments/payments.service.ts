@@ -17,8 +17,17 @@ export class PaymentsService {
   ) {}
 
   // on appointment complete create a payment base on it
-  createPaymentByAppointment(createPaymentDto: CreateBookingPaymentBySystem) {
-    const createPayment = this.paymentRepository.create(createPaymentDto);
+  async createPaymentByAppointment(
+    createPaymentDto: CreateBookingPaymentBySystem,
+  ) {
+    const payment = await this.paymentRepository.findOneBy({
+      appointmentId: createPaymentDto.appointmentId,
+    });
+    const createPayment = this.paymentRepository.create({
+      id: payment?.id,
+      ...createPaymentDto,
+    });
+
     this.paymentRepository.save(createPayment);
   }
 

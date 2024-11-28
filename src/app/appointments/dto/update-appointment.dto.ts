@@ -21,7 +21,6 @@ export class UpdateAppointmentDto {
   @IsString()
   username: string;
 
-  @IsNotEmpty()
   @IsString()
   notes: string;
 
@@ -48,13 +47,6 @@ export class UpdateAppointmentDto {
   @ArrayMinSize(1)
   @IsNotEmpty()
   serviceIds: number[];
-
-  @IsOptional()
-  @ValidateIf((obj) => !obj.serviceIds || obj.serviceIds.length === 0)
-  @IsArray()
-  @IsNotEmpty({ each: true })
-  @IsInt({ each: true })
-  packageIds: number[];
 
   @IsPositive()
   @IsNotEmpty()

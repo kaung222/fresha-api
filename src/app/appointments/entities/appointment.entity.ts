@@ -59,6 +59,9 @@ export class Appointment extends IncrementEntity {
   @Column({ nullable: true })
   memberId: number;
 
+  @Column('boolean', { default: false })
+  isOnlineBooking: boolean;
+
   @Column('int')
   startTime: number; // in second
 

@@ -64,6 +64,7 @@ export class AppointmentsService {
         discountPrice,
         endTime: startTime + totalTime,
         commissionFees,
+        isOnlineBooking: true,
         startTime,
         totalTime,
         totalPrice,
@@ -119,7 +120,6 @@ export class AppointmentsService {
       ...rest,
       organization: { id: orgId },
       member,
-      // client,
       startTime,
       endTime: startTime + totalTime,
       totalPrice,
@@ -220,6 +220,7 @@ export class AppointmentsService {
       relations: {
         services: true,
         user: true,
+        member: true,
       },
     });
   }
@@ -240,7 +241,7 @@ export class AppointmentsService {
     updateAppointmentDto: UpdateAppointmentDto,
     orgId: number,
   ) {
-    const appointment = await this.getBookingById(id, orgId);
+    const appointment = await this.getBookingById(id, orgId, ['services']);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
     try {
@@ -250,8 +251,11 @@ export class AppointmentsService {
         this.getServicesByIds(serviceIds, orgId),
         this.getMemberById(memberId, orgId),
       ]);
+      // calcualte total time and price and discount price
       const { totalPrice, totalTime, discountPrice } =
         this.calculateTimeAndPrice(services);
+
+      // calculate the commissions
       const commissionFees = this.calculateCommissionFees(
         totalPrice,
         member.commissionFees,
@@ -265,6 +269,7 @@ export class AppointmentsService {
       appointment.discountPrice = discountPrice;
       appointment.commissionFees = commissionFees;
       appointment.member = member;
+      // save the update data
       await this.appointmentRepository.save(appointment);
       await queryRunner.commitTransaction();
       return { message: 'Update the appointment successfully' };
@@ -297,8 +302,12 @@ export class AppointmentsService {
     orgId: number,
   ) {
     const appointment = await this.getBookingById(id, orgId);
-    this.appointmentRepository.update(id, { status: BookingStatus.cancelled });
+    const updateRes = await this.appointmentRepository.update(id, {
+      status: BookingStatus.cancelled,
+    });
     // send email about booking cancelation
+    if (updateRes.affected !== 1)
+      throw new ForbiddenException('Cannot cancel booking now');
     this.sendEmail({
       to: appointment.email,
       text: `Cancel your booking for the reason ${cancelBookingDto.reason}`,
@@ -316,22 +325,19 @@ export class AppointmentsService {
     orgId: number,
   ) {
     const { notes, paymentMethod, commissionFees, tips } = completeAppointment;
-    const appointment = await this.appointmentRepository.findOne({
-      where: { id, orgId },
-      relations: { services: true },
-    });
-    if (!appointment) throw new NotFoundException('Appointment not found');
+    const appointment = await this.getBookingById(id, orgId);
     await this.appointmentRepository.update(id, {
       status: BookingStatus.completed,
       commissionFees,
+      tips,
     });
     // on complete appointment create payment
     this.paymentService.createPaymentByAppointment({
-      amount: appointment.totalPrice,
+      // the total amount of user paid
+      amount: appointment.discountPrice + tips,
       clientName: appointment.username,
       appointmentId: id,
       method: paymentMethod,
-      tips,
       orgId,
       notes,
     });
@@ -348,10 +354,13 @@ export class AppointmentsService {
     };
   }
 
-  async getBookingById(bookingId: number, orgId: number) {
-    const appointment = await this.appointmentRepository.findOneBy({
-      orgId,
-      id: bookingId,
+  async getBookingById(bookingId: number, orgId: number, relations?: string[]) {
+    const appointment = await this.appointmentRepository.findOne({
+      where: {
+        orgId,
+        id: bookingId,
+      },
+      relations,
     });
     if (!appointment) throw new NotFoundException('Appointment not found');
     return appointment;

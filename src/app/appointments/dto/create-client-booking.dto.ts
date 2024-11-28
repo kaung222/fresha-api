@@ -1,16 +1,14 @@
 import {
   ArrayMinSize,
   IsArray,
-  IsDate,
   IsDateString,
   IsEmail,
   IsEnum,
-  IsInt,
   IsNotEmpty,
   IsOptional,
   IsPhoneNumber,
   IsPositive,
-  ValidateIf,
+  IsUrl,
 } from 'class-validator';
 import { BookingStatus } from '@/app/appointments/entities/appointment.entity';
 import { Gender } from '@/app/users/entities/user.entity';
@@ -19,9 +17,6 @@ export class ClientAppointmentDto {
   @IsNotEmpty()
   @IsDateString()
   date: string;
-
-  @IsNotEmpty()
-  clientId: number;
 
   @IsNotEmpty()
   username: string;
@@ -37,10 +32,15 @@ export class ClientAppointmentDto {
   phone: string;
 
   @IsEnum(Gender)
+  @IsNotEmpty()
   gender: Gender;
 
-  @IsEmail()
   @IsOptional()
+  @IsUrl()
+  profilePicture: string;
+
+  @IsEmail()
+  @IsNotEmpty()
   email: string;
 
   @IsNotEmpty()
