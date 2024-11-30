@@ -144,6 +144,8 @@ export class AppointmentsService {
       this.getServicesByIds(serviceIds, appointment.orgId),
       this.getMemberByIds(memberIds, appointment.orgId),
     ]);
+    // to override use the endtime of previous booking item
+    let startTime = appointment.startTime;
     const createBookingItems = this.itemRepository.create(
       items.map(({ serviceId, memberId }) => {
         const service = services.find((service) => service.id === serviceId);
@@ -153,19 +155,23 @@ export class AppointmentsService {
           member.commissionFees,
           member.commissionFeesType,
         );
-        return {
+        const endTime = startTime + service.duration;
+        const res = {
           appointmentId: appointment.id,
           memberId,
           serviceId,
           memberName: member.firstName + member.lastName,
           serviceName: service.name,
-          startTime: appointment.startTime,
-          endTime: appointment.startTime + service.duration,
+          startTime,
+          endTime,
           discountPrice: service.discountPrice,
           duration: service.duration,
           price: service.price,
           commissionFees,
         };
+        // the end time will be the start time of next booking items
+        startTime = endTime;
+        return res;
       }),
     );
     return await this.itemRepository.save(createBookingItems);
@@ -185,7 +191,11 @@ export class AppointmentsService {
   }
 
   private async getUserById(userId: number) {
-    return await this.dataSource.getRepository(User).findOneBy({ id: userId });
+    const user = await this.dataSource
+      .getRepository(User)
+      .findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 
   private sendEmailToMember(member: Member, appointmentDate: string) {
@@ -198,19 +208,21 @@ export class AppointmentsService {
   }
 
   private async getMemberByIds(memberIds: number[], orgId: number) {
+    const ids = [...new Set([...memberIds])];
     const members = await this.dataSource
       .getRepository(Member)
-      .findBy({ id: In(memberIds), orgId });
-    if (memberIds.length !== members.length)
+      .findBy({ id: In(ids), orgId });
+    if (ids.length !== members.length)
       throw new NotFoundException('some members are missing');
     return members;
   }
 
   async getServicesByIds(serviceIds: number[], orgId: number) {
+    const ids = [...new Set([...serviceIds])];
     const services = await this.dataSource
       .getRepository(Service)
-      .findBy({ id: In(serviceIds), orgId });
-    if (serviceIds.length !== services.length)
+      .findBy({ id: In(ids), orgId });
+    if (ids.length !== services.length)
       throw new NotFoundException('Some services are missing');
     return services;
   }
