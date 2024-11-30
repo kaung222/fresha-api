@@ -126,6 +126,7 @@ export class AppointmentsService {
     appointment.bookingItems = items;
     appointment.totalPrice = totalPrice;
     appointment.totalTime = totalTime;
+    appointment.endTime = appointment.startTime + totalTime;
     appointment.discountPrice = discountPrice;
     await this.appointmentRepository.save(appointment);
 
@@ -281,50 +282,37 @@ export class AppointmentsService {
     });
   }
 
-  // async update(
-  //   id: number,
-  //   updateAppointmentDto: UpdateAppointmentDto,
-  //   orgId: number,
-  // ) {
-  //   const appointment = await this.getBookingById(id, orgId, ['services']);
-  //   const queryRunner = this.dataSource.createQueryRunner();
-  //   await queryRunner.startTransaction();
-  //   try {
-  //     const { serviceIds, memberId, ...rest } = updateAppointmentDto;
-
-  //     const [services, member] = await Promise.all([
-  //       this.getServicesByIds(serviceIds, orgId),
-  //       this.getMemberByIds(memberId, orgId),
-  //     ]);
-  //     // calcualte total time and price and discount price
-  //     const { totalPrice, totalTime, discountPrice } =
-  //       this.calculateTimeAndPrice(services);
-
-  //     // calculate the commissions
-  //     const commissionFees = this.calculateCommissionFees(
-  //       totalPrice,
-  //       member.commissionFees,
-  //       member.commissionFeesType,
-  //     );
-  //     // appointment.services = services;
-  //     appointment.totalTime = totalTime;
-  //     appointment.endTime = rest.startTime + totalTime;
-  //     appointment.startTime = rest.startTime;
-  //     appointment.totalPrice = totalPrice;
-  //     appointment.discountPrice = discountPrice;
-  //     appointment.commissionFees = commissionFees;
-  //     Object.assign(appointment, rest);
-  //     // save the update data
-  //     await this.appointmentRepository.save(appointment);
-  //     await queryRunner.commitTransaction();
-  //     return { message: 'Update the appointment successfully' };
-  //   } catch (error) {
-  //     await queryRunner.rollbackTransaction();
-  //     throw new ForbiddenException('Cannot Update the appointment');
-  //   } finally {
-  //     await queryRunner.release();
-  //   }
-  // }
+  async update(
+    id: number,
+    updateAppointmentDto: UpdateAppointmentDto,
+    orgId: number,
+  ) {
+    const { bookingItems, ...rest } = updateAppointmentDto;
+    const appointment = await this.getBookingById(id, orgId, ['bookingItems']);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
+    try {
+      const items = await this.saveBookingItems(bookingItems, appointment);
+      // calculate time and price
+      const { totalPrice, totalTime, discountPrice } =
+        this.calculateTimeAndPrice(items);
+      appointment.bookingItems = items;
+      appointment.totalPrice = totalPrice;
+      appointment.totalTime = totalTime;
+      appointment.endTime = appointment.startTime + totalTime;
+      appointment.discountPrice = discountPrice;
+      Object.assign(appointment, rest);
+      // save the update data
+      await this.appointmentRepository.save(appointment);
+      await queryRunner.commitTransaction();
+      return { message: 'Update the appointment successfully' };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new ForbiddenException('Cannot Update the appointment');
+    } finally {
+      await queryRunner.release();
+    }
+  }
 
   async confirmBooking(id: number, orgId: number) {
     const appointment = await this.getBookingById(id, orgId);
