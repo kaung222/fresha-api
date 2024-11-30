@@ -38,11 +38,14 @@ export class Appointment extends IncrementEntity {
   })
   status: BookingStatus;
 
-  @Column()
+  @Column({ nullable: true })
   phone: string;
 
   @Column({ nullable: true })
   email: string;
+
+  @Column({ nullable: true })
+  profilePicture: string;
 
   @Column('enum', { enum: Gender, default: Gender.none })
   gender: Gender;

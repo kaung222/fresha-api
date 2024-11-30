@@ -58,20 +58,6 @@ export class ClientsService {
     return this.clientRepository.delete(id);
   }
 
-  @OnEvent('appointment.created')
-  async createClient({ userId, orgId }: { userId: number; orgId: number }) {
-    const client = await this.clientRepository.findOneBy({
-      userId,
-      organization: { id: orgId },
-    });
-    if (client) return;
-    const user = await this.dataSource
-      .getRepository(User)
-      .findOneBy({ id: userId });
-    const newClient = this.clientRepository.create(user);
-    this.clientRepository.save(newClient);
-  }
-
   async checkOwnership(id: number, orgId: number): Promise<Client> {
     const client = await this.clientRepository.findOneBy({
       id,

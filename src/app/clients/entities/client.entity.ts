@@ -26,9 +26,6 @@ export class Client extends IncrementEntity {
   @Column('date', { nullable: true })
   dob: Date;
 
-  @Column({ nullable: true })
-  userId: number;
-
   @Index('orgId')
   @Column()
   orgId: number;

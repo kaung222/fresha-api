@@ -4,21 +4,25 @@ import {
   IsEnum,
   IsNotEmpty,
   IsOptional,
+  IsPhoneNumber,
+  IsString,
   IsUrl,
 } from 'class-validator';
 
 export class CreateClientDto {
   @IsNotEmpty()
+  @IsString()
   firstName: string;
 
   @IsOptional()
   lastName?: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsEmail()
   email: string;
 
   @IsNotEmpty()
+  @IsPhoneNumber()
   phone: string;
 
   @IsOptional()
@@ -28,8 +32,6 @@ export class CreateClientDto {
   @IsEnum(Gender)
   gender?: Gender;
 
-  dob: Date;
-
   @IsOptional()
-  userId?: number;
+  dob: string;
 }

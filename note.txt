@@ -4,6 +4,9 @@ create  appointment complete logic
 add price unit in service eg:"MMK"
 add Discount and price unit in product
 
+statistics 
+total service time, commission fee ,number of bookings of member
+
 
 fixed later 
 

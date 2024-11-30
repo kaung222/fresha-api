@@ -210,6 +210,7 @@ export class AppointmentsService {
     const dates = getDatesBetweenDates(startDate, endDate);
     return await this.appointmentRepository.find({
       where: { memberId, date: In(dates) },
+      order: { createdAt: 'DESC' },
     });
   }
 
