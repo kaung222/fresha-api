@@ -46,9 +46,16 @@ export class ServicesService {
       organization: { id: orgId },
     });
     this.clearCache(orgId);
+    this.updateCategoryUsage(category);
     return await this.serviceRepository.save(newService);
   }
 
+  updateCategoryUsage(category: Category) {
+    this.dataSource
+      .getRepository(Category)
+      .update({ id: category.id }, { serviceCount: category.serviceCount + 1 });
+    this.clearCache(category.orgId);
+  }
   private clearCache(orgId: number) {
     const cacheKey = this.getCacheKey(orgId);
     this.cacheService.del(cacheKey);

@@ -61,6 +61,7 @@ import { Sale } from './app/sales/entities/sale.entity';
 import { SaleItem } from './app/sales/entities/sale-item.entity';
 import { TimeSlotsModule } from './app/time-slots/time-slots.module';
 import { FeaturesModule } from './app/features/features.module';
+import { BookingItem } from './app/appointments/entities/booking-item.entity';
 
 @Module({
   imports: [
@@ -87,7 +88,7 @@ import { FeaturesModule } from './app/features/features.module';
         OrgReview,
         Client,
         Appointment,
-
+        BookingItem,
         Test,
         Product,
         MemberSchedule,

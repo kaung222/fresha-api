@@ -6,6 +6,7 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { Gender, User } from '@/app/users/entities/user.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
@@ -79,6 +80,7 @@ export class Appointment extends IncrementEntity {
 
   @ManyToMany(() => Service, (service) => service.appointments, {
     eager: true,
+    lazy: true,
   })
   @JoinTable()
   services: Service[];

@@ -30,9 +30,6 @@ export class CreateAppointmentDto {
   @IsOptional()
   notes: string;
 
-  @IsEnum(BookingStatus)
-  status: BookingStatus;
-
   @IsNotEmpty()
   @IsPhoneNumber()
   phone: string;
@@ -44,21 +41,14 @@ export class CreateAppointmentDto {
   @IsEnum(Gender)
   gender: Gender;
 
-  @IsNotEmpty()
-  memberId: number;
+  @IsOptional()
+  memberId?: number;
 
   @IsArray()
   @ArrayMinSize(1)
   @IsNotEmpty({ each: true }) // Ensures no element in the array is empty
   @IsInt({ each: true }) // Ensures every element is an integer
   serviceIds: number[];
-
-  @IsOptional()
-  @ValidateIf((obj) => !obj.serviceIds || obj.serviceIds.length === 0)
-  @IsArray()
-  @IsNotEmpty({ each: true })
-  @IsInt({ each: true })
-  packageIds: number[];
 
   @IsNotEmpty()
   orgId: number;

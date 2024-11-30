@@ -68,6 +68,7 @@ export class AppointmentsService {
         startTime,
         totalTime,
         totalPrice,
+        status: BookingStatus.pending,
         services,
       });
       const appointment = await this.appointmentRepository.save(newAppointment);
@@ -98,6 +99,7 @@ export class AppointmentsService {
     this.createNotification(createNotificationDto);
   }
 
+  // create client appointment from org dashboard
   async createClientAppointment(
     orgId: number,
     addAppointmentDto: ClientAppointmentDto,
@@ -133,7 +135,7 @@ export class AppointmentsService {
       message: 'Added appointment successfully',
     };
   }
-
+  // calcuate the commissionfees of appointment for a selected member
   private calculateCommissionFees(
     totalPrice: number,
     fees: number,
@@ -146,6 +148,7 @@ export class AppointmentsService {
         return (totalPrice * fees) / 100;
     }
   }
+
   private async getUserById(userId: number) {
     return await this.dataSource.getRepository(User).findOneBy({ id: userId });
   }
@@ -270,6 +273,7 @@ export class AppointmentsService {
       appointment.discountPrice = discountPrice;
       appointment.commissionFees = commissionFees;
       appointment.member = member;
+      Object.assign(appointment, rest);
       // save the update data
       await this.appointmentRepository.save(appointment);
       await queryRunner.commitTransaction();

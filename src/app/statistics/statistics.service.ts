@@ -62,4 +62,13 @@ export class StatisticsService {
       .getRawOne();
     return data;
   }
+
+  async getMVPOfMonth(orgId: number, getStatisticsDto: GetStatisticsDto) {
+    const { startDate, endDate } = getStatisticsDto;
+    const dates = getDatesBetweenDates(startDate, endDate);
+    const data = this.dataSource
+      .getRepository(Appointment)
+      .createQueryBuilder('appointment')
+      .where('appointment.orgId=:orgId', { orgId });
+  }
 }
