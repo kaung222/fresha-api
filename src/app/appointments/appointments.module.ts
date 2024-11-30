@@ -6,10 +6,11 @@ import { Appointment } from './entities/appointment.entity';
 import { PaymentsService } from '../payments/payments.service';
 import { Payment } from '../payments/entities/payment.entity';
 import { BullModule } from '@nestjs/bull';
+import { BookingItem } from './entities/booking-item.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Appointment, Payment]),
+    TypeOrmModule.forFeature([Appointment, Payment, BookingItem]),
     BullModule.registerQueue({ name: 'emailQueue' }),
     BullModule.registerQueue({ name: 'notificationQueue' }),
   ],

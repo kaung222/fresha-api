@@ -3,15 +3,26 @@ import {
   IsArray,
   IsDateString,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsPositive,
   IsString,
   IsUrl,
+  ValidateNested,
 } from 'class-validator';
 import { BookingStatus } from '@/app/appointments/entities/appointment.entity';
 import { Gender } from '@/app/users/entities/user.entity';
+import { Type } from 'class-transformer';
 
+export class BookingItemDto {
+  @IsNotEmpty()
+  @IsInt()
+  serviceId: number;
+
+  @IsNotEmpty()
+  memberId: number;
+}
 export class ClientAppointmentDto {
   @IsNotEmpty()
   @IsDateString()
@@ -42,13 +53,10 @@ export class ClientAppointmentDto {
   @IsNotEmpty()
   email: string;
 
-  @IsNotEmpty()
-  memberId: number;
-
-  @IsNotEmpty()
-  @IsArray()
+  @ValidateNested()
   @ArrayMinSize(1)
-  serviceIds: number[];
+  @Type(() => BookingItemDto)
+  bookingItems: BookingItemDto[];
 
   @IsNotEmpty()
   @IsPositive()

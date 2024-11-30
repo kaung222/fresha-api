@@ -37,10 +37,16 @@ export class BookingItem {
   endTime: number;
 
   @DecimalColumn()
-  totalPrice: number;
+  price: number;
+
+  @Column('int')
+  duration: number;
 
   @DecimalColumn()
   discountPrice: number;
+
+  @DecimalColumn()
+  commissionFees: number;
 
   @ManyToOne(() => Appointment, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'appointmentId' })

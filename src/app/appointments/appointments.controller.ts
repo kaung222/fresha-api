@@ -32,7 +32,7 @@ export class AppointmentsController {
     @Body() createAppointmentDto: CreateAppointmentDto,
     @User('id') userId: number,
   ) {
-    return this.appointmentsService.create(createAppointmentDto, userId);
+    // return this.appointmentsService.create(createAppointmentDto, userId);
   }
 
   @Post('for/client')
@@ -88,7 +88,7 @@ export class AppointmentsController {
     @Body() updateAppointmentDto: UpdateAppointmentDto,
     @User('orgId') orgId: number,
   ) {
-    return this.appointmentsService.update(+id, updateAppointmentDto, orgId);
+    // return this.appointmentsService.update(+id, updateAppointmentDto, orgId);
   }
 
   @Patch(':id/confirm')

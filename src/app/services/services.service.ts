@@ -244,10 +244,8 @@ export class ServicesService {
   async remove(id: number, orgId: number) {
     const service = await this.serviceRepository.findOne({
       where: { id },
-      relations: { appointments: true },
     });
     if (!service) throw new NotFoundException('Service not found');
-    service.appointments = [];
     service.members = [];
     if (service.type === ServiceType.package) {
       service.services = [];

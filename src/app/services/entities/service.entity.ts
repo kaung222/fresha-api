@@ -2,7 +2,6 @@ import { Appointment } from '@/app/appointments/entities/appointment.entity';
 import { Category } from '@/app/categories/entities/category.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
-import { Payment } from '@/app/payments/entities/payment.entity';
 import { IncrementEntity } from '@/utils/base.entity';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
 import {
@@ -101,9 +100,6 @@ export class Service extends IncrementEntity {
 
   @ManyToMany(() => Service, (service) => service.packages)
   services: Service[];
-
-  @ManyToMany(() => Appointment, (appointment) => appointment.services)
-  appointments: Appointment[];
 
   @BeforeInsert()
   calculateDiscountPrice() {

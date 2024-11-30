@@ -14,6 +14,7 @@ import { Member } from '@/app/members/entities/member.entity';
 import { Client } from '@/app/clients/entities/client.entity';
 import { Service } from '@/app/services/entities/service.entity';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
+import { BookingItem } from './booking-item.entity';
 
 export enum BookingStatus {
   pending = 'pending',
@@ -60,40 +61,22 @@ export class Appointment extends IncrementEntity {
   @DecimalColumn()
   discountPrice: number;
 
-  @Column({ nullable: true })
-  memberId: number;
-
   @Column('boolean', { default: false })
   isOnlineBooking: boolean;
 
-  @Column('int')
+  @Column('int', { default: 0 })
   startTime: number; // in second
 
-  @Column('int')
+  @Column('int', { default: 0 })
   endTime: number; // in second
 
-  @DecimalColumn({ default: 0 })
-  commissionFees: number;
-
-  @DecimalColumn({ default: 0 })
-  tips: number;
-
-  @ManyToMany(() => Service, (service) => service.appointments, {
-    eager: true,
-    lazy: true,
-  })
-  @JoinTable()
-  services: Service[];
+  // relationship
+  // section
+  @OneToMany(() => BookingItem, (item) => item.appointment)
+  bookingItems: BookingItem[];
 
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
   user: User;
-
-  @ManyToOne(() => Client, { onDelete: 'SET NULL' })
-  client: Client;
-
-  @ManyToOne(() => Member, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'memberId' })
-  member: Member;
 
   @Column()
   orgId: number;

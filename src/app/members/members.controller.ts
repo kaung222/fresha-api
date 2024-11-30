@@ -62,7 +62,7 @@ export class MembersController {
     @Param('id') memberId: number,
     @Query() getTimes: GetAvailableTimes,
   ) {
-    return this.membersService.getAvailableTimeSlots(memberId, getTimes);
+    // return this.membersService.getAvailableTimeSlots(memberId, getTimes);
   }
 
   @Get(':id/appointments')
@@ -70,7 +70,7 @@ export class MembersController {
     @Param('id') memberId: number,
     @Query() getAppointmentDto: GetAppointmentDto,
   ) {
-    return this.membersService.getAppointments(memberId, getAppointmentDto);
+    // return this.membersService.getAppointments(memberId, getAppointmentDto);
   }
 
   @Get(':id/reviews')
@@ -78,7 +78,7 @@ export class MembersController {
     @Param('id') memberId: number,
     @Query() getAppointmentDto: GetAppointmentDto,
   ) {
-    return this.membersService.getAppointments(memberId, getAppointmentDto);
+    // return this.membersService.getAppointments(memberId, getAppointmentDto);
   }
 
   @Delete(':id')
