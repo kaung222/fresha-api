@@ -272,16 +272,17 @@ export class AppointmentsService {
 
   // get appointment detail by org
   findOne(id: number) {
-    return this.appointmentRepository.findOne({
-      where: { id },
-      relations: {
-        user: true,
-        bookingItems: {
-          service: true,
-          member: true,
-        },
-      },
-    });
+    const appointment = this.appointmentRepository
+      .createQueryBuilder('appointment')
+      .where('appointment.id=:id', { id })
+      .leftJoinAndSelect('appointment.user', 'user')
+      .leftJoinAndSelect('appointment.bookingItems', 'bookingItems')
+      .leftJoinAndSelect('bookingItems.service', 'service')
+      .leftJoinAndSelect('bookingItems.member', 'member')
+      .leftJoin('member.services', 'services')
+      .addSelect('services.id')
+      .getOne();
+    return appointment;
   }
 
   // get appointment detail by user
