@@ -4,6 +4,7 @@ import { Service } from '../services/entities/service.entity';
 import { GetStatisticsDto } from './dto/get-statistics.dto';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { getDatesBetweenDates } from '@/utils';
+import { BookingItem } from '../appointments/entities/booking-item.entity';
 
 @Injectable()
 export class StatisticsService {
@@ -26,21 +27,15 @@ export class StatisticsService {
   ) {
     const { startDate, endDate, status } = getStatisticsDto;
     const dates = getDatesBetweenDates(startDate, endDate);
-    const queryBuilder = this.dataSource
-      .getRepository(Appointment)
-      .createQueryBuilder('appointment')
-      .where('appointment.memberId=:memberId', { memberId })
-      .andWhere('appointment.date IN :dates', { dates })
-      .select('SUM(appointment.duration)', 'totalDuration')
-      .addSelect('SUM(appointment.commissionFees)', 'totalCommissionFees')
-      .addSelect('COUNT(*)', 'totalAppointments')
-      .addSelect('SUM(appointment.tips)', 'totalTips');
-    // .getRawOne();
-
-    if (status) {
-      queryBuilder.andWhere('appointment.status=:status', { status });
-    }
-    const data = await queryBuilder.getRawOne();
+    const data = await this.dataSource
+      .getRepository(BookingItem)
+      .createQueryBuilder('item')
+      .where('item.memberId=:memberId', { memberId })
+      .andWhere('item.date IN (:...dates)', { dates })
+      .select('SUM(item.duration)', 'totalDuration')
+      .addSelect('SUM(item.commissionFees)', 'totalCommissionFees')
+      .addSelect('COUNT(*)', 'totalServiceCount')
+      .getRawOne();
     return data;
   }
 

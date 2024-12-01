@@ -15,7 +15,6 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
-import { CreateQuickAppointment } from './dto/create-quick-appointment.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { ClientAppointmentDto } from './dto/create-client-booking.dto';
 import { CompleteAppointmentDto } from './dto/complete-booking.dto';
@@ -32,7 +31,7 @@ export class AppointmentsController {
     @Body() createAppointmentDto: CreateAppointmentDto,
     @User('id') userId: number,
   ) {
-    // return this.appointmentsService.create(createAppointmentDto, userId);
+    return this.appointmentsService.create(createAppointmentDto, userId);
   }
 
   @Post('for/client')
@@ -88,7 +87,7 @@ export class AppointmentsController {
     @Body() updateAppointmentDto: UpdateAppointmentDto,
     @User('orgId') orgId: number,
   ) {
-    // return this.appointmentsService.update(+id, updateAppointmentDto, orgId);
+    return this.appointmentsService.update(+id, updateAppointmentDto, orgId);
   }
 
   @Patch(':id/confirm')

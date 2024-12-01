@@ -11,49 +11,21 @@ import {
   IsPhoneNumber,
   IsPositive,
   ValidateIf,
+  ValidateNested,
 } from 'class-validator';
 import { BookingStatus } from '../entities/appointment.entity';
 import { Gender } from '@/app/users/entities/user.entity';
+import { Type } from 'class-transformer';
+import { ClientAppointmentDto } from './create-client-booking.dto';
 
 class BookingItem {
   @IsNotEmpty()
   serviceId: number;
+
+  @IsNotEmpty()
+  memberId: number;
 }
-export class CreateAppointmentDto {
-  @IsNotEmpty()
-  @IsDateString()
-  date: string;
-
-  @IsNotEmpty()
-  username: string;
-
-  @IsOptional()
-  notes: string;
-
-  @IsNotEmpty()
-  @IsPhoneNumber()
-  phone: string;
-
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
-
-  @IsEnum(Gender)
-  gender: Gender;
-
-  @IsOptional()
-  memberId?: number;
-
-  @IsArray()
-  @ArrayMinSize(1)
-  @IsNotEmpty({ each: true }) // Ensures no element in the array is empty
-  @IsInt({ each: true }) // Ensures every element is an integer
-  serviceIds: number[];
-
+export class CreateAppointmentDto extends ClientAppointmentDto {
   @IsNotEmpty()
   orgId: number;
-
-  @IsNotEmpty()
-  @IsPositive()
-  startTime: number;
 }
