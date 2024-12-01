@@ -87,11 +87,12 @@ export class MembersService {
     const cacheKey = this.getCacheKey(orgId);
     const memberCache = await this.cacheService.get(cacheKey);
     if (memberCache) return memberCache;
-    const members = await this.memberRepository.find({
-      where: {
-        orgId,
-      },
-    });
+    const members = await this.memberRepository
+      .createQueryBuilder('member')
+      .where('member.orgId=:orgId', { orgId })
+      .leftJoin('member.services', 'service')
+      .addSelect('service.id')
+      .getMany();
     await this.cacheService.set(cacheKey, members, CacheTTL.long);
     return members;
   }
