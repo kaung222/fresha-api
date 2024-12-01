@@ -61,6 +61,9 @@ export class Appointment extends IncrementEntity {
   @DecimalColumn()
   discountPrice: number;
 
+  @DecimalColumn()
+  totalCommissionFees: number;
+
   @Column('boolean', { default: false })
   isOnlineBooking: boolean;
 

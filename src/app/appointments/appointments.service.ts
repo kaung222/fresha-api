@@ -71,6 +71,8 @@ export class AppointmentsService {
       appointment.bookingItems = items;
       appointment.totalPrice = totalPrice;
       appointment.totalTime = totalTime;
+      appointment.totalCommissionFees =
+        this.calculateTotalCommissionFees(items);
       appointment.endTime = appointment.startTime + totalTime;
       appointment.discountPrice = discountPrice;
       await this.appointmentRepository.save(appointment);
@@ -122,6 +124,7 @@ export class AppointmentsService {
     appointment.bookingItems = items;
     appointment.totalPrice = totalPrice;
     appointment.totalTime = totalTime;
+    appointment.totalCommissionFees = this.calculateTotalCommissionFees(items);
     appointment.endTime = appointment.startTime + totalTime;
     appointment.discountPrice = discountPrice;
     await this.appointmentRepository.save(appointment);
@@ -157,7 +160,7 @@ export class AppointmentsService {
           appointmentId: appointment.id,
           memberId,
           serviceId,
-          memberName: member.firstName + member.lastName,
+          memberName: member.firstName,
           serviceName: service.name,
           startTime,
           endTime,
@@ -291,29 +294,39 @@ export class AppointmentsService {
     });
   }
 
+  private calculateTotalCommissionFees(items: BookingItem[]) {
+    return items.reduce((pv, cv) => pv + cv.commissionFees, 0);
+  }
+
   async update(
     id: number,
     updateAppointmentDto: UpdateAppointmentDto,
     orgId: number,
   ) {
     const { bookingItems, ...rest } = updateAppointmentDto;
-    const appointment = await this.getBookingById(id, orgId, ['bookingItems']);
+    const appointment = await this.getBookingById(id, orgId);
+    // transaction start
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
+    await this.itemRepository.delete({ appointmentId: id });
+    appointment.startTime = rest.startTime;
     try {
       const items = await this.saveBookingItems(bookingItems, appointment);
       // calculate time and price
       const { totalPrice, totalTime, discountPrice } =
         this.calculateTimeAndPrice(items);
-      appointment.bookingItems = items;
       appointment.totalPrice = totalPrice;
       appointment.totalTime = totalTime;
+      appointment.totalCommissionFees =
+        this.calculateTotalCommissionFees(items);
       appointment.endTime = appointment.startTime + totalTime;
       appointment.discountPrice = discountPrice;
       Object.assign(appointment, rest);
       // save the update data
       await this.appointmentRepository.save(appointment);
+      // commit transaction
       await queryRunner.commitTransaction();
+
       return { message: 'Update the appointment successfully' };
     } catch (error) {
       await queryRunner.rollbackTransaction();
