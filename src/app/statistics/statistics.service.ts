@@ -13,13 +13,21 @@ export class StatisticsService {
     return 'hello';
   }
 
-  getMostBookingServices(orgId: number) {
-    const service = this.dataSource
-      .getRepository(Service)
-      .createQueryBuilder('service')
-      .where('service.organization=:orgId', { orgId })
-      .select('COUNT()')
+  getMostBookingServices(orgId: number, getStatisticsDto: GetStatisticsDto) {
+    const { startDate, endDate, status } = getStatisticsDto;
+    const dates = getDatesBetweenDates(startDate, endDate);
+    const services = this.dataSource
+      .getRepository(BookingItem)
+      .createQueryBuilder('item')
+      .leftJoin('item.appointment', 'appointment')
+      .where('appointment.orgId=:orgId', { orgId })
+      .andWhere('item.date IN (:...dates)', { dates })
+      .select('item.serviceId', 'serviceId')
+      // .addSelect('item.serviceName', 'serviceName')
+      .addSelect('COUNT(item.id)', 'totalOrders')
+      .groupBy('serviceId')
       .getRawMany();
+    return services;
   }
 
   async getMemberStatistics(
@@ -79,21 +87,33 @@ export class StatisticsService {
       .getRepository(Appointment)
       .createQueryBuilder('appointment')
       .where('appointment.orgId=:orgId', { orgId })
-      .andWhere('appointment.date IN :dates', { dates })
-      .select('SUM(appointment.duration)', 'totalDuration')
-      .addSelect('SUM(appointment.commissionFees)', 'totalCommissionFees')
+      .andWhere('appointment.date IN (:...dates)', { dates })
+      .select('appointment.date', 'date')
+      // .select('SUM(appointment.duration)', 'totalDuration')
+      .addSelect('SUM(appointment.totalCommissionFees)', 'totalCommissionFees')
+      .addSelect('SUM(appointment.discountPrice)', 'totalDiscountPrice')
       .addSelect('COUNT(*)', 'totalAppointments')
-      .addSelect('SUM(appointment.tips)', 'totalTips')
-      .getRawOne();
+      // .addSelect('SUM(appointment.tips)', 'totalTips')
+      .groupBy('date')
+      .getRawMany();
     return data;
   }
 
   async getMVPOfMonth(orgId: number, getStatisticsDto: GetStatisticsDto) {
     const { startDate, endDate } = getStatisticsDto;
     const dates = getDatesBetweenDates(startDate, endDate);
-    const data = this.dataSource
-      .getRepository(Appointment)
-      .createQueryBuilder('appointment')
-      .where('appointment.orgId=:orgId', { orgId });
+    const services = this.dataSource
+      .getRepository(BookingItem)
+      .createQueryBuilder('item')
+      .leftJoin('item.appointment', 'appointment')
+      .where('appointment.orgId=:orgId', { orgId })
+      .andWhere('item.date IN (:...dates)', { dates })
+      .select('item.memberId', 'memberId')
+      .addSelect('COUNT(item.id)', 'totalOrders')
+      .addSelect('SUM(item.commissionFees)', 'totalFees')
+      .addSelect('SUM(item.duration)', 'totalDuration')
+      .groupBy('memberId')
+      .getRawMany();
+    return services;
   }
 }
