@@ -380,7 +380,7 @@ export class AppointmentsService {
     completeAppointment: CompleteAppointmentDto,
     orgId: number,
   ) {
-    const { notes, paymentMethod, commissionFees, tips } = completeAppointment;
+    const { notes, paymentMethod } = completeAppointment;
     const appointment = await this.getBookingById(id, orgId);
     await this.appointmentRepository.update(id, {
       status: BookingStatus.completed,
@@ -388,7 +388,7 @@ export class AppointmentsService {
     // on complete appointment create payment
     this.paymentService.createPaymentByAppointment({
       // the total amount of user paid
-      amount: appointment.discountPrice + tips,
+      amount: appointment.discountPrice,
       clientName: appointment.username,
       appointmentId: id,
       method: paymentMethod,

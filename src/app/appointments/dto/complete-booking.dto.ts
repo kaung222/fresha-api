@@ -8,9 +8,9 @@ import {
 } from 'class-validator';
 
 export class CompleteAppointmentDto {
-  @IsNotEmpty()
-  @IsNumber()
-  commissionFees: number;
+  // @IsNotEmpty()
+  // @IsNumber()
+  // commissionFees: number;
 
   @IsOptional()
   @IsString()
@@ -20,7 +20,7 @@ export class CompleteAppointmentDto {
   @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
 
-  @IsNotEmpty()
-  @IsNumber()
-  tips: number;
+  // @IsNotEmpty()
+  // @IsNumber()
+  // tips: number;
 }

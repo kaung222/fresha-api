@@ -1,16 +1,10 @@
 
-add commission fee in member
-create  appointment complete logic
-add price unit in service eg:"MMK"
-add Discount and price unit in product
-
 statistics 
 total service time, commission fee ,number of bookings of member
+add total commission fees in appointment
+
 
 
 fixed later 
 
 // Discount should not greater than the price
-
-
-add user image in appointment

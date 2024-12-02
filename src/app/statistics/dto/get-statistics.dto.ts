@@ -9,6 +9,6 @@ export class GetStatisticsDto {
   endDate: string;
 
   @IsEnum(BookingStatus)
-  @IsOptional()
+  @IsNotEmpty()
   status: BookingStatus;
 }

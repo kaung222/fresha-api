@@ -13,6 +13,7 @@ export class StatisticsController {
     @Param('memberId') memberId: number,
     @Query() getStatisticsDto: GetStatisticsDto,
   ) {
+    // return this.statisticsService.getMemberChart(memberId, getStatisticsDto);
     return this.statisticsService.getMemberStatistics(
       memberId,
       getStatisticsDto,
