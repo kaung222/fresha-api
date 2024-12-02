@@ -35,7 +35,7 @@ export class StatisticsController {
     );
   }
 
-  @Get('member/most-ordered')
+  @Get('members')
   @ApiOperation({ summary: 'Get org most worked member statistics' })
   gerMVPMemeber(
     @User('orgId') orgId: number,
@@ -44,7 +44,7 @@ export class StatisticsController {
     return this.statisticsService.getMVPOfMonth(orgId, getStatisticsDto);
   }
 
-  @Get('service/most-ordered')
+  @Get('services')
   @ApiOperation({ summary: 'Get org most ordered service statistics' })
   getMostBookingServices(
     @User('orgId') orgId: number,
