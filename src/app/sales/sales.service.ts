@@ -25,7 +25,9 @@ export class SalesService {
     @InjectRepository(SaleItem)
     private saleItemRepository: Repository<SaleItem>,
   ) {}
+
   async create(orgId: number, createSaleDto: CreateSaleDto) {
+    // return;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
     try {
@@ -36,7 +38,7 @@ export class SalesService {
       });
       const sale = await this.saleRepository.save(createSale);
       const items = await this.saveSaleItems(sale, saleItems);
-      const { totalPrice } = this.calculateTotalPrice(items);
+      const totalPrice = this.calculateTotalPrice(items);
       sale.totalPrice = totalPrice;
       await this.saleRepository.save(sale);
       await queryRunner.commitTransaction();
@@ -62,7 +64,7 @@ export class SalesService {
       });
       const sale = await this.saleRepository.save(createSale);
       const items = await this.saveSaleItems(sale, saleItems);
-      const { totalPrice } = this.calculateTotalPrice(items);
+      const totalPrice = this.calculateTotalPrice(items);
       sale.totalPrice = totalPrice;
       await this.saleRepository.save(sale);
       await queryRunner.commitTransaction();
@@ -82,7 +84,7 @@ export class SalesService {
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new ForbiddenException('Creating sale failed');
+      throw new ForbiddenException(error.message);
     } finally {
       await queryRunner.release();
     }
@@ -99,12 +101,12 @@ export class SalesService {
       saleItems.map(({ productId, quantity }) => {
         const product = products.find((product) => product.id === productId);
         // add some discrount here
-        const subtotalPrice = product.price * quantity;
+        const subtotalPrice = product.discountPrice * quantity;
         return {
           product,
           quantity,
           name: product.name,
-          price: product.price,
+          price: product.discountPrice,
           sale,
           subtotalPrice,
         };
@@ -113,7 +115,7 @@ export class SalesService {
     return await this.saleItemRepository.save(createSaleItems);
   }
 
-  private async getProductsByIds(productIds: number[]) {
+  private async getProductsByIds(productIds: string[]) {
     const products = await this.dataSource
       .getRepository(Product)
       .findBy({ id: In(productIds) });
@@ -124,10 +126,7 @@ export class SalesService {
 
   // calculate total price by sale itmes
   private calculateTotalPrice(items: SaleItem[]) {
-    const totalPrice = items.reduce((pv, cv) => pv + cv.subtotalPrice, 0);
-    return {
-      totalPrice,
-    };
+    return items.reduce((pv, cv) => pv + cv.subtotalPrice, 0);
   }
 
   async findAll(orgId: number, paginateQuery: PaginateQuery) {
@@ -141,16 +140,18 @@ export class SalesService {
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
-  findOne(id: number, orgId: number) {
-    return this.saleRepository.findOneOrFail({
-      where: { id, organization: { id: orgId } },
+  async findOne(id: string, orgId: number) {
+    const sale = await this.saleRepository.findOne({
+      where: { id, orgId },
       relations: {
-        saleItems: true,
+        saleItems: { product: true },
       },
     });
+    if (!sale) throw new NotFoundException('sale not found');
+    return sale;
   }
 
-  async update(id: number, updateSaleDto: UpdateQuickSaleDto, orgId: number) {
+  async update(id: string, updateSaleDto: UpdateQuickSaleDto, orgId: number) {
     return {
       error: true,
       message: 'Cannot update sale',
@@ -178,13 +179,13 @@ export class SalesService {
     }
   }
 
-  async remove(id: number, orgId: number) {
+  async remove(id: string, orgId: number) {
     await this.getSaleById(id, orgId);
     return this.saleRepository.delete({ id });
   }
 
   async getSaleById(
-    saleId: number,
+    saleId: string,
     orgId: number,
     saleItems_include?: boolean,
   ) {

@@ -1,5 +1,11 @@
 import { Organization } from '@/app/organizations/entities/organization.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class ClosedDay {
@@ -18,6 +24,10 @@ export class ClosedDay {
   @Column({ default: 'Holidays' })
   type: string;
 
+  @Column('orgId')
+  orgId: number;
+
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'orgId' })
   organization: Organization;
 }

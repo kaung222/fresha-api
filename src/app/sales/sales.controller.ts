@@ -43,7 +43,7 @@ export class SalesController {
 
   @Get(':id')
   findOne(@Param('id') id: string, @User('orgId') orgId: number) {
-    return this.salesService.findOne(+id, orgId);
+    return this.salesService.findOne(id, orgId);
   }
 
   @Patch(':id')
@@ -52,11 +52,11 @@ export class SalesController {
     @Body() updateSaleDto: UpdateQuickSaleDto,
     @User('orgId') orgId: number,
   ) {
-    return this.salesService.update(+id, updateSaleDto, orgId);
+    return this.salesService.update(id, updateSaleDto, orgId);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @User('orgId') orgId: number) {
-    return this.salesService.remove(+id, orgId);
+    return this.salesService.remove(id, orgId);
   }
 }

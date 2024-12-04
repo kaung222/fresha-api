@@ -35,24 +35,22 @@ export class ProductsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.productsService.findOne(+id);
+    return this.productsService.findOne(id);
   }
 
   @Patch(':id')
   @Role(Roles.org)
-  async update(
+  update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
     @User('orgId') orgId: number,
   ) {
-    await this.productsService.checkOwnership(+id, orgId);
-    return this.productsService.update(+id, updateProductDto);
+    return this.productsService.update(id, updateProductDto, orgId);
   }
 
   @Delete(':id')
   @Role(Roles.org)
-  async remove(@Param('id') id: string, @User('orgId') orgId: number) {
-    await this.productsService.checkOwnership(+id, orgId);
-    return this.productsService.remove(+id);
+  remove(@Param('id') id: string, @User('orgId') orgId: number) {
+    return this.productsService.remove(id, orgId);
   }
 }

@@ -1,10 +1,11 @@
 import { Organization } from '@/app/organizations/entities/organization.entity';
-import { IncrementEntity } from '@/utils';
+import { DiscountType } from '@/app/services/entities/service.entity';
+import { UUIDEntity } from '@/utils';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity()
-export class Product extends IncrementEntity {
+export class Product extends UUIDEntity {
   @Column({ type: 'simple-array', nullable: true })
   images: string[];
 
@@ -23,6 +24,9 @@ export class Product extends IncrementEntity {
   @DecimalColumn()
   discountPrice: number;
 
+  @Column('enum', { enum: DiscountType, default: DiscountType.percent })
+  discountType: DiscountType;
+
   @Column({ nullable: true })
   brand: string;
 
@@ -36,8 +40,15 @@ export class Product extends IncrementEntity {
   instock: boolean;
 
   @Column('int', { default: 1 })
+  stock: number;
+
+  @Column('int', { default: 1 })
   moq: number;
 
+  @Column()
+  orgId: number;
+
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'orgId' })
   organization: Organization;
 }

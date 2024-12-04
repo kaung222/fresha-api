@@ -14,7 +14,7 @@ import {
 
 export class SaleItemDto {
   @IsNotEmpty()
-  productId: number;
+  productId: string;
 
   @IsNotEmpty()
   @IsPositive()

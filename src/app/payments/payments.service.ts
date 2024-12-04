@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   CreateBookingPaymentBySystem,
   CreateSalePayment,
@@ -45,10 +45,12 @@ export class PaymentsService {
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
-  findOne(id: string, orgId: number) {
-    return this.paymentRepository.findOne({
+  async findOne(id: string, orgId: number) {
+    const payment = await this.paymentRepository.findOne({
       where: { orgId, id },
       relations: { appointment: true, sale: true },
     });
+    if (!payment) throw new NotFoundException('Payment not found');
+    return payment;
   }
 }

@@ -286,7 +286,7 @@ export class AppointmentsService {
   }
 
   // get appointment detail by user
-  findOneByUser(id: number) {
+  findOneByUser(id: string) {
     return this.appointmentRepository.findOne({
       where: { id },
       relations: {
@@ -300,7 +300,7 @@ export class AppointmentsService {
   }
 
   async update(
-    id: number,
+    id: string,
     updateAppointmentDto: UpdateAppointmentDto,
     orgId: number,
   ) {
@@ -337,7 +337,7 @@ export class AppointmentsService {
     }
   }
 
-  async confirmBooking(id: number, orgId: number) {
+  async confirmBooking(id: string, orgId: number) {
     const appointment = await this.getBookingById(id, orgId);
     this.appointmentRepository.update(id, { status: BookingStatus.confirmed });
     // send email about booking confirmation
@@ -353,7 +353,7 @@ export class AppointmentsService {
   }
 
   async cancelBooking(
-    id: number,
+    id: string,
     cancelBookingDto: CancelBookingDto,
     orgId: number,
   ) {
@@ -376,7 +376,7 @@ export class AppointmentsService {
   }
 
   async completeBooking(
-    id: number,
+    id: string,
     completeAppointment: CompleteAppointmentDto,
     orgId: number,
   ) {
@@ -400,7 +400,7 @@ export class AppointmentsService {
     };
   }
 
-  async remove(id: number, orgId: number) {
+  async remove(id: string, orgId: number) {
     await this.getBookingById(id, orgId);
     this.appointmentRepository.delete({ id });
     return {
@@ -408,7 +408,7 @@ export class AppointmentsService {
     };
   }
 
-  async getBookingById(bookingId: number, orgId: number, relations?: string[]) {
+  async getBookingById(bookingId: string, orgId: number, relations?: string[]) {
     const appointment = await this.appointmentRepository.findOne({
       where: {
         orgId,

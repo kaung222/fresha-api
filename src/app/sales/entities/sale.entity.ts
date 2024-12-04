@@ -1,13 +1,18 @@
-import { Client } from '@/app/clients/entities/client.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
-import { User } from '@/app/users/entities/user.entity';
-import { IncrementEntity } from '@/utils';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { UUIDEntity } from '@/utils';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { SaleItem } from './sale-item.entity';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
 
 @Entity()
-export class Sale extends IncrementEntity {
+export class Sale extends UUIDEntity {
   @Column({ default: 'unknown' })
   username: string;
 
@@ -26,13 +31,11 @@ export class Sale extends IncrementEntity {
   @OneToMany(() => SaleItem, (item) => item.sale)
   saleItems: SaleItem[];
 
-  @ManyToOne(() => Client)
-  client: Client;
-
+  @Index('orgId')
   @Column()
   orgId: number;
 
-  @ManyToOne(() => Organization, { nullable: false })
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orgId' })
   organization: Organization;
 }

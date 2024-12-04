@@ -55,6 +55,7 @@ export class AppointmentsController {
     @Param('memberId') memberId: number,
     @Query() getAppointment: GetAppointmentDto,
   ) {
+    console.log(memberId);
     return this.appointmentsService.getBookingsByMemberId(
       memberId,
       getAppointment,
@@ -87,14 +88,14 @@ export class AppointmentsController {
     @Body() updateAppointmentDto: UpdateAppointmentDto,
     @User('orgId') orgId: number,
   ) {
-    return this.appointmentsService.update(+id, updateAppointmentDto, orgId);
+    return this.appointmentsService.update(id, updateAppointmentDto, orgId);
   }
 
   @Patch(':id/confirm')
   @Role(Roles.org, Roles.member)
   @ApiOperation({ summary: 'Confirm booking by org or member' })
   confirmBooking(@Param('id') id: string, @User('orgId') orgId: number) {
-    return this.appointmentsService.confirmBooking(+id, orgId);
+    return this.appointmentsService.confirmBooking(id, orgId);
   }
 
   @Patch(':id/cancel')
@@ -105,7 +106,7 @@ export class AppointmentsController {
     @User('orgId') orgId: number,
     @Body() cancelBookingDto: CancelBookingDto,
   ) {
-    return this.appointmentsService.cancelBooking(+id, cancelBookingDto, orgId);
+    return this.appointmentsService.cancelBooking(id, cancelBookingDto, orgId);
   }
 
   @Patch(':id/complete')
@@ -116,17 +117,13 @@ export class AppointmentsController {
     @Body() completeBooking: CompleteAppointmentDto,
     @User('orgId') orgId: number,
   ) {
-    return this.appointmentsService.completeBooking(
-      +id,
-      completeBooking,
-      orgId,
-    );
+    return this.appointmentsService.completeBooking(id, completeBooking, orgId);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete booking by org or member' })
   @Role(Roles.org, Roles.member)
   remove(@Param('id') id: string, @User('orgId') orgId: number) {
-    return this.appointmentsService.remove(+id, orgId);
+    return this.appointmentsService.remove(id, orgId);
   }
 }

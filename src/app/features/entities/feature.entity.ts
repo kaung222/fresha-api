@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum Currency {
   mmk = 'MMK',
@@ -14,6 +14,7 @@ export class Feature {
   id: string;
 
   @Column()
+  @Index('orgId')
   orgId: number;
 
   @Column('boolean')

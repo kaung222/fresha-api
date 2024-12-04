@@ -32,7 +32,7 @@ export class BookingItem {
   memberId: number;
 
   @Column({ nullable: true })
-  appointmentId: number;
+  appointmentId: string;
 
   @Column('int')
   startTime: number;

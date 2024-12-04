@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateClosedDayDto } from './dto/create-closed-day.dto';
-import { UpdateClosedDayDto } from './dto/update-closed-day.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ClosedDay } from './entities/closed-day.entity';
-import { Between, LessThan, MoreThan, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { getDatesBetweenDates } from '@/utils';
 import { GetClosedDay } from './dto/get-close-days.dto';
 
@@ -16,12 +15,8 @@ export class ClosedDaysService {
 
   // create closed days
   create(createClosedDayDto: CreateClosedDayDto, orgId: number) {
-    const { startDate, endDate, type, notes } = createClosedDayDto;
     const createClosedDay = this.closedDayRepository.create({
-      startDate,
-      endDate,
-      type,
-      notes,
+      ...createClosedDayDto,
       organization: { id: orgId },
     });
     return this.closedDayRepository.save(createClosedDay);
@@ -29,11 +24,7 @@ export class ClosedDaysService {
 
   // get all close days by org
   async findAll(orgId: number, getClosedDay?: GetClosedDay) {
-    // const { startDate, endDate } = getClosedDay;
-    const closedDates = await this.closedDayRepository.findBy({
-      organization: { id: orgId },
-    });
-    return closedDates;
+    return await this.closedDayRepository.findBy({ orgId });
   }
 
   async getFormattedcloseDay(orgId: number) {
@@ -42,31 +33,25 @@ export class ClosedDaysService {
   }
 
   private formattedClosedDays(closedDates: ClosedDay[]) {
-    const formattedDays = closedDates.map((closedDay) => {
-      const { startDate, endDate, notes, type } = closedDay;
+    const formattedDays = closedDates.flatMap((closedDay) => {
+      const { startDate, endDate } = closedDay;
       const days = getDatesBetweenDates(startDate, endDate);
       return days.map((day) => ({
         date: day,
-        startDate,
-        endDate,
-        notes,
-        type,
+        ...closedDay,
       }));
     });
-    return formattedDays[0];
+    return formattedDays;
   }
 
   async remove(id: number, orgId: number) {
-    await this.checkOwnership(id, orgId);
+    await this.getClosedDay(id, orgId);
     return this.closedDayRepository.delete(id);
   }
 
-  async checkOwnership(id: number, orgId: number) {
-    const closedDay = await this.closedDayRepository.findOneBy({
-      id,
-      organization: { id: orgId },
-    });
+  async getClosedDay(id: number, orgId: number) {
+    const closedDay = await this.closedDayRepository.findOneBy({ id, orgId });
     if (!closedDay) throw new NotFoundException('Closed day not found');
-    return true;
+    return closedDay;
   }
 }

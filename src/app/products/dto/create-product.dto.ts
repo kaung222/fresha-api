@@ -2,10 +2,12 @@ import { DiscountType } from '@/app/services/entities/service.entity';
 import {
   IsBoolean,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsPositive,
   IsString,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -38,14 +40,18 @@ export class CreateProductDto {
   @IsBoolean()
   instock: boolean;
 
+  @IsNotEmpty()
+  @IsInt()
+  stock: number;
+
   @IsOptional()
   @IsPositive()
   moq: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   discount: number;
 
   @IsEnum(DiscountType)
-  @IsOptional()
-  dicountPrice: DiscountType;
+  @IsNotEmpty()
+  discountType: DiscountType;
 }

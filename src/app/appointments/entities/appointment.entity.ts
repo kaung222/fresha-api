@@ -1,5 +1,18 @@
-import { getCurrentDate, IncrementEntity } from '@/utils';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  generateOpt,
+  getCurrentDate,
+  IncrementEntity,
+  UUIDEntity,
+} from '@/utils';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { Gender, User } from '@/app/users/entities/user.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
@@ -13,12 +26,15 @@ export enum BookingStatus {
 }
 
 @Entity()
-export class Appointment extends IncrementEntity {
+export class Appointment extends UUIDEntity {
   @Column('date')
   date: string;
 
   @Column({ default: 'unknown' })
   username: string;
+
+  @Column('int')
+  token: number;
 
   @Column({ type: 'text', nullable: true })
   notes: string;
@@ -70,10 +86,16 @@ export class Appointment extends IncrementEntity {
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
   user: User;
 
+  @Index('orgId')
   @Column()
   orgId: number;
 
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orgId' })
   organization: Organization;
+
+  @BeforeInsert()
+  generateToken() {
+    this.token = parseInt(generateOpt());
+  }
 }

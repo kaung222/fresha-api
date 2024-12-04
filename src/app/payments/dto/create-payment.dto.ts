@@ -4,7 +4,7 @@ export class CreateBookingPaymentBySystem {
   clientName: string;
   method: PaymentMethod;
   amount: number;
-  appointmentId: number;
+  appointmentId: string;
   orgId: number;
   notes?: string;
 }
@@ -14,6 +14,6 @@ export class CreateSalePayment {
   clientName: string;
   method: PaymentMethod;
   amount: number;
-  saleId: number;
+  saleId: string;
   orgId: number;
 }

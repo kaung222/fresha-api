@@ -14,10 +14,13 @@ export class SaleItem {
   @DecimalColumn()
   price: number;
 
+  @Column('simple-array', { nullable: true })
+  images: string[];
+
   @Column('int', { default: 1 })
   quantity: number;
 
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  @DecimalColumn()
   subtotalPrice: number;
 
   @ManyToOne(() => Product, { onDelete: 'SET NULL' })

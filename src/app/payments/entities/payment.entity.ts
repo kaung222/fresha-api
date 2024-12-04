@@ -37,14 +37,14 @@ export class Payment extends UUIDEntity {
   notes: string;
 
   @Column({ nullable: true })
-  appointmentId: number;
+  appointmentId: string;
 
   @OneToOne(() => Appointment, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'appointmentId' })
   appointment: Appointment;
 
   @Column({ nullable: true })
-  saleId: number;
+  saleId: string;
 
   @OneToOne(() => Sale, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'saleId' })
