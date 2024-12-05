@@ -32,9 +32,12 @@ export class MemberScheduleController {
 
   @Get()
   findAll(@User('orgId') orgId: number) {
-    console.log('run');
-
     return this.memberScheduleService.findAll(orgId);
+  }
+
+  @Get('of/member/:memberId')
+  getMemberSchedules(@Param('memberId') memberId: number) {
+    return this.memberScheduleService.getMemberSchedule(memberId);
   }
 
   @Get(':id')

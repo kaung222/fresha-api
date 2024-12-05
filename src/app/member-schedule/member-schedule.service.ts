@@ -66,6 +66,10 @@ export class MemberScheduleService {
     });
   }
 
+  getMemberSchedule(memberId: number) {
+    return this.memberScheduleRepository.findBy({ memberId });
+  }
+
   findOne(id: number) {
     return this.memberScheduleRepository.findOneBy({ id });
   }
