@@ -277,7 +277,7 @@ export class AppointmentsService {
   }
 
   // get appointment detail by org
-  findOne(id: number) {
+  findOne(id: string) {
     const appointment = this.appointmentRepository
       .createQueryBuilder('appointment')
       .where('appointment.id=:id', { id })

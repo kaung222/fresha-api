@@ -75,7 +75,7 @@ export class AppointmentsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get details' })
   findOne(@Param('id') id: string) {
-    return this.appointmentsService.findOne(+id);
+    return this.appointmentsService.findOne(id);
   }
 
   @Patch(':id')
