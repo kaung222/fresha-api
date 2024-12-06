@@ -121,13 +121,14 @@ export class AuthService {
       email,
       isConfirmed: false,
     };
-    const isExistOtp = await this.otpRepository.findOneBy({
+    const existingOtp = await this.otpRepository.findOneBy({
       email,
     });
-    if (isExistOtp) {
-      await this.otpRepository.update(isExistOtp.id, otpPayload);
-    } else await this.otpRepository.insert(otpPayload);
-
+    const createOtp = this.otpRepository.create({
+      ...existingOtp,
+      ...otpPayload,
+    });
+    await this.otpRepository.save(createOtp);
     // send email otp
     this.sendEmail({
       to: email,

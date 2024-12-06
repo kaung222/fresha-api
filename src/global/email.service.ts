@@ -9,7 +9,7 @@ import { Job } from 'bull';
 import { format } from 'date-fns';
 
 export class SendEmailDto {
-  to: string;
+  to: string | string[];
   text: string;
   subject: string;
   recipientName: string;

@@ -13,7 +13,7 @@ export class BreakTime {
   endTime: number;
 
   @Column()
-  scheduleId: number;
+  scheduleId: string;
 
   @ManyToOne(() => MemberSchedule, { onDelete: 'CASCADE' })
   memberSchedule: MemberSchedule;

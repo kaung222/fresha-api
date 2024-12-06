@@ -28,6 +28,10 @@ import { User } from '../users/entities/user.entity';
 import { createAppointmentByUser } from '../notifications/test';
 import { BookingItem } from './entities/booking-item.entity';
 import { Organization } from '../organizations/entities/organization.entity';
+import {
+  sendBookingNotiToMember,
+  sendBookingNotiToUser,
+} from '@/utils/helpers/email-fns';
 
 @Injectable()
 export class AppointmentsService {
@@ -92,9 +96,7 @@ export class AppointmentsService {
 
   private async createAppointmentByUserEvent(appointment: Appointment) {
     const { date, organization, user } = appointment;
-    // this.sendEmailToMember(member, date);
-
-    // generating notification payload
+    // this.sendEmailToMember(appointment)
     const createNotificationDto = createAppointmentByUser(
       organization.id,
       user,
@@ -128,6 +130,8 @@ export class AppointmentsService {
     appointment.endTime = appointment.startTime + totalTime;
     appointment.discountPrice = discountPrice;
     await this.appointmentRepository.save(appointment);
+    this.sendEmailToMember(appointment);
+    this.sendEmailToUser(appointment);
 
     return {
       message: 'Create appointment successfully',
@@ -207,13 +211,15 @@ export class AppointmentsService {
     return org;
   }
 
-  private sendEmailToMember(member: Member, appointmentDate: string) {
-    this.sendEmail({
-      to: member.email,
-      recipientName: member.firstName,
-      subject: 'Appointment received',
-      text: `A user make an appointment to you on ${format(new Date(appointmentDate), 'dd-MM-YYYY')}`,
-    });
+  private sendEmailToMember(appointment: Appointment) {
+    const emails = appointment.bookingItems.map((item) => item.member.email);
+    const sendEmail = sendBookingNotiToMember(appointment, emails);
+    this.sendEmail(sendEmail);
+  }
+
+  private sendEmailToUser(appointment: Appointment) {
+    const sendEmail = sendBookingNotiToUser(appointment);
+    this.sendEmail(sendEmail);
   }
 
   private async getMemberByIds(memberIds: number[], orgId: number) {
@@ -400,6 +406,7 @@ export class AppointmentsService {
     };
   }
 
+  // delete booking by org
   async remove(id: string, orgId: number) {
     await this.getBookingById(id, orgId);
     this.appointmentRepository.delete({ id });
@@ -408,6 +415,7 @@ export class AppointmentsService {
     };
   }
 
+  // get booking by id
   async getBookingById(bookingId: string, orgId: number, relations?: string[]) {
     const appointment = await this.appointmentRepository.findOne({
       where: {
@@ -420,10 +428,12 @@ export class AppointmentsService {
     return appointment;
   }
 
+  // send email job
   sendEmail(emailPayload: SendEmailDto) {
     this.emailQueue.add('sendEmail', emailPayload);
   }
 
+  // create notification job
   createNotification(createNotification: CreateNotificationDto) {
     this.notificationQueue.add('notification.created', createNotification);
   }

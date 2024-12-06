@@ -28,8 +28,8 @@ export enum ScheduleType {
 }
 @Entity()
 export class MemberSchedule {
-  @PrimaryGeneratedColumn('increment')
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   startTime: number; // in second eg: 01:00:00 am = 3600 in second
@@ -46,10 +46,6 @@ export class MemberSchedule {
   @ManyToOne(() => Member, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'memberId' })
   member: Member;
-
-  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'organizationId' })
-  organization: Organization;
 
   // @OneToMany(() => BreakTime, (breakTime) => breakTime.memberSchedule, {
   //   eager: true,

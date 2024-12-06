@@ -27,6 +27,7 @@ export class MemberScheduleService {
   // create schedule for a member
   @OnEvent('member.created')
   async createMany({ memberId, orgId }: { memberId: number; orgId: number }) {
+    await this.getMemberById(memberId, orgId);
     const schedules = defaultScheduleData;
     const createSchedule = this.memberScheduleRepository.create(
       schedules.map(({ startTime, endTime, dayOfWeek }) => ({
@@ -34,26 +35,14 @@ export class MemberScheduleService {
         endTime,
         dayOfWeek,
         member: { id: memberId },
-        organization: { id: orgId },
       })),
     );
     return this.memberScheduleRepository.save(createSchedule);
   }
 
   async create(createSchedule: CreateMemberScheduleDto, orgId: number) {
-    const { startTime, endTime, memberId, dayOfWeek } = createSchedule;
-    const isExisted = await this.memberScheduleRepository.findOneBy({
-      memberId,
-      dayOfWeek,
-    });
-    if (isExisted) throw new ForbiddenException('Schedule already existed');
-    const newschedule = this.memberScheduleRepository.create({
-      startTime,
-      endTime,
-      dayOfWeek,
-      memberId,
-      organization: { id: orgId },
-    });
+    await this.getMemberById(createSchedule.memberId, orgId);
+    const newschedule = this.memberScheduleRepository.create(createSchedule);
     return this.memberScheduleRepository.save(newschedule);
   }
 
@@ -70,13 +59,13 @@ export class MemberScheduleService {
     return this.memberScheduleRepository.findBy({ memberId });
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return this.memberScheduleRepository.findOneBy({ id });
   }
 
   // add  breaktimes to a schedule
   async createBreakTime(
-    scheduleId: number,
+    scheduleId: string,
     createBreakTime: CreateBreakTimeDto,
   ) {
     const newBreakTime = this.breakTimeRepository.create(
@@ -89,7 +78,7 @@ export class MemberScheduleService {
     return await this.breakTimeRepository.save(newBreakTime);
   }
 
-  async update(id: number, updateMemberScheduleDto: UpdateMemberScheduleDto) {
+  async update(id: string, updateMemberScheduleDto: UpdateMemberScheduleDto) {
     const { startTime, endTime } = updateMemberScheduleDto;
     await this.memberScheduleRepository.update(id, { startTime, endTime });
     return {
@@ -102,9 +91,9 @@ export class MemberScheduleService {
     updateMultiScheduleDto: UpdateMultiScheduleDto,
   ) {
     const { schedules, memberId } = updateMultiScheduleDto;
+    await this.getMemberById(memberId, orgId);
     await this.memberScheduleRepository.delete({
       memberId: memberId,
-      organization: { id: orgId },
     });
     const createSchedule = this.memberScheduleRepository.create(
       schedules.map(({ startTime, endTime, dayOfWeek }) => ({
@@ -118,17 +107,17 @@ export class MemberScheduleService {
     return this.memberScheduleRepository.save(createSchedule);
   }
 
-  async checkOwnership(ids: number[], orgId: number): Promise<boolean> {
-    const schedules = await this.memberScheduleRepository.find({
-      where: { id: In(ids), organization: { id: orgId } },
-    });
-    return schedules.length === ids.length;
+  async getMemberById(memberId: number, orgId: number) {
+    const member = await this.dataSource
+      .getRepository(Member)
+      .findOneBy({ id: memberId, orgId });
+    if (!member) throw new NotFoundException('Member not found');
+    return member;
   }
 
-  async remove(id: number) {
-    await this.memberScheduleRepository.delete(id);
-    return {
-      message: 'Deleted the schedule successfully',
-    };
+  async removeSchedule(id: string, orgId: number) {
+    const schedule = await this.memberScheduleRepository.findOneBy({ id });
+    await this.getMemberById(schedule.memberId, orgId);
+    return this.memberScheduleRepository.delete({ id });
   }
 }

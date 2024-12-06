@@ -42,7 +42,7 @@ export class MemberScheduleController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.memberScheduleService.findOne(+id);
+    return this.memberScheduleService.findOne(id);
   }
 
   @Post(':id/break-time')
@@ -50,7 +50,7 @@ export class MemberScheduleController {
     @Param('id') id: string,
     @Body() createBreakTimeDto: CreateBreakTimeDto,
   ) {
-    return this.memberScheduleService.createBreakTime(+id, createBreakTimeDto);
+    return this.memberScheduleService.createBreakTime(id, createBreakTimeDto);
   }
 
   @Patch(':id')
@@ -58,7 +58,7 @@ export class MemberScheduleController {
     @Param('id') id: string,
     @Body() updateMemberScheduleDto: UpdateMemberScheduleDto,
   ) {
-    return this.memberScheduleService.update(+id, updateMemberScheduleDto);
+    return this.memberScheduleService.update(id, updateMemberScheduleDto);
   }
 
   @Patch('update/multiple')
@@ -71,7 +71,7 @@ export class MemberScheduleController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.memberScheduleService.remove(+id);
+  removeSchedule(@Param('id') id: string, orgId: number) {
+    return this.memberScheduleService.removeSchedule(id, orgId);
   }
 }
