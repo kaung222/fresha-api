@@ -1,9 +1,4 @@
-import {
-  generateOpt,
-  getCurrentDate,
-  IncrementEntity,
-  UUIDEntity,
-} from '@/utils';
+import { generateOpt, UUIDEntity } from '@/utils';
 import {
   BeforeInsert,
   Column,
@@ -27,6 +22,7 @@ export enum BookingStatus {
 
 @Entity()
 export class Appointment extends UUIDEntity {
+  @Index('bookingDate')
   @Column('date')
   date: string;
 

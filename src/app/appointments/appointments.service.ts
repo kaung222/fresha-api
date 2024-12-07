@@ -80,6 +80,7 @@ export class AppointmentsService {
       appointment.endTime = appointment.startTime + totalTime;
       appointment.discountPrice = discountPrice;
       await this.appointmentRepository.save(appointment);
+      // commit transaction
       await queryRunner.commitTransaction();
       this.createAppointmentByUserEvent(appointment);
       return {
@@ -111,35 +112,47 @@ export class AppointmentsService {
     addAppointmentDto: ClientAppointmentDto,
   ) {
     const { bookingItems, startTime, ...rest } = addAppointmentDto;
-    // save appointment
-    const createAppointment = this.appointmentRepository.create({
-      ...rest,
-      organization: { id: orgId },
-      startTime,
-    });
-    const appointment =
-      await this.appointmentRepository.save(createAppointment);
-    // save booking item
-    const items = await this.saveBookingItems(bookingItems, appointment);
-    console.log(items);
-    // calculate time and price
-    const { totalPrice, totalTime, discountPrice } =
-      this.calculateTimeAndPrice(items);
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.startTransaction();
+    try {
+      // save appointment
+      const createAppointment = this.appointmentRepository.create({
+        ...rest,
+        organization: { id: orgId },
+        startTime,
+      });
+      const appointment =
+        await this.appointmentRepository.save(createAppointment);
+      // save booking item
+      const items = await this.saveBookingItems(bookingItems, appointment);
+      console.log(items);
+      // calculate time and price
+      const { totalPrice, totalTime, discountPrice } =
+        this.calculateTimeAndPrice(items);
 
-    // update totalPrice , time and fee
-    appointment.totalPrice = totalPrice;
-    appointment.totalTime = totalTime;
-    appointment.totalCommissionFees = this.calculateTotalCommissionFees(items);
-    appointment.endTime = appointment.startTime + totalTime;
-    appointment.discountPrice = discountPrice;
-    await this.appointmentRepository.save(appointment);
-
-    // send email to member and user
-    this.sendEmailToMember(appointment);
-    this.sendEmailToUser(appointment);
-    return {
-      message: 'Create appointment successfully',
-    };
+      // update totalPrice , time and fee
+      appointment.bookingItems = items;
+      appointment.totalPrice = totalPrice;
+      appointment.totalTime = totalTime;
+      appointment.totalCommissionFees =
+        this.calculateTotalCommissionFees(items);
+      appointment.endTime = appointment.startTime + totalTime;
+      appointment.discountPrice = discountPrice;
+      await this.appointmentRepository.save(appointment);
+      // commit trunsaction
+      await queryRunner.commitTransaction();
+      // send email to member and user
+      this.sendEmailToMember(appointment);
+      this.sendEmailToUser(appointment);
+      return {
+        message: 'Create appointment successfully',
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new ForbiddenException();
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   private async saveBookingItems(
@@ -216,7 +229,7 @@ export class AppointmentsService {
   }
 
   private sendEmailToMember(appointment: Appointment) {
-    const emails = appointment.bookingItems.map((item) => item.member?.email);
+    const emails = appointment.bookingItems?.map((item) => item.member?.email);
     const sendEmail = sendBookingNotiToMember(appointment, emails);
     this.sendEmail(sendEmail);
   }

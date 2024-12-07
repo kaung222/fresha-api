@@ -22,6 +22,9 @@ export class Organization extends IncrementEntity {
   @Column('simple-array', { nullable: true })
   types: string[];
 
+  @Column({ nullable: true })
+  city: string;
+
   @Column('decimal', { precision: 10, scale: 7, nullable: true })
   latitude: number;
 
