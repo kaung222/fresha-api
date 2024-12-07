@@ -49,6 +49,7 @@ export class AppointmentsService {
   // create new appointment by user
   async create(createAppointmentDto: CreateAppointmentDto, userId: number) {
     const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
       const { bookingItems, orgId, ...rest } = createAppointmentDto;
@@ -140,10 +141,10 @@ export class AppointmentsService {
       appointment.endTime = appointment.startTime + totalTime;
       appointment.discountPrice = discountPrice;
       await this.appointmentRepository.save(appointment);
-      // commit trunsaction
       // send email to member and user
       this.sendEmailToMember(appointment);
       this.sendEmailToUser(appointment);
+      // commit trunsaction
       await queryRunner.commitTransaction();
       return {
         message: 'Create appointment successfully',
@@ -230,8 +231,9 @@ export class AppointmentsService {
   }
 
   private sendEmailToMember(appointment: Appointment) {
-    console.log(appointment);
     const emails = appointment.bookingItems?.map((item) => item.member?.email);
+    console.log(appointment.bookingItems);
+    console.log(appointment.bookingItems[0].member.email);
     const sendEmail = sendBookingNotiToMember(appointment, emails);
     this.sendEmail(sendEmail);
   }
@@ -322,6 +324,7 @@ export class AppointmentsService {
     const appointment = await this.getBookingById(id, orgId);
     // transaction start
     const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
     await queryRunner.startTransaction();
     await this.itemRepository.delete({ appointmentId: id });
     appointment.startTime = rest.startTime;
