@@ -111,6 +111,7 @@ export class AppointmentsService {
     addAppointmentDto: ClientAppointmentDto,
   ) {
     const { bookingItems, startTime, ...rest } = addAppointmentDto;
+    // save appointment
     const createAppointment = this.appointmentRepository.create({
       ...rest,
       organization: { id: orgId },
@@ -118,21 +119,24 @@ export class AppointmentsService {
     });
     const appointment =
       await this.appointmentRepository.save(createAppointment);
+    // save booking item
     const items = await this.saveBookingItems(bookingItems, appointment);
-
+    console.log(items);
     // calculate time and price
     const { totalPrice, totalTime, discountPrice } =
       this.calculateTimeAndPrice(items);
-    appointment.bookingItems = items;
+
+    // update totalPrice , time and fee
     appointment.totalPrice = totalPrice;
     appointment.totalTime = totalTime;
     appointment.totalCommissionFees = this.calculateTotalCommissionFees(items);
     appointment.endTime = appointment.startTime + totalTime;
     appointment.discountPrice = discountPrice;
     await this.appointmentRepository.save(appointment);
+
+    // send email to member and user
     this.sendEmailToMember(appointment);
     this.sendEmailToUser(appointment);
-
     return {
       message: 'Create appointment successfully',
     };
@@ -162,8 +166,8 @@ export class AppointmentsService {
         const endTime = startTime + service.duration;
         const res = {
           appointmentId: appointment.id,
-          memberId,
-          serviceId,
+          member,
+          service,
           memberName: member.firstName,
           serviceName: service.name,
           startTime,
@@ -212,7 +216,7 @@ export class AppointmentsService {
   }
 
   private sendEmailToMember(appointment: Appointment) {
-    const emails = appointment.bookingItems.map((item) => item.member.email);
+    const emails = appointment.bookingItems.map((item) => item.member?.email);
     const sendEmail = sendBookingNotiToMember(appointment, emails);
     this.sendEmail(sendEmail);
   }
@@ -262,17 +266,6 @@ export class AppointmentsService {
       relations: {
         bookingItems: true,
       },
-    });
-  }
-
-  async getBookingsByMemberId(
-    memberId: number,
-    getAppointmentDto: GetAppointmentDto,
-  ) {
-    const { startDate, endDate } = getAppointmentDto;
-    const dates = getDatesBetweenDates(startDate, endDate);
-    return await this.itemRepository.find({
-      where: { memberId },
     });
   }
 

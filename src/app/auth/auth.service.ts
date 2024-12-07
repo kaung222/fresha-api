@@ -8,7 +8,11 @@ import {
 import { loginOrganizationDto } from './dto/login-org.dto';
 import { Repository } from 'typeorm';
 import { Organization } from '../organizations/entities/organization.entity';
-import { Member, MemberType } from '../members/entities/member.entity';
+import {
+  Member,
+  MemberType,
+  UserState,
+} from '../members/entities/member.entity';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -42,45 +46,35 @@ export class AuthService {
   // login organization and member
 
   async loginOrganization(loginOrgDto: loginOrganizationDto) {
+    const { email, password } = loginOrgDto;
+    // get member by email
     const member = await this.memberRepository
       .createQueryBuilder('member')
-      .leftJoinAndSelect('member.organization', 'organization')
       .addSelect('member.password')
-      .where('member.email=:email', { email: loginOrgDto.email })
+      .where('member.email=:email', { email })
       .getOne();
     if (!member) throw new NotFoundException('email not found');
-    if (member && member.password == null)
-      throw new ForbiddenException(
-        'Please accept the invitation in your email',
-      );
-    const isAuthenticated = await this.checkPassword(
-      loginOrgDto.password,
-      member.password,
-    );
+    // check passowrd
+    const isAuthenticated = await this.checkPassword(password, member.password);
     if (!isAuthenticated) {
       throw new UnauthorizedException('Invalid email or password');
     }
-    const { password, ...rest } = member;
-    const jwtPayload = {
-      id: member.id,
-      role: member.role,
-      orgId: member.organization.id,
-    };
+    // generate tokens
+    const jwtPayload = this.generateJwtPayload(member);
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
+    // update member state
+    await this.memberRepository.update(member.id, { state: UserState.login });
     return {
       message: 'Login successfully',
       accessToken,
       refreshToken,
-      user: rest,
     };
   }
   // register new organization
   async createOrganization(createOrganization: RegisterOrganizationDto) {
     const { name, types, address, email, firstName, lastName } =
       createOrganization;
-    const isConfirmedOTP = await this.otpRepository.findOneBy({ email });
-    if (!isConfirmedOTP || !isConfirmedOTP.isConfirmed)
-      throw new ForbiddenException('Confirm OTP first');
+    await this.checkIsConfirm(email);
     const newOrg = this.organizationRepository.create({ name, types, address });
     const organization = await this.organizationRepository.save(newOrg);
     const password = await this.hashPassword(createOrganization.password);
@@ -94,13 +88,7 @@ export class AuthService {
       organization,
     });
     const member = await this.memberRepository.save(newMember);
-
-    const jwtPayload = {
-      id: member.id,
-      role: Roles.org,
-      orgId: organization.id,
-    };
-    delete member.password;
+    const jwtPayload = this.generateJwtPayload(member);
     const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
     // event an event , to see more ==> org-schedule.service.ts
     this.eventEmitter.emit('organization.created', organization.id);
@@ -108,10 +96,16 @@ export class AuthService {
       message: 'Create organization successfully',
       accessToken,
       refreshToken,
-      user: member,
     };
   }
 
+  generateJwtPayload(member: Member) {
+    return {
+      id: member.id,
+      role: Roles.org,
+      orgId: member.orgId,
+    };
+  }
   // get OTP
   async getOTP(email: string) {
     const otp = generateOpt();
@@ -146,6 +140,16 @@ export class AuthService {
     this.emailQueue.add('sendEmail', emailPayload);
   }
 
+  async logoutMember(memberId: number) {
+    await this.memberRepository.update(
+      { id: memberId },
+      { state: UserState.logout },
+    );
+    return {
+      message: 'logout successfully',
+    };
+  }
+
   async forgetPassword(email: string) {
     const member = await this.memberRepository.findOneBy({ email });
     if (!member) throw new NotFoundException('email not found');
@@ -176,7 +180,7 @@ export class AuthService {
 
   async checkIsConfirm(email: string) {
     const otp = await this.otpRepository.findOneBy({ email });
-    if (!otp || otp.isConfirmed === false)
+    if (!otp || !otp.isConfirmed)
       throw new UnauthorizedException('Confirm OTP first!');
     if (parseInt(otp.expiredAt) <= Date.now()) {
       throw new UnauthorizedException('OTP session ended!');
@@ -200,11 +204,18 @@ export class AuthService {
     };
   }
 
-  getNewAccessToken(token: string) {
+  async getNewAccessToken(token: string) {
     try {
       const { exp, iat, ...rest } = this.jwtService.verify(token, {
         secret: this.configService.get('JWT_REFRESH_SECRET'),
       });
+      const member = await this.memberRepository
+        .createQueryBuilder('member')
+        .where('member.id=:id', { id: rest?.id })
+        .addSelect('member.state')
+        .getOne();
+      if (!member || member.state === UserState.logout)
+        throw new ForbiddenException();
       const { accessToken, refreshToken } = this.generateTokens(rest);
       return { accessToken, refreshToken };
     } catch (error) {
@@ -219,7 +230,7 @@ export class AuthService {
       //  { expiresIn: '1h' }
     );
     const refreshToken = this.jwtService.sign(
-      { data: payload },
+      payload,
       // { expiresIn: '7d' },
       { secret: this.configService.get('JWT_REFRESH_SECRET') },
     );
@@ -229,6 +240,7 @@ export class AuthService {
   // hash password
   async hashPassword(payload: string): Promise<string> {
     // const salt = bcrypt.genSalt()
+    // const salt = bcrypt.genSaltSync(10);
     const hash = await bcrypt.hash(payload, 10);
     console.log(hash);
     return hash;
@@ -247,7 +259,7 @@ export class AuthService {
     res.cookie('refreshToken', refreshToken, {
       secure: true,
       httpOnly: true,
-      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
   }
   // Helper function to extract the refresh token from the cookie

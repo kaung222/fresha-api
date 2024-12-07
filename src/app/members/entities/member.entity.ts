@@ -25,6 +25,11 @@ export enum CommissionFeesType {
   percent = 'percent',
 }
 
+export enum UserState {
+  login = 'Login',
+  logout = 'Logout',
+}
+
 @Entity()
 export class Member extends IncrementEntity {
   @Column()
@@ -75,6 +80,14 @@ export class Member extends IncrementEntity {
 
   @Column({ type: 'enum', enum: MemberType, default: MemberType.employee })
   type: MemberType;
+
+  @Column({
+    type: 'enum',
+    enum: UserState,
+    default: UserState.login,
+    select: false,
+  })
+  state: UserState;
 
   // rating
   @Column('float', { default: 0 })

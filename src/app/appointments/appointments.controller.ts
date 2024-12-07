@@ -47,21 +47,6 @@ export class AppointmentsController {
     );
   }
 
-  @Get('of/member/:memberId')
-  @ApiOperation({
-    summary: 'Get bookings by memberId within the given date range',
-  })
-  getAppointmentByMemberId(
-    @Param('memberId') memberId: number,
-    @Query() getAppointment: GetAppointmentDto,
-  ) {
-    console.log(memberId);
-    return this.appointmentsService.getBookingsByMemberId(
-      memberId,
-      getAppointment,
-    );
-  }
-
   @Get()
   @ApiOperation({ summary: 'Get bookings by org or member' })
   @Role(Roles.org, Roles.member)

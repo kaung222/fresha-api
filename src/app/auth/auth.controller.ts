@@ -12,7 +12,7 @@ import { AuthService } from './auth.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { loginOrganizationDto } from './dto/login-org.dto';
 import { Role } from '@/security/role.decorator';
-import { Roles } from '@/security/user.decorator';
+import { Roles, User } from '@/security/user.decorator';
 import { Request, Response } from 'express';
 import { ConfirmOTPDto } from './dto/confirm-otp.dto';
 import { GetOTPDto } from './dto/get-otp.dto';
@@ -59,12 +59,12 @@ export class AuthController {
   @Get('refresh')
   @Role(Roles.member, Roles.org, Roles.user)
   @ApiOperation({ summary: 'Get new access token when expired' })
-  getNewAccessToken(@Req() req: Request, @Res() res: Response) {
+  async getNewAccessToken(@Req() req: Request, @Res() res: Response) {
     const cookie = req.headers.cookie;
     if (!cookie)
       throw new UnauthorizedException('Session expires, login again!');
     const token = this.authService.getRefreshTokenFromCookie(cookie);
-    const tokens = this.authService.getNewAccessToken(token);
+    const tokens = await this.authService.getNewAccessToken(token);
     this.authService.setCookieHeaders(res, tokens.refreshToken);
     res.send({ accessToken: tokens.accessToken });
   }
@@ -79,5 +79,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Create new password' })
   createNewPassword(@Body() createPassword: CreatePasswordDto) {
     return this.authService.createPassword(createPassword);
+  }
+
+  @Post('logout')
+  @ApiOperation({ summary: 'logout member' })
+  @Role(Roles.org, Roles.member)
+  handleLogout(@User('id') memberId: number) {
+    return this.authService.logoutMember(memberId);
   }
 }
