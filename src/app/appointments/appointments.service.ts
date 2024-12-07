@@ -113,6 +113,7 @@ export class AppointmentsService {
   ) {
     const { bookingItems, startTime, ...rest } = addAppointmentDto;
     const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
       // save appointment
@@ -140,10 +141,10 @@ export class AppointmentsService {
       appointment.discountPrice = discountPrice;
       await this.appointmentRepository.save(appointment);
       // commit trunsaction
-      await queryRunner.commitTransaction();
       // send email to member and user
       this.sendEmailToMember(appointment);
       this.sendEmailToUser(appointment);
+      await queryRunner.commitTransaction();
       return {
         message: 'Create appointment successfully',
       };
