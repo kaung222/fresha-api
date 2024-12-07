@@ -230,6 +230,7 @@ export class AppointmentsService {
   }
 
   private sendEmailToMember(appointment: Appointment) {
+    console.log(appointment);
     const emails = appointment.bookingItems?.map((item) => item.member?.email);
     const sendEmail = sendBookingNotiToMember(appointment, emails);
     this.sendEmail(sendEmail);
