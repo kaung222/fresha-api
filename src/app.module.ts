@@ -63,6 +63,9 @@ import { TimeSlotsModule } from './app/time-slots/time-slots.module';
 import { FeaturesModule } from './app/features/features.module';
 import { BookingItem } from './app/appointments/entities/booking-item.entity';
 import { EmailsModule } from './app/emails/emails.module';
+import { OrgTypesModule } from './app/org-types/org-types.module';
+import { OrgType } from './app/org-types/entities/org-type.entity';
+import { AdminsModule } from './app/admins/admins.module';
 
 @Module({
   imports: [
@@ -98,7 +101,7 @@ import { EmailsModule } from './app/emails/emails.module';
         Notification,
         ClosedDay,
         Leave,
-
+        OrgType,
         Brand,
         Payment,
         ProductCategory,
@@ -162,6 +165,8 @@ import { EmailsModule } from './app/emails/emails.module';
     TimeSlotsModule,
     FeaturesModule,
     EmailsModule,
+    OrgTypesModule,
+    AdminsModule,
   ],
   controllers: [],
   providers: [

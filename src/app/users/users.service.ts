@@ -1,19 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from './entities/user.entity';
+import { Repository } from 'typeorm';
+import { PaginateQuery } from '@/utils/paginate-query.dto';
+import { PaginationResponse } from '@/utils/paginate-res.dto';
 
 @Injectable()
 export class UsersService {
+  constructor(
+    @InjectRepository(User) private userRepository: Repository<User>,
+  ) {}
   create(createUserDto: CreateUserDto) {
     return 'This action adds a new user';
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll({ page = 1 }: PaginateQuery) {
+    const [data, totalCount] = await this.userRepository.findAndCount({
+      take: 10,
+      skip: 10 * (page - 1),
+    });
+    return new PaginationResponse({ page, data, totalCount }).toResponse();
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} user`;
+    return this.userRepository.findOneBy({ id });
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
@@ -21,6 +33,6 @@ export class UsersService {
   }
 
   remove(id: number) {
-    return `This action removes a #${id} user`;
+    return this.userRepository.delete({ id });
   }
 }

@@ -28,20 +28,20 @@ export class CreateProductDto {
   price: number;
 
   @IsOptional()
+  @IsString()
   brand: string;
 
   @IsOptional()
+  @IsString()
   description: string;
 
   @IsOptional()
+  @IsString()
   category: string;
-
-  @IsOptional()
-  @IsBoolean()
-  instock: boolean;
 
   @IsNotEmpty()
   @IsInt()
+  @IsPositive()
   stock: number;
 
   @IsOptional()
@@ -49,6 +49,7 @@ export class CreateProductDto {
   moq: number;
 
   @IsNotEmpty()
+  @IsPositive()
   discount: number;
 
   @IsEnum(DiscountType)

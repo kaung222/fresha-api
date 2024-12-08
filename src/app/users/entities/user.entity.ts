@@ -15,7 +15,7 @@ export class User extends IncrementEntity {
   @Column({ nullable: true })
   lastName?: string;
 
-  @Column({ nullable: true })
+  @Column({ unique: true })
   email: string;
 
   @Column()

@@ -15,6 +15,7 @@ import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { Category } from '../categories/entities/category.entity';
 import { OrgReview } from '../org-reviews/entities/org-review.entity';
 import { UpdateCurrency } from './dto/update-currency';
+import { Product } from '../products/entities/product.entity';
 @Injectable()
 export class OrganizationsService {
   constructor(
@@ -61,6 +62,7 @@ export class OrganizationsService {
     return members;
   }
 
+  // find detail by public
   async findOne(id: number) {
     const organization = await this.orgRepository.findOneBy({ id });
     const related = await this.orgRepository.find({
@@ -83,17 +85,22 @@ export class OrganizationsService {
     return organization;
   }
 
+  // find categories by public
   findCategories(orgId: number) {
     return this.dataSource.getRepository(Category).find({
-      where: { organization: { id: orgId } },
+      where: { orgId },
       relations: { services: true },
     });
   }
 
+  // find member by public
   findTeam(orgId: number) {
-    return this.dataSource.getRepository(Member).find({
-      where: { organization: { id: orgId } },
-    });
+    return this.dataSource.getRepository(Member).findBy({ orgId });
+  }
+
+  // find member by public
+  findProducts(orgId: number) {
+    return this.dataSource.getRepository(Product).findBy({ orgId });
   }
 
   async findReviews(orgId: number, paginateQuery: PaginateQuery) {

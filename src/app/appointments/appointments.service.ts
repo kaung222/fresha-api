@@ -97,14 +97,17 @@ export class AppointmentsService {
   }
 
   private async createAppointmentByUserEvent(appointment: Appointment) {
-    const { date, organization, user } = appointment;
-    // this.sendEmailToMember(appointment)
-    const createNotificationDto = createAppointmentByUser(
-      organization.id,
-      user,
-    );
+    this.sendEmailToMembers(appointment);
+    this.sendEmailToUser(appointment);
+
     // save and send notification
-    this.createNotification(createNotificationDto);
+    this.createNotification({
+      body: `You got an booking from ${appointment.username}`,
+      title: 'Appointment reveived',
+      link: appointment.id,
+      type: 'Appointment',
+      userId: appointment.orgId,
+    });
   }
 
   // create client appointment from org dashboard
@@ -142,7 +145,7 @@ export class AppointmentsService {
       appointment.discountPrice = discountPrice;
       await this.appointmentRepository.save(appointment);
       // send email to member and user
-      this.sendEmailToMember(appointment);
+      this.sendEmailToMembers(appointment);
       this.sendEmailToUser(appointment);
       // commit trunsaction
       await queryRunner.commitTransaction();
@@ -230,10 +233,11 @@ export class AppointmentsService {
     return org;
   }
 
-  private sendEmailToMember(appointment: Appointment) {
-    const emails = appointment.bookingItems?.map((item) => item.member?.email);
-    console.log(appointment.bookingItems);
-    console.log(appointment.bookingItems[0].member.email);
+  private sendEmailToMembers(appointment: Appointment) {
+    const allEmail = appointment.bookingItems?.map(
+      (item) => item.member?.email,
+    );
+    const emails = [...new Set(allEmail)];
     const sendEmail = sendBookingNotiToMember(appointment, emails);
     this.sendEmail(sendEmail);
   }
@@ -343,6 +347,7 @@ export class AppointmentsService {
       // save the update data
       await this.appointmentRepository.save(appointment);
       // commit transaction
+      this.sendEmailToUser(appointment);
       await queryRunner.commitTransaction();
 
       return { message: 'Update the appointment successfully' };

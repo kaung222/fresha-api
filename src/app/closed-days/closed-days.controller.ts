@@ -26,7 +26,6 @@ export class ClosedDaysController {
     @Body() createClosedDayDto: CreateClosedDayDto,
     @User('orgId') orgId: number,
   ) {
-    return;
     return this.closedDaysService.create(createClosedDayDto, orgId);
   }
 

@@ -49,6 +49,12 @@ export class OrganizationsController {
     return this.organizationsService.findTeam(+id);
   }
 
+  @Get(':id/products')
+  @ApiOperation({ summary: 'Get products of organization' })
+  findProducts(@Param('id') id: string) {
+    return this.organizationsService.findProducts(+id);
+  }
+
   @Get(':id/reviews')
   @ApiOperation({ summary: 'Get reviews of organization' })
   findReviews(@Param('id') id: string, @Query() paginateQuery: PaginateQuery) {

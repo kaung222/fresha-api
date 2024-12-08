@@ -36,9 +36,6 @@ export class Product extends UUIDEntity {
   @Column({ nullable: true })
   category: string;
 
-  @Column('boolean', { default: true })
-  instock: boolean;
-
   @Column('int', { default: 1 })
   stock: number;
 
