@@ -15,7 +15,12 @@ async function bootstrap() {
   //compression
   app.use(compression());
   app.enableCors({
-    origin: ['http://localhost:4040', 'https://fresha-clone.vercel.app'],
+    origin: [
+      'http://localhost:4040',
+      'https://fresha-clone.vercel.app',
+      'https://baranie.com',
+      'https://www.baranie.com',
+    ],
     credentials: true,
   });
   await app.listen(3000);
