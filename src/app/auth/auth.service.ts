@@ -72,10 +72,9 @@ export class AuthService {
   }
   // register new organization
   async createOrganization(createOrganization: RegisterOrganizationDto) {
-    const { name, types, address, email, firstName, lastName } =
-      createOrganization;
+    const { name, email, firstName, lastName } = createOrganization;
     await this.checkIsConfirm(email);
-    const newOrg = this.organizationRepository.create({ name, types, address });
+    const newOrg = this.organizationRepository.create({ name });
     const organization = await this.organizationRepository.save(newOrg);
     const password = await this.hashPassword(createOrganization.password);
     const newMember = this.memberRepository.create({

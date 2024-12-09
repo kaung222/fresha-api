@@ -3,6 +3,7 @@ import {
   BeforeInsert,
   Column,
   Entity,
+  Generated,
   Index,
   JoinColumn,
   ManyToOne,
@@ -25,6 +26,9 @@ export class Appointment extends UUIDEntity {
   @Index('bookingDate')
   @Column('date')
   date: string;
+
+  @Generated('increment')
+  bookingId: number;
 
   @Column({ default: 'unknown' })
   username: string;
