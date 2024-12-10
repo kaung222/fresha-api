@@ -13,9 +13,7 @@ import { Service } from '../services/entities/service.entity';
 import { getDatesBetweenDates } from '@/utils';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { SendEmailDto } from '@/global/email.service';
 import { CommissionFeesType, Member } from '../members/entities/member.entity';
-import { format } from 'date-fns';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { PaymentsService } from '../payments/payments.service';
 import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
@@ -25,19 +23,20 @@ import {
 } from './dto/create-client-booking.dto';
 import { CompleteAppointmentDto } from './dto/complete-booking.dto';
 import { User } from '../users/entities/user.entity';
-import { createAppointmentByUser } from '../notifications/test';
 import { BookingItem } from './entities/booking-item.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import {
   sendBookingNotiToMember,
   sendBookingNotiToUser,
 } from '@/utils/helpers/email-fns';
+import { EmailsService } from '../emails/emails.service';
+import { CreateEmailDto } from '../emails/dto/crearte-email.dto';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
     private dataSource: DataSource,
-    @InjectQueue('emailQueue') private emailQueue: Queue,
+    private readonly emailService: EmailsService,
     @InjectQueue('notificationQueue') private notificationQueue: Queue,
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
@@ -239,12 +238,12 @@ export class AppointmentsService {
     );
     const emails = [...new Set(allEmail)];
     const sendEmail = sendBookingNotiToMember(appointment, emails);
-    this.sendEmail(sendEmail);
+    this.sendEmail(appointment.orgId, sendEmail);
   }
 
   private sendEmailToUser(appointment: Appointment) {
     const sendEmail = sendBookingNotiToUser(appointment);
-    this.sendEmail(sendEmail);
+    this.sendEmail(appointment.orgId, sendEmail);
   }
 
   private async getMemberByIds(memberIds: number[], orgId: number) {
@@ -363,7 +362,7 @@ export class AppointmentsService {
     const appointment = await this.getBookingById(id, orgId);
     this.appointmentRepository.update(id, { status: BookingStatus.confirmed });
     // send email about booking confirmation
-    this.sendEmail({
+    this.sendEmail(orgId, {
       to: appointment.email,
       text: 'Confirm your booking',
       recipientName: appointment.username,
@@ -386,7 +385,7 @@ export class AppointmentsService {
     // send email about booking cancelation
     if (updateRes.affected !== 1)
       throw new ForbiddenException('Cannot cancel booking now');
-    this.sendEmail({
+    this.sendEmail(orgId, {
       to: appointment.email,
       text: `Cancel your booking for the reason ${cancelBookingDto.reason}`,
       recipientName: appointment.username,
@@ -445,8 +444,8 @@ export class AppointmentsService {
   }
 
   // send email job
-  sendEmail(emailPayload: SendEmailDto) {
-    this.emailQueue.add('sendEmail', emailPayload);
+  sendEmail(orgId: number, emailPayload: CreateEmailDto) {
+    this.emailService.create(orgId, emailPayload);
   }
 
   // create notification job

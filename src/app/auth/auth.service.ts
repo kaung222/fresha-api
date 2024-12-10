@@ -20,14 +20,12 @@ import { Roles } from '@/security/user.decorator';
 import { ConfigService } from '@nestjs/config';
 import { CreatePasswordDto } from './dto/create-password.dto';
 import { Response } from 'express';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
-import { SendEmailDto } from '@/global/email.service';
 import { generateOpt } from '@/utils';
 import { OTP } from './entities/otp.entity';
 import { ConfirmOTPDto } from './dto/confirm-otp.dto';
 import { RegisterOrganizationDto } from './dto/create-org.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EmailsService } from '../emails/emails.service';
 
 @Injectable()
 export class AuthService {
@@ -35,7 +33,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
-    @InjectQueue('emailQueue') private readonly emailQueue: Queue,
+    private emailService: EmailsService,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
     @InjectRepository(Organization)
@@ -123,7 +121,7 @@ export class AuthService {
     });
     await this.otpRepository.save(createOtp);
     // send email otp
-    this.sendEmail({
+    this.emailService.createWithoutSave({
       to: email,
       text: `Your OTP for fresha is ${otp}.Dont share it anyone!`,
       recipientName: 'Customer',
@@ -133,10 +131,6 @@ export class AuthService {
       message: `Send OTP to ${email} successfully`,
       email,
     };
-  }
-
-  sendEmail(emailPayload: SendEmailDto) {
-    this.emailQueue.add('sendEmail', emailPayload);
   }
 
   async logoutMember(memberId: number) {
@@ -239,9 +233,8 @@ export class AuthService {
   // hash password
   async hashPassword(payload: string): Promise<string> {
     // const salt = bcrypt.genSalt()
-    // const salt = bcrypt.genSaltSync(10);
-    const hash = await bcrypt.hash(payload, 10);
-    console.log(hash);
+    const salt = await bcrypt.genSaltSync(10);
+    const hash = await bcrypt.hash(payload, salt);
     return hash;
   }
 

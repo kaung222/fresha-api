@@ -1,4 +1,4 @@
-export class SendEmailDto {
+export class CreateEmailDto {
   to: string | string[];
   text: string;
   subject: string;

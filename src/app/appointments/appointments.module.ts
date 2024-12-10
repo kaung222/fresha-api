@@ -11,7 +11,6 @@ import { BookingItem } from './entities/booking-item.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Appointment, Payment, BookingItem]),
-    BullModule.registerQueue({ name: 'emailQueue' }),
     BullModule.registerQueue({ name: 'notificationQueue' }),
   ],
   controllers: [AppointmentsController],

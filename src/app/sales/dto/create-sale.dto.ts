@@ -1,10 +1,14 @@
+import { PaymentMethod } from '@/app/payments/entities/payment.entity';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsNotEmpty,
   IsOptional,
   IsPositive,
+  IsString,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -16,13 +20,12 @@ export class SaleItemDto {
   @IsPositive()
   quantity: number;
 }
-
 export class CreateSaleDto {
-  @IsNotEmpty()
-  username: string;
-
   @IsOptional()
   notes: string;
+
+  @IsOptional()
+  username: string;
 
   @IsNotEmpty()
   @ValidateNested()
@@ -30,4 +33,16 @@ export class CreateSaleDto {
   @ArrayMinSize(1)
   @Type(() => SaleItemDto)
   saleItems: SaleItemDto[];
+
+  @IsNotEmpty()
+  @IsBoolean()
+  savePayment: boolean;
+
+  @ValidateIf((obj) => obj.savePayment === true)
+  @IsNotEmpty()
+  paymentMethod: PaymentMethod;
+
+  @IsOptional()
+  @IsString()
+  paymentNotes: string;
 }

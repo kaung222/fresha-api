@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  Min,
   ValidateIf,
 } from 'class-validator';
 
@@ -41,7 +42,6 @@ export class CreateProductDto {
 
   @IsNotEmpty()
   @IsInt()
-  @IsPositive()
   stock: number;
 
   @IsOptional()
@@ -49,7 +49,7 @@ export class CreateProductDto {
   moq: number;
 
   @IsNotEmpty()
-  @IsPositive()
+  @Min(0)
   discount: number;
 
   @IsEnum(DiscountType)

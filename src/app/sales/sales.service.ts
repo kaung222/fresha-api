@@ -26,33 +26,7 @@ export class SalesService {
     private saleItemRepository: Repository<SaleItem>,
   ) {}
 
-  async create(orgId: number, createSaleDto: CreateSaleDto) {
-    // return;
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.startTransaction();
-    try {
-      const { saleItems, ...rest } = createSaleDto;
-      const createSale = this.saleRepository.create({
-        ...rest,
-        orgId,
-      });
-      const sale = await this.saleRepository.save(createSale);
-      const items = await this.saveSaleItems(sale, saleItems);
-      const totalPrice = this.calculateTotalPrice(items);
-      sale.totalPrice = totalPrice;
-      await this.saleRepository.save(sale);
-      await queryRunner.commitTransaction();
-      return {
-        message: 'Create sale successfully',
-      };
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
-  async createQuickSale(orgId: number, createQuickSaleDto: CreateQuickSaleDto) {
+  async create(orgId: number, createQuickSaleDto: CreateQuickSaleDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.startTransaction();
     try {
@@ -66,6 +40,7 @@ export class SalesService {
       const items = await this.saveSaleItems(sale, saleItems);
       const totalPrice = this.calculateTotalPrice(items);
       sale.totalPrice = totalPrice;
+
       await this.saleRepository.save(sale);
       await queryRunner.commitTransaction();
 
@@ -100,7 +75,7 @@ export class SalesService {
     const createSaleItems = this.saleItemRepository.create(
       saleItems.map(({ productId, quantity }) => {
         const product = products.find((product) => product.id === productId);
-        // add some discrount here
+        // add some discount here
         const subtotalPrice = product.discountPrice * quantity;
         return {
           product,
@@ -130,7 +105,7 @@ export class SalesService {
   }
 
   async findAll(orgId: number, paginateQuery: PaginateQuery) {
-    const { page } = paginateQuery;
+    const { page = 1 } = paginateQuery;
     const [data, totalCount] = await this.saleRepository.findAndCount({
       where: { orgId },
       relations: { saleItems: true },

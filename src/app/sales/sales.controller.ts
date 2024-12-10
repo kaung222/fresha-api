@@ -15,8 +15,10 @@ import { Roles, User } from '@/security/user.decorator';
 import { CreateQuickSaleDto } from './dto/create-quick-sale.dto';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { UpdateQuickSaleDto } from './dto/update-sale.dto';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('sales')
+@ApiTags('Sale')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
@@ -32,7 +34,7 @@ export class SalesController {
     @User('orgId') orgId: number,
     @Body() quickSaleDto: CreateQuickSaleDto,
   ) {
-    return this.salesService.createQuickSale(orgId, quickSaleDto);
+    return this.salesService.create(orgId, quickSaleDto);
   }
 
   @Get()

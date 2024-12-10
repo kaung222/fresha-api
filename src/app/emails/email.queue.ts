@@ -7,20 +7,34 @@ import {
 } from '@nestjs/bull';
 import { Job } from 'bull';
 import { format } from 'date-fns';
-
-export class SendEmailDto {
-  to: string | string[];
-  text: string;
-  subject: string;
-  recipientName: string;
-}
+import { Email } from './entities/email.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreateEmailDto } from './dto/crearte-email.dto';
 
 @Processor('emailQueue') // Replace with your queue name
-export class EmailService {
-  constructor(private mailerService: MailerService) {}
+export class EmailQueue {
+  constructor(
+    private mailerService: MailerService,
+    @InjectRepository(Email)
+    private readonly emailRepository: Repository<Email>,
+  ) {}
   @Process('sendEmail')
-  async handleSendEmail({ data }: Job<SendEmailDto>) {
-    console.log('sendmail :' + data.subject);
+  async handleSendEmail({ data }: Job<Email>) {
+    this.emailRepository.save(data);
+    const { recipientName, subject, text, to } = data;
+    return await this.mailerService.sendMail({
+      from: process.env.SHOP_GMAIL,
+      to,
+      subject,
+      text: template(recipientName, text),
+      html: template(recipientName, text),
+    });
+  }
+
+  @Process('sendEmailWithoutSaving')
+  async handleSendEmailwithourSave({ data }: Job<CreateEmailDto>) {
+    console.log(data);
     const { recipientName, subject, text, to } = data;
     return await this.mailerService.sendMail({
       from: process.env.SHOP_GMAIL,

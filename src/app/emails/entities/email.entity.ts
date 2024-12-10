@@ -22,8 +22,8 @@ export class Email {
   @Column()
   subject: string;
 
-  @Column()
-  to: string;
+  @Column('simple-array')
+  to: string[] | string;
 
   @Index('orgId')
   @Column()

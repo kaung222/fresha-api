@@ -14,8 +14,9 @@ import { UpdateClosedDayDto } from './dto/update-closed-day.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { GetClosedDay } from './dto/get-close-days.dto';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Business closed day')
 @Controller('closed-days')
 @Role(Roles.org)
 export class ClosedDaysController {

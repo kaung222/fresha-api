@@ -1,10 +1,12 @@
 import { Appointment } from '@/app/appointments/entities/appointment.entity';
-import { SendEmailDto } from '@/global/email.service';
+import { CreateEmailDto } from '@/app/emails/dto/crearte-email.dto';
 import { format } from 'date-fns';
 
 const getDate = (date: string) => format(new Date(date), 'dd-MM-yyyy');
 
-export function sendBookingNotiToUser(appointment: Appointment): SendEmailDto {
+export function sendBookingNotiToUser(
+  appointment: Appointment,
+): CreateEmailDto {
   return {
     recipientName: appointment.username,
     subject: 'Booking confirmation',
@@ -16,7 +18,7 @@ export function sendBookingNotiToUser(appointment: Appointment): SendEmailDto {
 export function sendBookingNotiToMember(
   appointment: Appointment,
   emails: string[],
-): SendEmailDto {
+): CreateEmailDto {
   return {
     recipientName: appointment.username,
     subject: 'Booking confirmation',
@@ -28,7 +30,7 @@ export function sendBookingNotiToMember(
 export function cancelBookingByOrg(
   appointment: Appointment,
   reason: string,
-): SendEmailDto {
+): CreateEmailDto {
   return {
     recipientName: appointment.username,
     subject: 'Booking cancellation',

@@ -53,7 +53,7 @@ export class ProductsService {
     discountType: DiscountType,
   ) {
     if (discountType === DiscountType.fixed) return price - discount;
-    else return (price * discount) / 100;
+    else return price - (price * discount) / 100;
   }
 
   async update(id: string, updateProductDto: UpdateProductDto, orgId: number) {
