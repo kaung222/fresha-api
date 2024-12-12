@@ -150,7 +150,7 @@ export class ServicesService {
   }
 
   async updatePackage(
-    id: number,
+    id: string,
     createPackageDto: CreatePackageDto,
     orgId: number,
   ) {
@@ -186,7 +186,7 @@ export class ServicesService {
     return this.serviceRepository.save(myPackage);
   }
 
-  async getPackageById(packageId: number, orgId: number) {
+  async getPackageById(packageId: string, orgId: number) {
     const myPackage = await this.serviceRepository.findOne({
       where: { orgId, id: packageId, type: ServiceType.package },
       relations: { members: true, services: true },
@@ -195,7 +195,7 @@ export class ServicesService {
     return myPackage;
   }
 
-  async calculatePriceAndDuration(serviceIds: number[], orgId: number) {
+  async calculatePriceAndDuration(serviceIds: string[], orgId: number) {
     const services = await this.serviceRepository.findBy({
       id: In(serviceIds),
       type: ServiceType.service,
@@ -210,7 +210,7 @@ export class ServicesService {
     return { price, duration, services };
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return this.serviceRepository.findOne({
       relations: { members: true, services: true, category: true },
       where: { id },
@@ -218,7 +218,7 @@ export class ServicesService {
   }
 
   // update service by id
-  async update(id: number, updateServiceDto: UpdateServiceDto, orgId: number) {
+  async update(id: string, updateServiceDto: UpdateServiceDto, orgId: number) {
     const { memberIds, categoryId, ...rest } = updateServiceDto;
     const service = await this.getServiceById(id, orgId);
     const [members, category] = await Promise.all([
@@ -241,7 +241,7 @@ export class ServicesService {
 
   // Remove service by id
   // delete all relations
-  async remove(id: number, orgId: number) {
+  async remove(id: string, orgId: number) {
     const service = await this.serviceRepository.findOne({
       where: { id },
     });
@@ -259,7 +259,7 @@ export class ServicesService {
   }
 
   // get services by id
-  async getServiceById(serviceId: number, orgId: number): Promise<Service> {
+  async getServiceById(serviceId: string, orgId: number): Promise<Service> {
     const service = await this.serviceRepository.findOne({
       where: {
         orgId,

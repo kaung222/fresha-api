@@ -8,6 +8,7 @@ import {
   IsPositive,
   IsString,
   IsUrl,
+  IsUUID,
   ValidateNested,
 } from 'class-validator';
 import { BookingStatus } from '@/app/appointments/entities/appointment.entity';
@@ -16,11 +17,12 @@ import { Type } from 'class-transformer';
 
 export class BookingItemDto {
   @IsNotEmpty()
-  @IsInt()
-  serviceId: number;
+  @IsUUID()
+  serviceId: string;
 
   @IsNotEmpty()
-  memberId: number;
+  @IsUUID()
+  memberId: string;
 }
 export class ClientAppointmentDto {
   @IsNotEmpty()

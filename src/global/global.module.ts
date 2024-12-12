@@ -6,14 +6,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Email } from '@/app/emails/entities/email.entity';
 import { EmailQueue } from '@/app/emails/email.queue';
 import { BullModule } from '@nestjs/bull';
+import { File } from '@/app/files/entities/file.entity';
+import { FilesService } from '@/app/files/files.service';
 
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Email]),
+    TypeOrmModule.forFeature([Email, File]),
     BullModule.registerQueue({ name: 'emailQueue' }),
+    BullModule.registerQueue({ name: 'FileQueue' }),
   ],
-  providers: [CacheService, EmailsService],
-  exports: [CacheService, EmailsService],
+  providers: [CacheService, EmailsService, FilesService],
+  exports: [CacheService, EmailsService, FilesService],
 })
 export class GlobalModule {}

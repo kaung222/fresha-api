@@ -46,7 +46,7 @@ export class ServicesController {
     @Body() updatePackageDto: UpdatePackageDto,
     @User('orgId') orgId: number,
   ) {
-    return this.servicesService.updatePackage(+id, updatePackageDto, orgId);
+    return this.servicesService.updatePackage(id, updatePackageDto, orgId);
   }
 
   @Get()
@@ -56,7 +56,7 @@ export class ServicesController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.servicesService.findOne(+id);
+    return this.servicesService.findOne(id);
   }
 
   @Patch(':id')
@@ -66,11 +66,11 @@ export class ServicesController {
     @User('orgId') orgId: number,
   ) {
     console.log(id, orgId, updateServiceDto);
-    return this.servicesService.update(+id, updateServiceDto, orgId);
+    return this.servicesService.update(id, updateServiceDto, orgId);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @User('orgId') orgId: number) {
-    return this.servicesService.remove(+id, orgId);
+    return this.servicesService.remove(id, orgId);
   }
 }

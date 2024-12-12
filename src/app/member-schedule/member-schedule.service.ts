@@ -26,7 +26,7 @@ export class MemberScheduleService {
   ) {}
   // create schedule for a member
   @OnEvent('member.created')
-  async createMany({ memberId, orgId }: { memberId: number; orgId: number }) {
+  async createMany({ memberId, orgId }: { memberId: string; orgId: number }) {
     await this.getMemberById(memberId, orgId);
     const schedules = defaultScheduleData;
     const createSchedule = this.memberScheduleRepository.create(
@@ -55,7 +55,7 @@ export class MemberScheduleService {
     });
   }
 
-  getMemberSchedule(memberId: number) {
+  getMemberSchedule(memberId: string) {
     return this.memberScheduleRepository.findBy({ memberId });
   }
 
@@ -107,7 +107,7 @@ export class MemberScheduleService {
     return this.memberScheduleRepository.save(createSchedule);
   }
 
-  async getMemberById(memberId: number, orgId: number) {
+  async getMemberById(memberId: string, orgId: number) {
     const member = await this.dataSource
       .getRepository(Member)
       .findOneBy({ id: memberId, orgId });

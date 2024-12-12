@@ -2,7 +2,7 @@ import { Appointment } from '@/app/appointments/entities/appointment.entity';
 import { CreateEmailDto } from '@/app/emails/dto/crearte-email.dto';
 import { format } from 'date-fns';
 
-const getDate = (date: string) => format(new Date(date), 'dd-MM-yyyy');
+const getDate = (date: Date) => format(new Date(date), 'dd-MM-yyyy');
 
 export function sendBookingNotiToUser(
   appointment: Appointment,

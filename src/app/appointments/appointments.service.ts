@@ -7,7 +7,7 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment, BookingStatus } from './entities/appointment.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { Between, DataSource, In, Repository } from 'typeorm';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { Service } from '../services/entities/service.entity';
 import { getDatesBetweenDates } from '@/utils';
@@ -46,7 +46,7 @@ export class AppointmentsService {
   ) {}
 
   // create new appointment by user
-  async create(createAppointmentDto: CreateAppointmentDto, userId: number) {
+  async create(createAppointmentDto: CreateAppointmentDto, userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -89,7 +89,7 @@ export class AppointmentsService {
       };
     } catch (error) {
       queryRunner.rollbackTransaction();
-      throw new ForbiddenException('Cannot update the appointment!');
+      throw new ForbiddenException('Cannot book the appointment!');
     } finally {
       queryRunner.release();
     }
@@ -176,7 +176,7 @@ export class AppointmentsService {
         const service = services.find((service) => service.id === serviceId);
         const member = members.find((member) => member.id === memberId);
         const commissionFees = this.calculateCommissionFees(
-          service.price,
+          service.discountPrice,
           member.commissionFees,
           member.commissionFeesType,
         );
@@ -189,7 +189,7 @@ export class AppointmentsService {
           serviceName: service.name,
           startTime,
           endTime,
-          date: appointment.date,
+          // date: appointment.date,
           discountPrice: service.discountPrice,
           duration: service.duration,
           price: service.price,
@@ -216,7 +216,7 @@ export class AppointmentsService {
     }
   }
 
-  private async getUserById(userId: number) {
+  private async getUserById(userId: string) {
     const user = await this.dataSource
       .getRepository(User)
       .findOneBy({ id: userId });
@@ -246,7 +246,7 @@ export class AppointmentsService {
     this.sendEmail(appointment.orgId, sendEmail);
   }
 
-  private async getMemberByIds(memberIds: number[], orgId: number) {
+  private async getMemberByIds(memberIds: string[], orgId: number) {
     const ids = [...new Set([...memberIds])];
     const members = await this.dataSource
       .getRepository(Member)
@@ -256,7 +256,7 @@ export class AppointmentsService {
     return members;
   }
 
-  async getServicesByIds(serviceIds: number[], orgId: number) {
+  async getServicesByIds(serviceIds: string[], orgId: number) {
     const ids = [...new Set([...serviceIds])];
     const services = await this.dataSource
       .getRepository(Service)
@@ -280,9 +280,9 @@ export class AppointmentsService {
   // find all appointment by org for a given date
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
     const { startDate, endDate } = getAppointmentDto;
-    const dates = getDatesBetweenDates(startDate, endDate);
+
     return await this.appointmentRepository.find({
-      where: { orgId, date: In(dates) },
+      where: { orgId, date: Between(startDate, endDate) },
       relations: {
         bookingItems: true,
       },
@@ -360,6 +360,9 @@ export class AppointmentsService {
 
   async confirmBooking(id: string, orgId: number) {
     const appointment = await this.getBookingById(id, orgId);
+    // if completed , cannot be confirmed
+    if (appointment.status === BookingStatus.completed)
+      throw new ForbiddenException('Completed booking cannot be confirmed!');
     this.appointmentRepository.update(id, { status: BookingStatus.confirmed });
     // send email about booking confirmation
     this.sendEmail(orgId, {
@@ -379,6 +382,10 @@ export class AppointmentsService {
     orgId: number,
   ) {
     const appointment = await this.getBookingById(id, orgId);
+
+    // if complete , cannot be cancelled
+    if (appointment.status === BookingStatus.completed)
+      throw new ForbiddenException('Completed booking cannot be cancelled!');
     const updateRes = await this.appointmentRepository.update(id, {
       status: BookingStatus.cancelled,
     });

@@ -30,7 +30,7 @@ export class RolesGuard implements CanActivate {
       const user: SignedUser = this.jwtService.verify(accessToken);
       request.user = user;
       // return requiredRoles.some((role) => user.roles?.includes(role));
-      console.log(user, ' allowed roles are ' + requiredRoles);
+      // console.log(user, ' allowed roles are ' + requiredRoles);
       const isAuthenticated = Array.from(requiredRoles).includes(user.role);
       if (!isAuthenticated)
         throw new UnauthorizedException('Role cannot access!');

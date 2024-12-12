@@ -8,7 +8,7 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import { IncrementEntity } from '@/utils/base.entity';
+import { UUIDEntity } from '@/utils/base.entity';
 import { Service } from '@/app/services/entities/service.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import { Roles } from '@/security/user.decorator';
@@ -31,7 +31,7 @@ export enum UserState {
 }
 
 @Entity()
-export class Member extends IncrementEntity {
+export class Member extends UUIDEntity {
   @Column()
   firstName: string;
 

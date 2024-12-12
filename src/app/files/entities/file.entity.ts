@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class File {
@@ -6,8 +6,12 @@ export class File {
   id: string;
 
   @Column()
+  @Index('file_url')
   url: string;
 
   @Column('boolean', { default: false })
   isUsed: boolean;
+
+  @Column({ nullable: true })
+  userId: string;
 }

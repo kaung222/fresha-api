@@ -12,16 +12,20 @@ export class OrgTypesService {
     @InjectRepository(OrgType) private orgTypeRepository: Repository<OrgType>,
     private fileService: FilesService,
   ) {}
-  async create(createOrgTypeDto: CreateOrgTypeDto) {
+
+  // create type
+  async create(adminId: string, createOrgTypeDto: CreateOrgTypeDto) {
     const { icon } = createOrgTypeDto;
     const createType = this.orgTypeRepository.create(createOrgTypeDto);
     await this.orgTypeRepository.save(createType);
-    this.fileService.updateFileAsUsed([icon]);
+    // update file used
+    this.fileService.updateFileAsUsed(icon, adminId);
     return {
       message: 'Create type successfully',
     };
   }
 
+  // get all types
   findAll() {
     return this.orgTypeRepository.find();
   }
@@ -30,9 +34,12 @@ export class OrgTypesService {
     return await this.orgTypeRepository.findOneBy({ id });
   }
 
-  async remove(id: number) {
+  async remove(id: number, adminId: string) {
+    const type = await this.findOne(id);
     const response = await this.orgTypeRepository.delete({ id });
     if (response.affected !== 1) throw new NotFoundException();
+    // update file unused
+    this.fileService.updateFileAsUnused(type.icon, adminId);
     return {
       message: 'Delete type successfully',
     };

@@ -16,7 +16,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { FilesService } from './files.service';
 import { StoreFiledto } from './dto/store-file.dto';
 import { StoreMultipleFilesDto } from './dto/store-multi-file.dto';
-import { Roles } from '@/security/user.decorator';
+import { Roles, User } from '@/security/user.decorator';
 
 @Controller('files')
 @ApiTags('File')
@@ -28,6 +28,7 @@ export class FilesController {
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   storeImage(
+    @User('id') userId: any,
     @Body() storeImageDto: StoreFiledto,
     @UploadedFile(
       new ParseFilePipe({
@@ -39,7 +40,7 @@ export class FilesController {
     )
     file: Express.Multer.File,
   ) {
-    return this.fileService.storeImage(file);
+    return this.fileService.storeImage(file, userId);
   }
 
   @Post('multiple')
@@ -47,8 +48,8 @@ export class FilesController {
   @ApiOperation({ summary: 'store multiple images' })
   @UseInterceptors(FilesInterceptor('files', 4))
   uploadFile(
+    @User('id') userId: any,
     @Body() storeImageDto: StoreMultipleFilesDto,
-
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
@@ -59,7 +60,7 @@ export class FilesController {
     )
     files: Array<Express.Multer.File>,
   ) {
-    return this.fileService.storeMultipleImages(files);
+    return this.fileService.storeMultipleImages(files, userId);
   }
 
   @Cron(CronExpression.EVERY_10_HOURS)

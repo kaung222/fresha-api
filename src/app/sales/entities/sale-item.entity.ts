@@ -1,5 +1,11 @@
 import { Product } from '@/app/products/entities/product.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Sale } from './sale.entity';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
 
@@ -23,7 +29,11 @@ export class SaleItem {
   @DecimalColumn()
   subtotalPrice: number;
 
+  @Column({ nullable: true })
+  productId: string;
+
   @ManyToOne(() => Product, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'productId' })
   product: Product;
 
   @ManyToOne(() => Sale, { onDelete: 'CASCADE' })

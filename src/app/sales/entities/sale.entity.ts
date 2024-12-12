@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { SaleItem } from './sale-item.entity';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
+import { BookingStatus } from '@/app/appointments/entities/appointment.entity';
 
 @Entity()
 export class Sale extends UUIDEntity {
@@ -27,6 +28,9 @@ export class Sale extends UUIDEntity {
 
   @Column({ nullable: true })
   notes: string;
+
+  @Column('enum', { enum: BookingStatus, default: BookingStatus.completed })
+  status: BookingStatus;
 
   @OneToMany(() => SaleItem, (item) => item.sale)
   saleItems: SaleItem[];

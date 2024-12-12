@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { DiscountType } from '../services/entities/service.entity';
 import { FilesService } from '../files/files.service';
+import { PaginateQuery } from '@/utils/paginate-query.dto';
 
 @Injectable()
 export class ProductsService {
@@ -15,6 +16,7 @@ export class ProductsService {
     private readonly productRepository: Repository<Product>,
     private readonly filesService: FilesService,
   ) {}
+  // product create
   async create(orgId: number, createProductDto: CreateProductDto) {
     const { discountType, discount, price, images } = createProductDto;
     const discountPrice = this.calculateDiscountPrice(
@@ -28,16 +30,17 @@ export class ProductsService {
       organization: { id: orgId },
     });
     await this.productRepository.save(createProduct);
-    this.filesService.updateFileAsUsed(images);
+    this.filesService.updateFileAsUsed(images, orgId);
     return {
       message: 'Product created successfully',
     };
   }
 
-  async findAll(orgId: number) {
-    let page = 1;
+  async findAll(orgId: number, paginateQuery: PaginateQuery) {
+    const { page = 1 } = paginateQuery;
     const [data, totalCount] = await this.productRepository.findAndCount({
       where: { orgId },
+      skip: 10 * (page - 1),
       take: 10,
     });
     return new PaginationResponse({ data, page, totalCount }).toResponse();
@@ -71,17 +74,21 @@ export class ProductsService {
     });
     await this.productRepository.save(newUpdate);
     if (images !== product.images) {
-      await this.filesService.updateFileAsUsed(images);
-      this.filesService.updateFileAsUnused(product.images);
+      this.filesService.updateFileAsUsed(images, orgId.toString());
+      this.filesService.updateFileAsUnused(product.images, orgId.toString());
     }
     return {
-      message: 'Update product successfully',
+      message: `Update product ${product.name} successfully`,
     };
   }
 
   async remove(id: string, orgId: number) {
-    await this.getProductById(id, orgId);
-    return this.productRepository.delete(id);
+    const product = await this.getProductById(id, orgId);
+    await this.productRepository.delete({ id });
+    this.filesService.updateFileAsUnused(product.images, orgId);
+    return {
+      message: `Deleted product ${product.name} successfully`,
+    };
   }
 
   private async getProductById(id: string, orgId: number) {

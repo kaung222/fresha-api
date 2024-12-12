@@ -66,6 +66,7 @@ import { EmailsModule } from './app/emails/emails.module';
 import { OrgTypesModule } from './app/org-types/org-types.module';
 import { OrgType } from './app/org-types/entities/org-type.entity';
 import { AdminsModule } from './app/admins/admins.module';
+import { Email } from './app/emails/entities/email.entity';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { AdminsModule } from './app/admins/admins.module';
         Service,
         Organization,
         Category,
+        Email,
         User,
         OTP,
         File,

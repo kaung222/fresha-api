@@ -41,7 +41,7 @@ export class MemberSchedule {
   dayOfWeek: DayOfWeek;
 
   @Column()
-  memberId: number;
+  memberId: string;
 
   @ManyToOne(() => Member, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'memberId' })

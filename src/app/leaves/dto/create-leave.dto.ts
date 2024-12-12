@@ -25,5 +25,5 @@ export class CreateLeaveDto {
   type: string;
 
   @IsNotEmpty()
-  memberId: number;
+  memberId: string;
 }

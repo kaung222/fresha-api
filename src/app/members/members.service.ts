@@ -28,6 +28,7 @@ import { CreateNotificationDto } from '../notifications/dto/create-notification.
 import { Leave } from '../leaves/entities/leave.entity';
 import { CacheService, CacheTTL } from '@/global/cache.service';
 import { GetAppointmentDto } from './dto/get-appointments.dto';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class MembersService {
@@ -35,27 +36,11 @@ export class MembersService {
     private eventEmitter: EventEmitter2,
     private dataSource: DataSource,
     private readonly cacheService: CacheService,
+    private readonly fileService: FilesService,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
   ) {}
 
-  async memberCreateEvent(orgId: number, member: Member) {
-    this.eventEmitter.emit('member.created', { memberId: member.id, orgId });
-    // create notification for owner org
-    const notification: CreateNotificationDto = {
-      body: 'New member created and send invitation email',
-      title: 'Member created',
-      type: 'Member',
-      userId: orgId,
-      link: member.id.toString(),
-      thumbnail: member?.profilePictureUrl,
-    };
-    this.eventEmitter.emit('notification.created', notification);
-    // file update as used
-    this.eventEmitter.emit('files.used', {
-      ids: [member.profilePictureUrl],
-    });
-  }
   // create new member
   async create(createMemberDto: CreateMemberDto, orgId: number) {
     const { serviceIds, ...rest } = createMemberDto;
@@ -66,8 +51,8 @@ export class MembersService {
       organization: { id: orgId },
     });
     const member = await this.memberRepository.save(createMember);
-    this.memberCreateEvent(orgId, member);
     await this.clearCache(orgId);
+    this.fileService.updateFileAsUsed(member.profilePictureUrl, orgId);
     return {
       message: 'Create member successfully',
     };
@@ -107,7 +92,7 @@ export class MembersService {
   }
 
   // get Member details and services offered
-  findOne(id: number) {
+  findOne(id: string) {
     return this.memberRepository.findOne({
       where: { id },
       relations: { services: true },
@@ -115,11 +100,11 @@ export class MembersService {
   }
 
   // get member detail by access token
-  getProfile(id: number) {
+  getProfile(id: string) {
     return this.memberRepository.findOneBy({ id });
   }
 
-  async update(id: number, updateMemberDto: UpdateMemberDto, orgId: number) {
+  async update(id: string, updateMemberDto: UpdateMemberDto, orgId: number) {
     const { serviceIds, profilePictureUrl } = updateMemberDto;
     // Find the member with the relations (services)
     const member = await this.memberRepository.findOne({
@@ -143,11 +128,13 @@ export class MembersService {
 
     // Save the updated member entity
     await this.memberRepository.save(member);
-    this.eventEmitter.emit('files.used', { ids: [profilePictureUrl] });
-    this.eventEmitter.emit('files.unused', { ids: [member.profilePictureUrl] });
+    if (member.profilePictureUrl !== profilePictureUrl) {
+      this.fileService.updateFileAsUnused(member.profilePictureUrl, orgId);
+      this.fileService.updateFileAsUnused(profilePictureUrl, orgId);
+    }
     await this.clearCache(orgId);
     return {
-      message: 'success',
+      message: `Update member ${member.firstName} successfully`,
     };
   }
 
@@ -233,16 +220,17 @@ export class MembersService {
   //   });
   // }
 
-  async remove(id: number, orgId: number) {
-    await this.getMemberById(id, orgId);
-    await this.memberRepository.delete(id);
+  async remove(id: string, orgId: number) {
+    const member = await this.getMemberById(id, orgId);
+    await this.memberRepository.delete({ id });
     await this.clearCache(orgId);
+    this.fileService.updateFileAsUnused(member.profilePictureUrl, orgId);
     return {
       message: 'Delete member successfully',
     };
   }
 
-  restore(id: number) {
+  restore(id: string) {
     return this.memberRepository.restore(id);
   }
 
@@ -250,7 +238,7 @@ export class MembersService {
     return this.memberRepository.restore(ids);
   }
 
-  async getMemberById(memberId: number, orgId: number): Promise<Member> {
+  async getMemberById(memberId: string, orgId: number): Promise<Member> {
     const member = await this.memberRepository.findOne({
       where: { orgId, id: memberId },
     });

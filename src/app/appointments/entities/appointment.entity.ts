@@ -25,7 +25,7 @@ export enum BookingStatus {
 export class Appointment extends UUIDEntity {
   @Index('bookingDate')
   @Column('date')
-  date: string;
+  date: Date;
 
   @Generated('increment')
   bookingId: number;

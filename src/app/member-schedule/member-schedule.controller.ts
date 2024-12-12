@@ -36,7 +36,7 @@ export class MemberScheduleController {
   }
 
   @Get('of/member/:memberId')
-  getMemberSchedules(@Param('memberId') memberId: number) {
+  getMemberSchedules(@Param('memberId') memberId: string) {
     return this.memberScheduleService.getMemberSchedule(memberId);
   }
 

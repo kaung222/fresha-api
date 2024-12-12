@@ -14,11 +14,11 @@ export class OrgReviewsService {
     @InjectRepository(OrgReview)
     private readonly orgReviewRepository: Repository<OrgReview>,
   ) {}
-  create(createOrgReviewDto: CreateOrgReviewDto, userId: number) {
+  create(createOrgReviewDto: CreateOrgReviewDto, userId: string) {
     const { orgId, rating, notes } = createOrgReviewDto;
     const newReview = this.orgReviewRepository.create({
       organization: { id: orgId },
-      user: { id: userId },
+      userId,
       rating,
       notes,
     });
@@ -34,14 +34,14 @@ export class OrgReviewsService {
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return this.orgReviewRepository.findAndCount({
       where: { id },
       relations: { user: true },
     });
   }
 
-  update(id: number, updateOrgReviewDto: UpdateOrgReviewDto) {
+  update(id: string, updateOrgReviewDto: UpdateOrgReviewDto) {
     return this.orgReviewRepository.update(id, updateOrgReviewDto);
   }
 
@@ -61,14 +61,14 @@ export class OrgReviewsService {
     });
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return this.orgReviewRepository.delete(id);
   }
 
-  async checkOwnership(id: number, userId: number) {
+  async checkOwnership(id: string, userId: string) {
     const review = await this.orgReviewRepository.findOneBy({
       id,
-      user: { id: userId },
+      userId,
     });
     if (!review) throw new NotFoundException('Review not found');
     return true;

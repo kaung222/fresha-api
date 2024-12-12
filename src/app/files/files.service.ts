@@ -4,21 +4,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { File } from './entities/file.entity';
 import { storeObjectAWS, storeObjectsAWS } from '@/utils/store-obj-s3';
 import { deleteObjectAWS } from '@/utils/delete-obj-s3';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 
 @Injectable()
 export class FilesService {
   constructor(
     @InjectRepository(File)
     private fileRepository: Repository<File>,
-    // private awsS3Service: AwsS3Service
+    @InjectQueue('FileQueue')
+    private fileQueue: Queue,
   ) {}
 
   //store image
-  async storeImage(file: Express.Multer.File) {
+  async storeImage(file: Express.Multer.File, userId: any) {
     try {
       const imageId = await storeObjectAWS(file);
       const imageUrls = this.generateImageUrls([imageId]);
-      await this.saveImageUrlsToDatabase(imageUrls);
+      await this.saveImageUrlsToDatabase(imageUrls, userId);
       return { imageUrl: imageUrls[0] };
     } catch (error) {
       throw new BadRequestException(error);
@@ -26,10 +29,10 @@ export class FilesService {
   }
 
   // store multiple images
-  async storeMultipleImages(images: Express.Multer.File[]) {
+  async storeMultipleImages(images: Express.Multer.File[], userId) {
     const imageIds = await storeObjectsAWS(images);
     const imageUrls = this.generateImageUrls(imageIds);
-    await this.saveImageUrlsToDatabase(imageUrls);
+    await this.saveImageUrlsToDatabase(imageUrls, userId);
     return { imageUrls };
   }
 
@@ -40,28 +43,35 @@ export class FilesService {
     );
   }
 
-  private async saveImageUrlsToDatabase(imageUrls: string[]): Promise<void> {
+  private async saveImageUrlsToDatabase(
+    imageUrls: string[],
+    userId,
+  ): Promise<void> {
     // Create an array of URL objects
     const urls = imageUrls.map((imageUrl) => {
-      return { url: imageUrl };
+      return { url: imageUrl, userId };
     });
     await this.fileRepository.insert(urls);
   }
 
   // update file as used
-  async updateFileAsUsed(fileUrls: string[]) {
-    await this.fileRepository.update(
-      { url: In(fileUrls), isUsed: false },
-      { isUsed: true },
-    );
+  updateFileAsUsed(fileUrls: string[] | string, userId: string | number) {
+    try {
+      const urlsArray = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
+      this.fileQueue.add('updateFileUsed', { urls: urlsArray, userId });
+    } catch (error) {
+      console.log('Error updating file as used');
+    }
   }
 
   // update file as unused
-  async updateFileAsUnused(fileUrls: string[]) {
-    await this.fileRepository.update(
-      { url: In(fileUrls), isUsed: true },
-      { isUsed: false },
-    );
+  updateFileAsUnused(fileUrls: string[] | string, userId: string | number) {
+    try {
+      const urlsArray = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
+      this.fileQueue.add('updateFileUnused', { urls: urlsArray, userId });
+    } catch (error) {
+      console.log('Error updating file as unused');
+    }
   }
 
   // get files for test

@@ -1,9 +1,13 @@
-import { IsDateString, IsNotEmpty } from 'class-validator';
+import { IsDate, IsDateString, IsNotEmpty } from 'class-validator';
 
 export class GetAppointmentDto {
   @IsNotEmpty()
-  startDate: string;
+  // @IsDate()
+  @IsDateString()
+  startDate: Date;
 
   @IsNotEmpty()
-  endDate: string;
+  // @IsDate()
+  @IsDateString()
+  endDate: Date;
 }

@@ -18,6 +18,7 @@ import { ConfirmOTPDto } from './dto/confirm-otp.dto';
 import { GetOTPDto } from './dto/get-otp.dto';
 import { RegisterOrganizationDto } from './dto/create-org.dto';
 import { CreatePasswordDto } from './dto/create-password.dto';
+import { CheckEmailDto } from './dto/check-email.dto';
 
 @Controller('auth')
 @ApiTags('Organization Auth')
@@ -31,6 +32,12 @@ export class AuthController {
       await this.authService.loginOrganization(loginOrgDto);
     this.authService.setCookieHeaders(res, refreshToken);
     res.send({ ...rest }).status(200);
+  }
+
+  @Post('/check-email')
+  @ApiOperation({ summary: 'Check existed email or not' })
+  checkEmail(@Body() checkEamilDto: CheckEmailDto) {
+    return this.authService.checkExistEmail(checkEamilDto.email);
   }
 
   @Get('otp/:email')
@@ -84,7 +91,7 @@ export class AuthController {
   @Post('logout')
   @ApiOperation({ summary: 'logout member' })
   @Role(Roles.org, Roles.member)
-  handleLogout(@User('id') memberId: number) {
+  handleLogout(@User('id') memberId: string) {
     return this.authService.logoutMember(memberId);
   }
 }

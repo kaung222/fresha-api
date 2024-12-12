@@ -17,6 +17,7 @@ export class PaymentsService {
   ) {}
 
   // on appointment complete create a payment base on it
+  // hello
   async createPaymentByAppointment(
     createPaymentDto: CreateBookingPaymentBySystem,
   ) {

@@ -26,6 +26,7 @@ import { ConfirmOTPDto } from './dto/confirm-otp.dto';
 import { RegisterOrganizationDto } from './dto/create-org.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EmailsService } from '../emails/emails.service';
+import { retry } from 'rxjs';
 
 @Injectable()
 export class AuthService {
@@ -68,9 +69,24 @@ export class AuthService {
       refreshToken,
     };
   }
+
+  async checkExistEmail(email: string) {
+    const member = await this.memberRepository
+      .createQueryBuilder('member')
+      .where('member.email=:email', { email })
+      .addSelect('member.password')
+      .getOne();
+    if (!member) return await this.getOTP(email);
+    if (member && member.password) return { message: 'login', password: true };
+
+    await this.getOTP(email);
+    return { message: 'create_password', password: false, email };
+  }
   // register new organization
   async createOrganization(createOrganization: RegisterOrganizationDto) {
     const { name, email, firstName, lastName } = createOrganization;
+    const isExisting = await this.memberRepository.findOneBy({ email });
+    if (isExisting) throw new ConflictException('Email already taken');
     await this.checkIsConfirm(email);
     const newOrg = this.organizationRepository.create({ name });
     const organization = await this.organizationRepository.save(newOrg);
@@ -133,7 +149,7 @@ export class AuthService {
     };
   }
 
-  async logoutMember(memberId: number) {
+  async logoutMember(memberId: string) {
     await this.memberRepository.update(
       { id: memberId },
       { state: UserState.logout },

@@ -29,7 +29,7 @@ export class AppointmentsController {
   @Role(Roles.user)
   create(
     @Body() createAppointmentDto: CreateAppointmentDto,
-    @User('id') userId: number,
+    @User('id') userId: string,
   ) {
     return this.appointmentsService.create(createAppointmentDto, userId);
   }

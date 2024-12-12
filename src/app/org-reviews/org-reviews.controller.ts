@@ -1,15 +1,6 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { OrgReviewsService } from './org-reviews.service';
 import { CreateOrgReviewDto } from './dto/create-org-review.dto';
-import { UpdateOrgReviewDto } from './dto/update-org-review.dto';
 import { Roles, User } from '@/security/user.decorator';
 import { Role } from '@/security/role.decorator';
 import { ApiTags } from '@nestjs/swagger';
@@ -23,7 +14,7 @@ export class OrgReviewsController {
   @Role(Roles.user)
   create(
     @Body() createOrgReviewDto: CreateOrgReviewDto,
-    @User('id') userId: number,
+    @User('id') userId: string,
   ) {
     return this.orgReviewsService.create(createOrgReviewDto, userId);
   }
@@ -36,13 +27,12 @@ export class OrgReviewsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.orgReviewsService.findOne(+id);
+    return this.orgReviewsService.findOne(id);
   }
 
   @Delete(':id')
   @Role(Roles.user)
-  async remove(@Param('id') id: string, @User('id') userId: number) {
-    await this.orgReviewsService.checkOwnership(+id, userId);
-    return this.orgReviewsService.remove(+id);
+  remove(@Param('id') id: string, @User('id') userId: number) {
+    return this.orgReviewsService.remove(id);
   }
 }

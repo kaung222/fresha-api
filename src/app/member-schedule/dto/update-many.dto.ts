@@ -26,5 +26,5 @@ export class UpdateMultiScheduleDto {
   schedules: Schedule[];
 
   @IsNotEmpty()
-  memberId: number;
+  memberId: string;
 }

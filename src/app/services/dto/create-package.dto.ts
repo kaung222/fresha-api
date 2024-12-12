@@ -31,7 +31,7 @@ export class CreatePackageDto {
   @IsArray()
   @ArrayMinSize(2)
   @ArrayMaxSize(10)
-  serviceIds: number[];
+  serviceIds: string[];
 
   @ApiProperty({ example: '[memberId1,memberId2]' })
   @IsArray()

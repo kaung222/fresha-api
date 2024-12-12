@@ -18,5 +18,5 @@ export class CreateMemberScheduleDto {
   dayOfWeek: DayOfWeek;
 
   @IsNotEmpty()
-  memberId: number;
+  memberId: string;
 }

@@ -2,7 +2,7 @@ import { Appointment } from '@/app/appointments/entities/appointment.entity';
 import { Category } from '@/app/categories/entities/category.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
-import { IncrementEntity } from '@/utils/base.entity';
+import { IncrementEntity, UUIDEntity } from '@/utils/base.entity';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
 import {
   Entity,
@@ -38,7 +38,7 @@ export enum DiscountType {
 }
 
 @Entity()
-export class Service extends IncrementEntity {
+export class Service extends UUIDEntity {
   @Column()
   name: string;
 

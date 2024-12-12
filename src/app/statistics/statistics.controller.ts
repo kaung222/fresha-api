@@ -22,10 +22,10 @@ export class StatisticsController {
       getStatisticsDto,
     );
   }
-  @Get('member/:memberId')
+  @Get('of/member/:memberId')
   @ApiOperation({ summary: 'Get org member statistics' })
   getMemberStatistics(
-    @Param('memberId') memberId: number,
+    @Param('memberId') memberId: string,
     @Query() getStatisticsDto: GetStatisticsDto,
   ) {
     // return this.statisticsService.getMemberChart(memberId, getStatisticsDto);
@@ -52,6 +52,30 @@ export class StatisticsController {
   ) {
     return this.statisticsService.getMostBookingServices(
       orgId,
+      getStatisticsDto,
+    );
+  }
+
+  @Get('of/product/:productId')
+  @ApiOperation({ summary: 'Get Product statistics by id' })
+  getProductStatistics(
+    @Param('productId') productId: string,
+    @Query() getStatisticsDto: GetStatisticsDto,
+  ) {
+    return this.statisticsService.getProductStatistics(
+      productId,
+      getStatisticsDto,
+    );
+  }
+
+  @Get('of/service/:serviceId')
+  @ApiOperation({ summary: 'Get service statistics by id' })
+  getServiceStatistics(
+    @Param('serviceId') serviceId: string,
+    @Query() getStatisticsDto: GetStatisticsDto,
+  ) {
+    return this.statisticsService.getServiceStatistics(
+      serviceId,
       getStatisticsDto,
     );
   }

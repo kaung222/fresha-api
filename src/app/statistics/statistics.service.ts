@@ -5,6 +5,7 @@ import { GetStatisticsDto } from './dto/get-statistics.dto';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { getDatesBetweenDates } from '@/utils';
 import { BookingItem } from '../appointments/entities/booking-item.entity';
+import { SaleItem } from '../sales/entities/sale-item.entity';
 
 @Injectable()
 export class StatisticsService {
@@ -31,50 +32,37 @@ export class StatisticsService {
   }
 
   async getMemberStatistics(
-    memberId: number,
+    memberId: string,
     getStatisticsDto: GetStatisticsDto,
   ) {
     const { startDate, endDate, status } = getStatisticsDto;
-    const dates = getDatesBetweenDates(startDate, endDate);
-    const queryBuilder = this.dataSource
+    const bookingItems = await this.dataSource
       .getRepository(BookingItem)
       .createQueryBuilder('item')
       .leftJoin('item.appointment', 'appointment')
       .where('item.memberId=:memberId', { memberId })
-      .andWhere('item.date IN (:...dates)', { dates })
-      .andWhere('appointment.status=:status', { status });
-
-    const BookingItems = await queryBuilder
+      .andWhere('appointment.date BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .andWhere('appointment.status=:status', { status })
       .addSelect('appointment.status')
+      .addSelect('appointment.createdAt')
       .getMany();
-    const data = await queryBuilder
-      .select('SUM(item.duration)', 'totalDuration')
-      .addSelect('SUM(item.commissionFees)', 'totalCommissionFees')
-      .addSelect('SUM(item.discountPrice)', 'totalDiscountPrice')
-      .addSelect('COUNT(*)', 'totalServiceCount')
-      .getRawOne();
 
-    return { BookingItems, data };
-  }
-
-  async getMemberChart(memberId: number, getStatisticsDto: GetStatisticsDto) {
-    const { startDate, endDate, status } = getStatisticsDto;
-    const dates = getDatesBetweenDates(startDate, endDate);
-    const queryBuilder = this.dataSource
-      .getRepository(BookingItem)
-      .createQueryBuilder('item')
-      .leftJoin('item.appointment', 'appointment')
-      .where('item.memberId=:memberId', { memberId })
-      .andWhere('item.date IN (:...dates)', { dates })
-      .andWhere('appointment.status=:status', { status });
-
-    const data = await queryBuilder
-      .select('appointment.date', 'date')
-      .addSelect('SUM(item.discountPrice)', 'discountPrice')
-      .groupBy('date')
-      .orderBy('date')
-      .getRawMany();
-    return data;
+    const data = {
+      totalDuration: bookingItems.reduce((pv, cv) => pv + cv.duration, 0),
+      totalCommissionFees: bookingItems.reduce(
+        (pv, cv) => pv + cv.commissionFees,
+        0,
+      ),
+      totalDiscountPrice: bookingItems.reduce(
+        (pv, cv) => pv + cv.discountPrice,
+        0,
+      ),
+      totalServiceCount: bookingItems.length,
+    };
+    return { bookingItems, data };
   }
 
   async getOrgAppointmentStatistics(
@@ -115,5 +103,97 @@ export class StatisticsService {
       .groupBy('memberId')
       .getRawMany();
     return services;
+  }
+
+  async getProductStatistics(
+    productId: string,
+    getStatistics: GetStatisticsDto,
+  ) {
+    const { startDate, endDate, status } = getStatistics;
+    const saleItems = await this.dataSource
+      .getRepository(SaleItem)
+      .createQueryBuilder('item')
+      .leftJoin('item.sale', 'sale')
+      .where('item.productId = :productId', { productId })
+      .andWhere('sale.createdAt BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .andWhere('sale.status=:status', { status })
+      .addSelect('sale.createdAt')
+      .getMany();
+    const data = {
+      totalQuantity: saleItems.reduce((pv, cv) => pv + cv.quantity, 0),
+      totalPrice: saleItems.reduce((pv, cv) => pv + cv.subtotalPrice, 0),
+    };
+
+    return { saleItems, data };
+  }
+
+  // async getServiceStatistics(
+  //   serviceId: string,
+  //   getStatistics: GetStatisticsDto,
+  // ) {
+  //   const { startDate, endDate, status } = getStatistics;
+  //   const queryBuilder = this.dataSource
+  //     .getRepository(BookingItem)
+  //     .createQueryBuilder('item')
+  //     .leftJoin('item.appointment', 'appointment')
+  //     .where('item.serviceId = :serviceId', { serviceId })
+  //     .andWhere('appointment.createdAt BETWEEN :startDate AND :endDate', {
+  //       startDate,
+  //       endDate,
+  //     })
+  //     .select("DATE_FORMAT(appointment.createdAt,'%Y-%m-%d')", 'date')
+  //     .addSelect('item.price', 'price')
+  //     .addSelect('COUNT(item.id)', 'totalCount')
+  //     .addSelect('SUM(item.price)', 'totalPrice')
+  //     .groupBy('date')
+  //     .addGroupBy('price')
+  //     .orderBy('date');
+
+  //   return await queryBuilder.getRawMany();
+  // }
+
+  async getServiceStatistics(
+    serviceId: string,
+    getStatisticsDto: GetStatisticsDto,
+  ) {
+    const { startDate, endDate, status } = getStatisticsDto;
+    const bookingItems = await this.dataSource
+      .getRepository(BookingItem)
+      .createQueryBuilder('item')
+      .leftJoin('item.appointment', 'appointment')
+      .where('item.serviceId=:serviceId', { serviceId })
+      .andWhere('appointment.createdAt BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .andWhere('appointment.status=:status', { status })
+      .addSelect('appointment.status')
+      .addSelect('appointment.createdAt')
+      .getMany();
+
+    const data = {
+      totalCommissionFees: bookingItems.reduce(
+        (pv, cv) => pv + cv.commissionFees,
+        0,
+      ),
+      totalDuration: bookingItems.reduce((pv, cv) => pv + cv.duration, 0),
+      totalDiscountPrice: bookingItems.reduce(
+        (pv, cv) => pv + cv.discountPrice,
+        0,
+      ),
+      totalServiceCount: bookingItems.length,
+    };
+
+    // await queryBuilder
+    //   .select('SUM(item.duration)', 'totalDuration')
+    //   .addSelect('SUM(item.commissionFees)', 'totalDuration')
+    //   .addSelect('SUM(item.discountPrice)', 'totalDiscountPrice')
+    //   .addSelect('COUNT(*)', 'totalServiceCount')
+    //   .getRawOne();
+
+    return { data, bookingItems };
   }
 }

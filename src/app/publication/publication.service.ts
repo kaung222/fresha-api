@@ -8,14 +8,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UpdateMultiScheduleDto } from '../org-schedule/dto/update-many.dto';
 import { OrgSchedule } from '../org-schedule/entities/org-schedule.entity';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class PublicationService {
   constructor(
     @InjectRepository(Organization)
     private readonly orgRepository: Repository<Organization>,
-    private readonly eventEmitter: EventEmitter2,
     private readonly dataSource: DataSource,
+    private fileService: FilesService,
   ) {}
 
   async updateBasicInfo(orgId: number, updateBasiceInfo: UpdateBasiceInfo) {
@@ -62,9 +63,8 @@ export class PublicationService {
     });
 
     if (updateRes.affected === 1) {
-      this.eventEmitter.emit('files.used', { ids: images });
-      organization.images &&
-        this.eventEmitter.emit('files.unused', { ids: organization.images });
+      this.fileService.updateFileAsUnused(organization.images, orgId);
+      this.fileService.updateFileAsUnused(images, orgId);
       return {
         message: 'success',
       };

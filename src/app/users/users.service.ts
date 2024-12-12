@@ -24,15 +24,15 @@ export class UsersService {
     return new PaginationResponse({ page, data, totalCount }).toResponse();
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return this.userRepository.findOneBy({ id });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
+  update(id: string, updateUserDto: UpdateUserDto) {
     return `This action updates a #${id} user`;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return this.userRepository.delete({ id });
   }
 }

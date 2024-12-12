@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -13,6 +14,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { ApiTags } from '@nestjs/swagger';
+import { PaginateQuery } from '@/utils/paginate-query.dto';
 
 @Controller('products')
 @ApiTags('Product')
@@ -29,8 +31,9 @@ export class ProductsController {
   }
 
   @Get()
-  findAll(@User('orgId') orgId: number) {
-    return this.productsService.findAll(orgId);
+  @Role(Roles.org, Roles.member)
+  findAll(@User('orgId') orgId: number, @Query() paginateQuery: PaginateQuery) {
+    return this.productsService.findAll(orgId, paginateQuery);
   }
 
   @Get(':id')

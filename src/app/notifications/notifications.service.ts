@@ -26,6 +26,7 @@ export class NotificationsService {
     const [data, totalCount] = await this.notificationRepository.findAndCount({
       where: { userId },
       take: 10,
+      order: { createdAt: 'DESC' },
       skip: 10 * (page - 1),
     });
     return new PaginationResponse({ data, totalCount, page }).toResponse();

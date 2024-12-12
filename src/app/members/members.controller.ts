@@ -39,22 +39,23 @@ export class MembersController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.membersService.findOne(+id);
+    return this.membersService.findOne(id);
   }
 
   @Get(':id/profile')
   @Role(Roles.org, Roles.member)
-  getProfile(@User('id') id: number) {
+  getProfile(@User('id') id: string) {
     return this.membersService.getProfile(id);
   }
 
   @Patch(':id')
+  @Role(Roles.org)
   update(
     @Param('id') id: string,
     @Body() updateMemberDto: UpdateMemberDto,
     @User('orgId') orgId: number,
   ) {
-    return this.membersService.update(+id, updateMemberDto, orgId);
+    return this.membersService.update(id, updateMemberDto, orgId);
   }
 
   @Get(':id/available-times')
@@ -65,29 +66,23 @@ export class MembersController {
     // return this.membersService.getAvailableTimeSlots(memberId, getTimes);
   }
 
-  @Get(':id/appointments')
-  getAppointments(
-    @Param('id') memberId: number,
-    @Query() getAppointmentDto: GetAppointmentDto,
-  ) {
-    // return this.membersService.getAppointments(memberId, getAppointmentDto);
-  }
-
   @Get(':id/reviews')
   getReviews(
     @Param('id') memberId: number,
     @Query() getAppointmentDto: GetAppointmentDto,
   ) {
-    // return this.membersService.getAppointments(memberId, getAppointmentDto);
+    // return this.membersService.getReviews(memberId, getAppointmentDto);
   }
 
   @Delete(':id')
+  @Role(Roles.org)
   remove(@Param('id') id: string, @User('orgId') orgId: number) {
-    return this.membersService.remove(+id, orgId);
+    return this.membersService.remove(id, orgId);
   }
 
   @Get(':id/restore')
+  @Role(Roles.org)
   restore(@Param('id') id: string, @User('orgId') orgId: number) {
-    return this.membersService.restore(+id);
+    return this.membersService.restore(id);
   }
 }

@@ -9,7 +9,6 @@ import { Appointment } from './appointment.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Service } from '@/app/services/entities/service.entity';
 import { DecimalColumn } from '@/utils/decorators/column.decorators';
-import { getCurrentDate } from '@/utils';
 
 @Entity()
 export class BookingItem {
@@ -18,9 +17,6 @@ export class BookingItem {
 
   @Column()
   serviceName: string;
-
-  @Column('date', { default: getCurrentDate() })
-  date: string;
 
   @Column()
   memberName: string;

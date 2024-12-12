@@ -1,8 +1,5 @@
-
-statistics 
-total service time, commission fee ,number of bookings of member
-add total commission fees in appointment
-
+reduce stock on sale
+image used on image upload
 
 
 fixed later 

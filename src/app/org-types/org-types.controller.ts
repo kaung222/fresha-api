@@ -1,16 +1,8 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { OrgTypesService } from './org-types.service';
 import { CreateOrgTypeDto } from './dto/create-org-type.dto';
 import { Role } from '@/security/role.decorator';
-import { Roles } from '@/security/user.decorator';
+import { Roles, User } from '@/security/user.decorator';
 
 @Controller('org-types')
 export class OrgTypesController {
@@ -18,8 +10,11 @@ export class OrgTypesController {
 
   @Post()
   @Role(Roles.admin)
-  create(@Body() createOrgTypeDto: CreateOrgTypeDto) {
-    return this.orgTypesService.create(createOrgTypeDto);
+  create(
+    @User('id') adminId: string,
+    @Body() createOrgTypeDto: CreateOrgTypeDto,
+  ) {
+    return this.orgTypesService.create(adminId, createOrgTypeDto);
   }
 
   @Get()
@@ -34,7 +29,7 @@ export class OrgTypesController {
 
   @Delete(':id')
   @Role(Roles.admin)
-  remove(@Param('id') id: string) {
-    return this.orgTypesService.remove(+id);
+  remove(@Param('id') id: string, @User('id') adminId: string) {
+    return this.orgTypesService.remove(+id, adminId);
   }
 }
