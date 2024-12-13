@@ -27,6 +27,9 @@ export class CreatePackageDto {
   @IsOptional()
   description: string;
 
+  @IsOptional()
+  thumbnailUrl: string;
+
   @IsNotEmpty({ each: true })
   @IsArray()
   @ArrayMinSize(2)

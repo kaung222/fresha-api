@@ -29,6 +29,9 @@ export class CreateServiceDto {
   @Max(1000000)
   price: number;
 
+  @IsOptional()
+  thumbnailUrl: string;
+
   @IsNotEmpty()
   @IsNumber()
   @IsPositive()

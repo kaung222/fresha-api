@@ -14,6 +14,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { defaultScheduleData } from '@/utils/data/org-schedule.data';
 import { UpdateMultiScheduleDto } from './dto/update-many.dto';
 import { Member } from '../members/entities/member.entity';
+import { CacheService, CacheTTL } from '@/global/cache.service';
 
 @Injectable()
 export class MemberScheduleService {
@@ -23,6 +24,7 @@ export class MemberScheduleService {
     @InjectRepository(BreakTime)
     private breakTimeRepository: Repository<BreakTime>,
     private dataSource: DataSource,
+    private cacheService: CacheService,
   ) {}
   // create schedule for a member
   @OnEvent('member.created')
@@ -37,7 +39,10 @@ export class MemberScheduleService {
         member: { id: memberId },
       })),
     );
-    return this.memberScheduleRepository.save(createSchedule);
+    await this.memberScheduleRepository.save(createSchedule);
+    // invalidate cache
+    this.cacheService.del(this.getCacheKey(orgId));
+    return { message: 'Create schedule successfully' };
   }
 
   async create(createSchedule: CreateMemberScheduleDto, orgId: number) {
@@ -47,12 +52,21 @@ export class MemberScheduleService {
   }
 
   async findAll(orgId: number) {
-    return this.dataSource.getRepository(Member).find({
+    const cacheKey = this.getCacheKey(orgId);
+    const dataInCache = await this.cacheService.get(cacheKey);
+    if (dataInCache) return dataInCache;
+    const response = await this.dataSource.getRepository(Member).find({
       relations: { schedules: true },
       where: {
         orgId,
       },
     });
+    await this.cacheService.set(cacheKey, response, CacheTTL.veryLong);
+    return response;
+  }
+
+  private getCacheKey(orgId: number) {
+    return `schedule:${orgId}`;
   }
 
   getMemberSchedule(memberId: string) {
@@ -78,9 +92,15 @@ export class MemberScheduleService {
     return await this.breakTimeRepository.save(newBreakTime);
   }
 
-  async update(id: string, updateMemberScheduleDto: UpdateMemberScheduleDto) {
+  async update(
+    id: string,
+    updateMemberScheduleDto: UpdateMemberScheduleDto,
+    orgId: number,
+  ) {
     const { startTime, endTime } = updateMemberScheduleDto;
     await this.memberScheduleRepository.update(id, { startTime, endTime });
+    // invalidate cache
+    this.cacheService.del(this.getCacheKey(orgId));
     return {
       message: 'Updated the schedule successfully',
     };
@@ -104,7 +124,10 @@ export class MemberScheduleService {
         memberId,
       })),
     );
-    return this.memberScheduleRepository.save(createSchedule);
+    await this.memberScheduleRepository.save(createSchedule);
+    // invalidate cache
+    await this.cacheService.del(this.getCacheKey(orgId));
+    return { message: 'Update schedule successfully' };
   }
 
   async getMemberById(memberId: string, orgId: number) {
@@ -118,6 +141,8 @@ export class MemberScheduleService {
   async removeSchedule(id: string, orgId: number) {
     const schedule = await this.memberScheduleRepository.findOneBy({ id });
     await this.getMemberById(schedule.memberId, orgId);
+    // invalidate cache
+    this.cacheService.del(this.getCacheKey(orgId));
     return this.memberScheduleRepository.delete({ id });
   }
 }

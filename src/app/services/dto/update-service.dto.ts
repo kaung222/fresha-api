@@ -29,6 +29,9 @@ export class UpdateServiceDto {
   @Max(1000000)
   price: number;
 
+  @IsOptional()
+  thumbnailUrl: string;
+
   @IsNotEmpty()
   @IsNumber()
   @IsPositive()

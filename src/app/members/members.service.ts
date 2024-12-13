@@ -7,38 +7,23 @@ import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Member } from './entities/member.entity';
-import { DataSource, In, MoreThan, Repository } from 'typeorm';
-import { ServicesService } from '../services/services.service';
+import { DataSource, In, Repository } from 'typeorm';
 import { Roles } from '@/security/user.decorator';
-import { format } from 'date-fns';
-import {
-  getCurrentDate,
-  getCurrentDayOfWeek,
-  getDatesBetweenDates,
-} from '@/utils';
-import {
-  MemberSchedule,
-  ScheduleType,
-} from '../member-schedule/entities/member-schedule.entity';
-import { Appointment } from '../appointments/entities/appointment.entity';
+
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Service } from '../services/entities/service.entity';
-import { GetAvailableTimes } from './dto/get-available-time.dto';
-import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
-import { Leave } from '../leaves/entities/leave.entity';
+
 import { CacheService, CacheTTL } from '@/global/cache.service';
-import { GetAppointmentDto } from './dto/get-appointments.dto';
 import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class MembersService {
   constructor(
-    private eventEmitter: EventEmitter2,
+    @InjectRepository(Member)
+    private readonly memberRepository: Repository<Member>,
     private dataSource: DataSource,
     private readonly cacheService: CacheService,
     private readonly fileService: FilesService,
-    @InjectRepository(Member)
-    private readonly memberRepository: Repository<Member>,
   ) {}
 
   // create new member
@@ -130,7 +115,7 @@ export class MembersService {
     await this.memberRepository.save(member);
     if (member.profilePictureUrl !== profilePictureUrl) {
       this.fileService.updateFileAsUnused(member.profilePictureUrl, orgId);
-      this.fileService.updateFileAsUnused(profilePictureUrl, orgId);
+      this.fileService.updateFileAsUsed(profilePictureUrl, orgId);
     }
     await this.clearCache(orgId);
     return {

@@ -1,16 +1,9 @@
 import { Organization } from '@/app/organizations/entities/organization.entity';
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { UUIDEntity } from '@/utils';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity()
-export class Email {
-  @PrimaryGeneratedColumn('uuid')
+export class Email extends UUIDEntity {
   id: string;
 
   @Column('text')

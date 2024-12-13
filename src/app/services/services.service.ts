@@ -12,8 +12,8 @@ import { Member } from '../members/entities/member.entity';
 import { CreatePackageDto } from './dto/create-package.dto';
 import { Category } from '../categories/entities/category.entity';
 import { GetServicesDto } from './dto/get-service.dto';
-import { CategoriesService } from '../categories/categories.service';
 import { CacheService } from '@/global/cache.service';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class ServicesService {
@@ -22,6 +22,7 @@ export class ServicesService {
     private readonly serviceRepository: Repository<Service>,
     private readonly dataSource: DataSource,
     private cacheService: CacheService,
+    private fileService: FilesService,
   ) {}
 
   // create new service
@@ -47,10 +48,14 @@ export class ServicesService {
     });
     this.clearCache(orgId);
     this.updateCategoryUsage(category);
-    return await this.serviceRepository.save(newService);
+    await this.serviceRepository.save(newService);
+    this.fileService.updateFileAsUsed(rest.thumbnailUrl, orgId);
+    return {
+      message: 'Create service successfully',
+    };
   }
 
-  updateCategoryUsage(category: Category) {
+  private updateCategoryUsage(category: Category) {
     this.dataSource
       .getRepository(Category)
       .update({ id: category.id }, { serviceCount: category.serviceCount + 1 });
@@ -97,6 +102,7 @@ export class ServicesService {
     return members;
   }
 
+  // find all package
   async findAll(orgId: number, getServices: GetServicesDto) {
     const queryBuilder = this.serviceRepository
       .createQueryBuilder('service')
@@ -183,7 +189,13 @@ export class ServicesService {
     myPackage.discountPrice = discountPrice;
     Object.assign(myPackage, rest);
     this.clearCache(orgId);
-    return this.serviceRepository.save(myPackage);
+    await this.serviceRepository.save(myPackage);
+
+    if (myPackage.thumbnailUrl !== rest.thumbnailUrl) {
+      this.fileService.updateFileAsUsed(rest.thumbnailUrl, orgId);
+      this.fileService.updateFileAsUnused(myPackage.thumbnailUrl, orgId);
+    }
+    return { message: 'Update successfully' };
   }
 
   async getPackageById(packageId: string, orgId: number) {
@@ -195,7 +207,7 @@ export class ServicesService {
     return myPackage;
   }
 
-  async calculatePriceAndDuration(serviceIds: string[], orgId: number) {
+  private async calculatePriceAndDuration(serviceIds: string[], orgId: number) {
     const services = await this.serviceRepository.findBy({
       id: In(serviceIds),
       type: ServiceType.service,
@@ -235,16 +247,19 @@ export class ServicesService {
     service.members = members;
     service.discountPrice = discountPrice;
     Object.assign(service, rest);
+    await this.serviceRepository.save(service);
     this.clearCache(orgId);
-    return await this.serviceRepository.save(service);
+    if (service.thumbnailUrl !== rest.thumbnailUrl) {
+      this.fileService.updateFileAsUsed(rest.thumbnailUrl, orgId);
+      this.fileService.updateFileAsUnused(service.thumbnailUrl, orgId);
+    }
+    return { message: 'Update service successfully' };
   }
 
   // Remove service by id
   // delete all relations
   async remove(id: string, orgId: number) {
-    const service = await this.serviceRepository.findOne({
-      where: { id },
-    });
+    const service = await this.getServiceById(id, orgId);
     if (!service) throw new NotFoundException('Service not found');
     service.members = [];
     if (service.type === ServiceType.package) {
@@ -253,6 +268,7 @@ export class ServicesService {
     await this.serviceRepository.save(service);
     await this.serviceRepository.delete({ id });
     this.clearCache(orgId);
+    this.fileService.updateFileAsUnused(service.thumbnailUrl, orgId);
     return {
       message: 'Deleted service successfully',
     };

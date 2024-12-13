@@ -26,12 +26,11 @@ export class PublicationService {
       phones,
       notes,
     });
-
     if (updateRes.affected == 1)
       return {
-        message: 'success',
+        message: 'Update your business info successfully.',
       };
-    throw new ForbiddenException('Cannot update');
+    throw new ForbiddenException('Updating basic info failed!');
   }
 
   async updateTypes(orgId: number, types: string[]) {
@@ -41,9 +40,9 @@ export class PublicationService {
 
     if (updateRes.affected == 1)
       return {
-        message: 'success',
+        message: 'Set service type successfully.',
       };
-    throw new ForbiddenException('Cannot update');
+    throw new ForbiddenException('Updating types failed!');
   }
 
   async updateLocation(orgId: number, updateLocation: UpdateLocation) {
@@ -56,21 +55,24 @@ export class PublicationService {
   }
 
   async uploadImages(orgId: number, uploadImages: UploadImages) {
-    const { images } = uploadImages;
-    const organization = await this.orgRepository.findOneBy({ id: orgId });
-    const updateRes = await this.orgRepository.update(orgId, {
-      images,
-    });
+    try {
+      const { images } = uploadImages;
+      const organization = await this.orgRepository.findOneBy({ id: orgId });
+      const updateRes = await this.orgRepository.update(orgId, {
+        images,
+      });
 
-    if (updateRes.affected === 1) {
-      this.fileService.updateFileAsUnused(organization.images, orgId);
-      this.fileService.updateFileAsUnused(images, orgId);
-      return {
-        message: 'success',
-      };
+      if (updateRes.affected === 1) {
+        this.fileService.updateFileAsUnused(organization.images, orgId);
+        this.fileService.updateFileAsUnused(images, orgId);
+        return {
+          message: 'Upload images successfullt',
+        };
+      }
+    } catch (error) {
+      console.log(error);
+      throw new ForbiddenException('Error uploading images');
     }
-
-    throw new ForbiddenException('Cannot update');
   }
 
   async updateManySchedule(
@@ -95,7 +97,7 @@ export class PublicationService {
       await orgScheduleRepository.save(createSchedule);
       await queryRunner.commitTransaction();
       return {
-        message: 'success',
+        message: 'Update schedule successfully',
       };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -120,9 +122,9 @@ export class PublicationService {
     });
     if (updateRes.affected == 1)
       return {
-        message: 'success',
+        message: 'Publish your business successfully.',
       };
 
-    throw new ForbiddenException('Cannot publish');
+    throw new ForbiddenException('There is problem publishing your business!');
   }
 }

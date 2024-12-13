@@ -55,10 +55,15 @@ export class MemberScheduleController {
 
   @Patch(':id')
   update(
+    @User('orgId') orgId: number,
     @Param('id') id: string,
     @Body() updateMemberScheduleDto: UpdateMemberScheduleDto,
   ) {
-    return this.memberScheduleService.update(id, updateMemberScheduleDto);
+    return this.memberScheduleService.update(
+      id,
+      updateMemberScheduleDto,
+      orgId,
+    );
   }
 
   @Patch('update/multiple')

@@ -42,12 +42,16 @@ export class ClientsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateClientDto: UpdateClientDto) {
-    return this.clientsService.update(+id, updateClientDto);
+  update(
+    @User('orgId') orgId: number,
+    @Param('id') id: string,
+    @Body() updateClientDto: UpdateClientDto,
+  ) {
+    return this.clientsService.update(+id, updateClientDto, orgId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.clientsService.remove(+id);
+  remove(@Param('id') id: string, @User('orgId') orgId: number) {
+    return this.clientsService.remove(+id, orgId);
   }
 }

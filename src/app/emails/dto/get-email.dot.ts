@@ -1,8 +1,11 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class GetEmailDto {
   @IsNotEmpty()
-  startDate: string;
+  @IsDateString()
+  startDate: Date;
+
   @IsNotEmpty()
-  endDate: string;
+  @IsDateString()
+  endDate: Date;
 }
