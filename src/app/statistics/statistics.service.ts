@@ -16,13 +16,16 @@ export class StatisticsService {
 
   getMostBookingServices(orgId: number, getStatisticsDto: GetStatisticsDto) {
     const { startDate, endDate, status } = getStatisticsDto;
-    const dates = getDatesBetweenDates(startDate, endDate);
+
     const services = this.dataSource
       .getRepository(BookingItem)
       .createQueryBuilder('item')
       .leftJoin('item.appointment', 'appointment')
       .where('appointment.orgId=:orgId', { orgId })
-      .andWhere('item.date IN (:...dates)', { dates })
+      .andWhere('appointment.date BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
       .select('item.serviceId', 'serviceId')
       // .addSelect('item.serviceName', 'serviceName')
       .addSelect('COUNT(item.id)', 'totalOrders')
@@ -95,7 +98,10 @@ export class StatisticsService {
       .createQueryBuilder('item')
       .leftJoin('item.appointment', 'appointment')
       .where('appointment.orgId=:orgId', { orgId })
-      .andWhere('item.date IN (:...dates)', { dates })
+      .andWhere('appointment.date BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
       .select('item.memberId', 'memberId')
       .addSelect('COUNT(item.id)', 'totalOrders')
       .addSelect('SUM(item.commissionFees)', 'totalFees')
