@@ -57,6 +57,19 @@ export class AppointmentsController {
     return this.appointmentsService.findAll(orgId, getAppointmentDto);
   }
 
+  @Get('by/created-date')
+  @ApiOperation({ summary: 'Get bookings by org or member' })
+  @Role(Roles.org, Roles.member)
+  findAllByCreatedDate(
+    @User('orgId') orgId: number,
+    @Query() getAppointmentDto: GetAppointmentDto,
+  ) {
+    return this.appointmentsService.findAllByCreatedDate(
+      orgId,
+      getAppointmentDto,
+    );
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get details' })
   findOne(@Param('id') id: string) {

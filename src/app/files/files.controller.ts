@@ -63,7 +63,7 @@ export class FilesController {
     return this.fileService.storeMultipleImages(files, userId);
   }
 
-  @Cron(CronExpression.EVERY_10_HOURS)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   deleteUnusedFiles() {
     this.fileService.deleteUnusedFiles();
   }

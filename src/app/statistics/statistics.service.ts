@@ -26,6 +26,7 @@ export class StatisticsService {
         startDate,
         endDate,
       })
+      .andWhere('appointment.status=:status', { status })
       .select('item.serviceId', 'serviceId')
       // .addSelect('item.serviceName', 'serviceName')
       .addSelect('COUNT(item.id)', 'totalOrders')
@@ -73,18 +74,22 @@ export class StatisticsService {
     getStatisticsDto: GetStatisticsDto,
   ) {
     const { startDate, endDate } = getStatisticsDto;
-    const dates = getDatesBetweenDates(startDate, endDate);
+    // const dates = getDatesBetweenDates(startDate, endDate);
     const data = await this.dataSource
       .getRepository(Appointment)
       .createQueryBuilder('appointment')
       .where('appointment.orgId=:orgId', { orgId })
-      .andWhere('appointment.date IN (:...dates)', { dates })
+      // .andWhere('appointment.date IN (:...dates)', { dates })
+      .andWhere('appointment.date BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
       .select('appointment.date', 'date')
       // .select('SUM(appointment.duration)', 'totalDuration')
       .addSelect('SUM(appointment.totalCommissionFees)', 'totalCommissionFees')
       .addSelect('SUM(appointment.discountPrice)', 'totalDiscountPrice')
       .addSelect('COUNT(*)', 'totalAppointments')
-      // .addSelect('SUM(appointment.tips)', 'totalTips')
+
       .groupBy('date')
       .getRawMany();
     return data;
@@ -92,8 +97,7 @@ export class StatisticsService {
 
   async getMVPOfMonth(orgId: number, getStatisticsDto: GetStatisticsDto) {
     const { startDate, endDate } = getStatisticsDto;
-    const dates = getDatesBetweenDates(startDate, endDate);
-    const services = this.dataSource
+    const services = await this.dataSource
       .getRepository(BookingItem)
       .createQueryBuilder('item')
       .leftJoin('item.appointment', 'appointment')
@@ -171,7 +175,7 @@ export class StatisticsService {
       .createQueryBuilder('item')
       .leftJoin('item.appointment', 'appointment')
       .where('item.serviceId=:serviceId', { serviceId })
-      .andWhere('appointment.createdAt BETWEEN :startDate AND :endDate', {
+      .andWhere('appointment.date BETWEEN :startDate AND :endDate', {
         startDate,
         endDate,
       })
@@ -192,13 +196,6 @@ export class StatisticsService {
       ),
       totalServiceCount: bookingItems.length,
     };
-
-    // await queryBuilder
-    //   .select('SUM(item.duration)', 'totalDuration')
-    //   .addSelect('SUM(item.commissionFees)', 'totalDuration')
-    //   .addSelect('SUM(item.discountPrice)', 'totalDiscountPrice')
-    //   .addSelect('COUNT(*)', 'totalServiceCount')
-    //   .getRawOne();
 
     return { data, bookingItems };
   }

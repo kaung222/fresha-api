@@ -38,7 +38,7 @@ export class Member extends UUIDEntity {
   @Column({ nullable: true })
   lastName: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column({ nullable: true })

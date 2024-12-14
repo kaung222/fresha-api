@@ -55,20 +55,23 @@ export class FilesService {
   }
 
   // update file as used
-  updateFileAsUsed(fileUrls: string[] | string, userId: string | number) {
+  async updateFileAsUsed(fileUrls: string[] | string, userId: string | number) {
     try {
       const urlsArray = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
-      this.fileQueue.add('updateFileUsed', { urls: urlsArray, userId });
+      await this.fileQueue.add('updateFileUsed', { urls: urlsArray, userId });
     } catch (error) {
       console.log('Error updating file as used');
     }
   }
 
   // update file as unused
-  updateFileAsUnused(fileUrls: string[] | string, userId: string | number) {
+  async updateFileAsUnused(
+    fileUrls: string[] | string,
+    userId: string | number,
+  ) {
     try {
       const urlsArray = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
-      this.fileQueue.add('updateFileUnused', { urls: urlsArray, userId });
+      await this.fileQueue.add('updateFileUnused', { urls: urlsArray, userId });
     } catch (error) {
       console.log('Error updating file as unused');
     }
@@ -81,13 +84,14 @@ export class FilesService {
 
   async deleteUnusedFiles() {
     const files = await this.fileRepository.findBy({ isUsed: false });
-    Promise.all(
+    console.log(files);
+    Promise.all([
       files.map(async (file) => {
         const url = new URL(file.url);
         const objectId = url.pathname.substring(1);
         await deleteObjectAWS(objectId);
       }),
-    );
-    await this.fileRepository.delete({ isUsed: false });
+      await this.fileRepository.delete({ isUsed: false }),
+    ]);
   }
 }

@@ -280,12 +280,28 @@ export class AppointmentsService {
   // find all appointment by org for a given date
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
     const { startDate, endDate } = getAppointmentDto;
-
     return await this.appointmentRepository.find({
       where: { orgId, date: Between(startDate, endDate) },
       relations: {
         bookingItems: true,
       },
+    });
+  }
+
+  // find all appointment by org for a given date
+  async findAllByCreatedDate(
+    orgId: number,
+    getAppointmentDto: GetAppointmentDto,
+  ) {
+    const startDate = new Date(getAppointmentDto.startDate);
+    const endDate = new Date(getAppointmentDto.endDate);
+
+    return await this.appointmentRepository.find({
+      where: { orgId, createdAt: Between(startDate, endDate) },
+      relations: {
+        bookingItems: true,
+      },
+      order: { createdAt: 'desc' },
     });
   }
 

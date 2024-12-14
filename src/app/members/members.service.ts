@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -29,6 +30,10 @@ export class MembersService {
   // create new member
   async create(createMemberDto: CreateMemberDto, orgId: number) {
     const { serviceIds, ...rest } = createMemberDto;
+    const isExisted = await this.memberRepository.findOneBy({
+      email: rest.email,
+    });
+    if (isExisted) throw new ConflictException('Email already used!');
     const services = await this.getServicesByIds(serviceIds, orgId);
     const createMember = this.memberRepository.create({
       ...rest,
@@ -206,6 +211,7 @@ export class MembersService {
   // }
 
   async remove(id: string, orgId: number) {
+    // return this.memberRepository.delete({ orgId });
     const member = await this.getMemberById(id, orgId);
     await this.memberRepository.delete({ id });
     await this.clearCache(orgId);
@@ -227,6 +233,7 @@ export class MembersService {
     const member = await this.memberRepository.findOne({
       where: { orgId, id: memberId },
     });
+    if (!member) throw new NotFoundException('Member not found');
     if (member.role === Roles.org) {
       throw new ForbiddenException('this account cannot be deleted');
     }
