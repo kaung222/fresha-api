@@ -293,9 +293,7 @@ export class AppointmentsService {
     orgId: number,
     getAppointmentDto: GetAppointmentDto,
   ) {
-    const startDate = new Date(getAppointmentDto.startDate);
-    const endDate = new Date(getAppointmentDto.endDate);
-
+    const { startDate, endDate } = getAppointmentDto;
     return await this.appointmentRepository.find({
       where: { orgId, createdAt: Between(startDate, endDate) },
       relations: {

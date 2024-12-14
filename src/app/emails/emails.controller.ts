@@ -8,11 +8,11 @@ import {
   Query,
 } from '@nestjs/common';
 import { EmailsService } from './emails.service';
-import { CreateEmailDto } from './dto/crearte-email.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { ApiTags } from '@nestjs/swagger';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
+import { CreateEmailByOrg } from './dto/create-email-by-org.dto';
 
 @Controller('emails')
 @ApiTags('Email')
@@ -21,8 +21,11 @@ export class EmailsController {
   constructor(private readonly emailsService: EmailsService) {}
 
   @Post()
-  create(@User('orgId') orgId: number, @Body() createEmailDto: CreateEmailDto) {
-    return this.emailsService.create(orgId, createEmailDto);
+  create(
+    @User('orgId') orgId: number,
+    @Body() createEmailDto: CreateEmailByOrg,
+  ) {
+    return this.emailsService.createByOrg(orgId, createEmailDto);
   }
 
   @Get()

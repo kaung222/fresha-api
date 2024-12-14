@@ -1,13 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEmailDto } from './dto/crearte-email.dto';
 import { Email } from './entities/email.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
-import { CacheService, CacheTTL } from '@/global/cache.service';
+import { CacheService } from '@/global/cache.service';
+import { CreateEmailByOrg } from './dto/create-email-by-org.dto';
+import { Client } from '../clients/entities/client.entity';
 
 @Injectable()
 export class EmailsService {
@@ -17,6 +19,7 @@ export class EmailsService {
     @InjectQueue('emailQueue')
     private readonly emailQueue: Queue,
     private cacheService: CacheService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(orgId: number, createEmailDto: CreateEmailDto) {
@@ -24,6 +27,29 @@ export class EmailsService {
     await this.emailQueue.add('sendEmail', email);
     await this.cacheService.del(this.getCacheKey(orgId));
     return { message: 'Send message successfully' };
+  }
+
+  async createByOrg(orgId: number, createEmailDto: CreateEmailByOrg) {
+    const { isToAllClient, ...rest } = createEmailDto;
+    if (isToAllClient) {
+      const data: { email: string }[] = await this.dataSource
+        .getRepository(Client)
+        .createQueryBuilder()
+        .select('email', 'email')
+        .where('orgId=:orgId', { orgId })
+        .getRawMany();
+      if (data.length === 0) throw new NotFoundException('No member existed');
+      const emails = [...new Set(data?.map((d) => d.email))];
+      const email = this.emailRepository.create({ ...rest, orgId, to: emails });
+      await this.emailQueue.add('sendEmail', email);
+      return {
+        message: 'Send emails successfully',
+      };
+    }
+    const email = this.emailRepository.create({ orgId, ...createEmailDto });
+    await this.emailQueue.add('sendEmail', email);
+    await this.cacheService.del(this.getCacheKey(orgId));
+    return { message: 'Send emails successfully' };
   }
 
   async createWithoutSave(createEmailDto: CreateEmailDto) {
