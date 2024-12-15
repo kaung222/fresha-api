@@ -86,7 +86,7 @@ export class EmailsService {
     return response;
   }
   private getCacheKey(orgId: number, page = 1) {
-    return `clients:${orgId}:${page}`;
+    return `emails:${orgId}:${page}`;
   }
 
   async remove(id: string, orgId: number) {
