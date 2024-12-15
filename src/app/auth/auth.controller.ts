@@ -91,7 +91,8 @@ export class AuthController {
   @Post('logout')
   @ApiOperation({ summary: 'logout member' })
   @Role(Roles.org, Roles.member)
-  handleLogout(@User('id') memberId: string) {
-    return this.authService.logoutMember(memberId);
+  handleLogout(@User('id') memberId: string, @Res() res: Response) {
+    this.authService.setCookieHeaders(res, '');
+    res.send({ message: 'logout successfully' });
   }
 }

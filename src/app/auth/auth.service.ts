@@ -138,6 +138,7 @@ export class AuthService {
     await this.otpRepository.save(createOtp);
     // send email otp
     this.emailService.createWithoutSave({
+      orgId: 1,
       to: email,
       text: `Your OTP for fresha is ${otp}.Dont share it anyone!`,
       recipientName: 'Customer',
@@ -234,14 +235,11 @@ export class AuthService {
 
   // generate accessToken and refreshToken
   generateTokens(payload: any) {
-    const accessToken = this.jwtService.sign(
-      payload,
-      //  { expiresIn: '1h' }
-    );
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '60' });
     const refreshToken = this.jwtService.sign(
       payload,
       // { expiresIn: '7d' },
-      { secret: this.configService.get('JWT_REFRESH_SECRET') },
+      { expiresIn: '3d', secret: this.configService.get('JWT_REFRESH_SECRET') },
     );
     return { accessToken, refreshToken };
   }

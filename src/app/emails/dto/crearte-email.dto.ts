@@ -3,4 +3,5 @@ export class CreateEmailDto {
   text: string;
   subject: string;
   recipientName: string;
+  orgId: number;
 }

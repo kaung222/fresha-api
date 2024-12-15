@@ -31,6 +31,7 @@ import {
 } from '@/utils/helpers/email-fns';
 import { EmailsService } from '../emails/emails.service';
 import { CreateEmailDto } from '../emails/dto/crearte-email.dto';
+import { RescheduleBookingDto } from './dto/reschedule-booking.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -238,12 +239,12 @@ export class AppointmentsService {
     );
     const emails = [...new Set(allEmail)];
     const sendEmail = sendBookingNotiToMember(appointment, emails);
-    this.sendEmail(appointment.orgId, sendEmail);
+    this.sendEmail(sendEmail);
   }
 
   private sendEmailToUser(appointment: Appointment) {
     const sendEmail = sendBookingNotiToUser(appointment);
-    this.sendEmail(appointment.orgId, sendEmail);
+    this.sendEmail(sendEmail);
   }
 
   private async getMemberByIds(memberIds: string[], orgId: number) {
@@ -379,7 +380,8 @@ export class AppointmentsService {
       throw new ForbiddenException('Completed booking cannot be confirmed!');
     this.appointmentRepository.update(id, { status: BookingStatus.confirmed });
     // send email about booking confirmation
-    this.sendEmail(orgId, {
+    this.sendEmail({
+      orgId,
       to: appointment.email,
       text: 'Confirm your booking',
       recipientName: appointment.username,
@@ -406,7 +408,8 @@ export class AppointmentsService {
     // send email about booking cancelation
     if (updateRes.affected !== 1)
       throw new ForbiddenException('Cannot cancel booking now');
-    this.sendEmail(orgId, {
+    this.sendEmail({
+      orgId,
       to: appointment.email,
       text: `Cancel your booking for the reason ${cancelBookingDto.reason}`,
       recipientName: appointment.username,
@@ -442,6 +445,33 @@ export class AppointmentsService {
     };
   }
 
+  async rescheduleBooking(
+    id: string,
+    rescheduleBookingDto: RescheduleBookingDto,
+    orgId: number,
+  ) {
+    const { reason, startTime, date } = rescheduleBookingDto;
+    const appointment = await this.getBookingById(id, orgId, ['bookingItems']);
+
+    const { totalTime } = this.calculateTimeAndPrice(appointment.bookingItems);
+    await this.appointmentRepository.update(id, {
+      date,
+      startTime,
+      endTime: startTime + totalTime,
+    });
+    this.sendEmail({
+      orgId,
+      text: `Your booking is rescheduled from ${appointment.date} to ${date}. 
+      Check the due date and You can cancel before 5 hours before`,
+      recipientName: appointment.username,
+      subject: 'Booking Reschedule',
+      to: appointment.email,
+    });
+    return {
+      message: 'Marked as complete booking succesfully',
+    };
+  }
+
   // delete booking by org
   async remove(id: string, orgId: number) {
     await this.getBookingById(id, orgId);
@@ -465,8 +495,8 @@ export class AppointmentsService {
   }
 
   // send email job
-  sendEmail(orgId: number, emailPayload: CreateEmailDto) {
-    this.emailService.create(orgId, emailPayload);
+  sendEmail(emailPayload: CreateEmailDto) {
+    this.emailService.create(emailPayload);
   }
 
   // create notification job

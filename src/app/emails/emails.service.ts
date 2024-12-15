@@ -22,8 +22,9 @@ export class EmailsService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(orgId: number, createEmailDto: CreateEmailDto) {
-    const email = this.emailRepository.create({ orgId, ...createEmailDto });
+  async create(createEmailDto: CreateEmailDto) {
+    const { orgId } = createEmailDto;
+    const email = this.emailRepository.create(createEmailDto);
     await this.emailQueue.add('sendEmail', email);
     await this.cacheService.del(this.getCacheKey(orgId));
     return { message: 'Send message successfully' };
@@ -38,7 +39,7 @@ export class EmailsService {
         .select('email', 'email')
         .where('orgId=:orgId', { orgId })
         .getRawMany();
-      if (data.length === 0) throw new NotFoundException('No member existed');
+      if (data.length === 0) throw new NotFoundException('No client existed');
       const emails = [...new Set(data?.map((d) => d.email))];
       const email = this.emailRepository.create({ ...rest, orgId, to: emails });
       await this.emailQueue.add('sendEmail', email);
@@ -50,6 +51,13 @@ export class EmailsService {
     await this.emailQueue.add('sendEmail', email);
     await this.cacheService.del(this.getCacheKey(orgId));
     return { message: 'Send emails successfully' };
+  }
+
+  private async sendEmailToClients(orgId: number) {
+    const clients = await this.dataSource
+      .getRepository(Client)
+      .findBy({ orgId });
+    const emails = this.emailRepository.create({});
   }
 
   async createWithoutSave(createEmailDto: CreateEmailDto) {
@@ -73,7 +81,7 @@ export class EmailsService {
       data,
       totalCount,
       pageLimit: 20,
-    });
+    }).toResponse();
     await this.cacheService.set(cacheKey, response);
     return response;
   }

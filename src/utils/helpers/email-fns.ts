@@ -8,6 +8,7 @@ export function sendBookingNotiToUser(
   appointment: Appointment,
 ): CreateEmailDto {
   return {
+    orgId: appointment.orgId,
     recipientName: appointment.username,
     subject: 'Booking confirmation',
     text: `Your booking on ${getDate(appointment.date)} have been confirmed`,
@@ -20,6 +21,7 @@ export function sendBookingNotiToMember(
   emails: string[],
 ): CreateEmailDto {
   return {
+    orgId: appointment.orgId,
     recipientName: appointment.username,
     subject: 'Booking confirmation',
     text: `You got an booking from ${appointment.username} on ${getDate(appointment.date)}.`,
@@ -32,6 +34,7 @@ export function cancelBookingByOrg(
   reason: string,
 ): CreateEmailDto {
   return {
+    orgId: appointment.orgId,
     recipientName: appointment.username,
     subject: 'Booking cancellation',
     text: `Your booking on ${getDate(appointment.date)} have been cancelled for the reason ${reason}.`,

@@ -118,6 +118,17 @@ export class AppointmentsController {
     return this.appointmentsService.completeBooking(id, completeBooking, orgId);
   }
 
+  @Patch(':id/reschedule')
+  @Role(Roles.org, Roles.member)
+  @ApiOperation({ summary: 'Mark as complete booking by org or member' })
+  rescheduleBooking(
+    @Param('id') id: string,
+    @Body() completeBooking: CompleteAppointmentDto,
+    @User('orgId') orgId: number,
+  ) {
+    return this.appointmentsService.completeBooking(id, completeBooking, orgId);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete booking by org or member' })
   @Role(Roles.org, Roles.member)
