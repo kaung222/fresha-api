@@ -235,12 +235,11 @@ export class AuthService {
 
   // generate accessToken and refreshToken
   generateTokens(payload: any) {
-    const accessToken = this.jwtService.sign(payload, { expiresIn: 60 });
-    const refreshToken = this.jwtService.sign(
-      payload,
-      // { expiresIn: '7d' },
-      { expiresIn: '3d', secret: this.configService.get('JWT_REFRESH_SECRET') },
-    );
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d',
+      secret: this.configService.get('JWT_REFRESH_SECRET'),
+    });
     return { accessToken, refreshToken };
   }
 
