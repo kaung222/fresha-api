@@ -5,14 +5,13 @@ import {
 } from '@nestjs/common';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
-import { OnEvent } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Client } from './entities/client.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
-import { User } from '../users/entities/user.entity';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { CacheService, CacheTTL } from '@/global/cache.service';
+import { deleteObjectAWS, updateObject } from '@/utils/store-obj-s3';
 
 @Injectable()
 export class ClientsService {
@@ -27,8 +26,9 @@ export class ClientsService {
       ...createClientDto,
       orgId,
     });
-    await this.clientRepository.save(createClient);
-    this.cacheService.del(this.getCacheKey(orgId));
+    await updateObject(createClientDto.profilePicture);
+    await this.clientRepository.insert(createClient);
+    await this.cacheService.del(this.getCacheKey(orgId));
     return {
       message: 'Create client successfully',
     };
@@ -64,17 +64,23 @@ export class ClientsService {
   }
 
   async update(id: number, updateClientDto: UpdateClientDto, orgId: number) {
-    await this.getClientById(id, orgId);
+    const client = await this.getClientById(id, orgId);
     const response = await this.clientRepository.update(id, updateClientDto);
     if (response.affected == 1) {
       this.cacheService.del(this.getCacheKey(orgId, 1));
       return { message: 'Update successfully' };
     }
+    if (client.profilePicture !== updateClientDto.profilePicture) {
+      client.profilePicture &&
+        (await deleteObjectAWS(client.profilePicture, orgId));
+      await updateObject(updateClientDto.profilePicture);
+    }
     throw new ForbiddenException('Error updating client');
   }
 
   async remove(id: number, orgId: number) {
-    await this.getClientById(id, orgId);
+    const { profilePicture } = await this.getClientById(id, orgId);
+    profilePicture && (await deleteObjectAWS(profilePicture, orgId));
     return this.clientRepository.delete({ id });
   }
 

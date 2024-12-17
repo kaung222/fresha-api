@@ -64,7 +64,7 @@ export class AuthController {
   }
 
   @Get('refresh')
-  @Role(Roles.member, Roles.org, Roles.user)
+  // @Role(Roles.member, Roles.org, Roles.user)
   @ApiOperation({ summary: 'Get new access token when expired' })
   async getNewAccessToken(@Req() req: Request, @Res() res: Response) {
     const cookie = req.headers.cookie;

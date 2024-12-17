@@ -10,12 +10,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Member } from './entities/member.entity';
 import { DataSource, In, Repository } from 'typeorm';
 import { Roles } from '@/security/user.decorator';
-
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Service } from '../services/entities/service.entity';
-
 import { CacheService, CacheTTL } from '@/global/cache.service';
 import { FilesService } from '../files/files.service';
+import { deleteObjectAWS, updateObject } from '@/utils/store-obj-s3';
 
 @Injectable()
 export class MembersService {
@@ -29,7 +27,7 @@ export class MembersService {
 
   // create new member
   async create(createMemberDto: CreateMemberDto, orgId: number) {
-    const { serviceIds, ...rest } = createMemberDto;
+    const { serviceIds, profilePictureUrl, ...rest } = createMemberDto;
     const isExisted = await this.memberRepository.findOneBy({
       email: rest.email,
     });
@@ -40,9 +38,10 @@ export class MembersService {
       services,
       organization: { id: orgId },
     });
+
     const member = await this.memberRepository.save(createMember);
-    await this.clearCache(orgId);
-    this.fileService.updateFileAsUsed(member.profilePictureUrl, orgId);
+    profilePictureUrl && (await updateObject(member.profilePictureUrl, true));
+    this.clearCache(orgId);
     return {
       message: 'Create member successfully',
     };
@@ -119,10 +118,13 @@ export class MembersService {
     // Save the updated member entity
     await this.memberRepository.save(member);
     if (member.profilePictureUrl !== profilePictureUrl) {
-      this.fileService.updateFileAsUnused(member.profilePictureUrl, orgId);
-      this.fileService.updateFileAsUsed(profilePictureUrl, orgId);
+      await Promise.allSettled([
+        updateObject(profilePictureUrl, true),
+        updateObject(member.profilePictureUrl, false),
+      ]);
     }
     await this.clearCache(orgId);
+
     return {
       message: `Update member ${member.firstName} successfully`,
     };
@@ -211,11 +213,12 @@ export class MembersService {
   // }
 
   async remove(id: string, orgId: number) {
-    // return this.memberRepository.delete({ orgId });
-    const member = await this.getMemberById(id, orgId);
+    const { profilePictureUrl } = await this.getMemberById(id, orgId);
     await this.memberRepository.delete({ id });
-    await this.clearCache(orgId);
-    this.fileService.updateFileAsUnused(member.profilePictureUrl, orgId);
+    this.clearCache(orgId),
+      // if image exist then delete
+      profilePictureUrl && (await deleteObjectAWS(profilePictureUrl, orgId));
+
     return {
       message: 'Delete member successfully',
     };

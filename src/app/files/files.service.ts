@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { File } from './entities/file.entity';
 import { storeObjectAWS, storeObjectsAWS } from '@/utils/store-obj-s3';
@@ -17,12 +17,10 @@ export class FilesService {
   ) {}
 
   //store image
-  async storeImage(file: Express.Multer.File, userId: any) {
+  async storeImage(file: Express.Multer.File, userId: string | number) {
     try {
-      const imageId = await storeObjectAWS(file);
-      const imageUrls = this.generateImageUrls([imageId]);
-      await this.saveImageUrlsToDatabase(imageUrls, userId);
-      return { imageUrl: imageUrls[0] };
+      const imageUrl = await storeObjectAWS(file, userId);
+      return { imageUrl };
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -30,7 +28,10 @@ export class FilesService {
 
   // store multiple images
   async storeMultipleImages(images: Express.Multer.File[], userId) {
-    const imageIds = await storeObjectsAWS(images);
+    return {
+      message: 'Deprecated',
+    };
+    const imageIds = await storeObjectsAWS(images, userId);
     const imageUrls = this.generateImageUrls(imageIds);
     await this.saveImageUrlsToDatabase(imageUrls, userId);
     return { imageUrls };

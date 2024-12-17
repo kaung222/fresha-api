@@ -26,7 +26,7 @@ export class CreateClientDto {
   phone: string;
 
   @IsOptional()
-  @IsUrl()
+  // @IsUrl()
   profilePicture?: string;
 
   @IsEnum(Gender)

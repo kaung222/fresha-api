@@ -20,7 +20,7 @@ import { Roles, User } from '@/security/user.decorator';
 
 @Controller('files')
 @ApiTags('File')
-@Role(Roles.member, Roles.org, Roles.user)
+@Role(Roles.member, Roles.org)
 export class FilesController {
   constructor(private fileService: FilesService) {}
   @Post()
@@ -28,7 +28,7 @@ export class FilesController {
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   storeImage(
-    @User('id') userId: any,
+    @User('orgId') userId: string | number,
     @Body() storeImageDto: StoreFiledto,
     @UploadedFile(
       new ParseFilePipe({

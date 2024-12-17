@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrgTypeDto } from './dto/create-org-type.dto';
-import { UpdateOrgTypeDto } from './dto/update-org-type.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrgType } from './entities/org-type.entity';
 import { Repository } from 'typeorm';
 import { FilesService } from '../files/files.service';
+import { deleteObjectAWS, updateObject } from '@/utils/store-obj-s3';
+import { url } from 'inspector';
 
 @Injectable()
 export class OrgTypesService {
@@ -19,7 +20,7 @@ export class OrgTypesService {
     const createType = this.orgTypeRepository.create(createOrgTypeDto);
     await this.orgTypeRepository.save(createType);
     // update file used
-    this.fileService.updateFileAsUsed(icon, adminId);
+    icon && (await updateObject(icon, true));
     return {
       message: 'Create type successfully',
     };
@@ -39,7 +40,7 @@ export class OrgTypesService {
     const response = await this.orgTypeRepository.delete({ id });
     if (response.affected !== 1) throw new NotFoundException();
     // update file unused
-    this.fileService.updateFileAsUnused(type.icon, adminId);
+    type.icon && (await deleteObjectAWS(type.icon, adminId));
     return {
       message: 'Delete type successfully',
     };

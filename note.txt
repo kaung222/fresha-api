@@ -1,7 +1,9 @@
 reduce stock on sale
 image used on image upload
+validation for cloutfront domain
 
 
 fixed later 
+
 
 // Discount should not greater than the price
