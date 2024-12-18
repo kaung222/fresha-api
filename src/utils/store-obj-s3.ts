@@ -174,7 +174,7 @@ export async function deleteObjectAWS(userId: string | number, url?: string) {
 
   const fileOwnerId = getUserIdFromUrl(url);
   console.log(url, userId);
-  if (fileOwnerId !== userId) return;
+  if (fileOwnerId != userId) return;
   const Key = getKeyFromUrl(url);
   try {
     const command = new DeleteObjectCommand({
@@ -247,7 +247,7 @@ export async function deleteObjectsAWS(
     const Objects = urls
       .filter((url) => {
         const fileOwnerId = getUserIdFromUrl(url);
-        return fileOwnerId === userId;
+        return fileOwnerId == userId;
       })
       .map((url) => {
         return { Key: getKeyFromUrl(url) };
