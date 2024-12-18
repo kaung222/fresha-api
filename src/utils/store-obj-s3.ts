@@ -26,7 +26,7 @@ export async function storeObjectAWS(
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       Key: key,
       Body: file.buffer,
-      Tagging: 'isUsed=false',
+      // Tagging: 'isUsed=false',
     });
     await s3Client.send(command);
     return generateUrl(key);
@@ -37,6 +37,7 @@ export async function storeObjectAWS(
 }
 
 export async function updateObjectAsUsed(url?: string, isUsed?: boolean) {
+  return;
   if (!url) return null;
   const s3Client = new S3Client({
     region: process.env.AWS_S3_REGION,
@@ -72,6 +73,7 @@ export async function updateObjectAsUsed(url?: string, isUsed?: boolean) {
 }
 
 export async function updateObjectsAsUsed(urls?: string[], isUsed?: boolean) {
+  return;
   if (!urls) return null;
   const s3Client = new S3Client({
     region: process.env.AWS_S3_REGION,
@@ -134,6 +136,7 @@ export async function storeObjectsAWS(
   files: Express.Multer.File[],
   userId: string | number,
 ) {
+  return;
   const s3Client = new S3Client({
     region: process.env.AWS_S3_REGION,
     credentials: {
@@ -163,6 +166,7 @@ export async function storeObjectsAWS(
 
 // delete single object
 export async function deleteObjectAWS(userId: string | number, url?: string) {
+  return;
   if (!url) return null;
   const s3Client = new S3Client({
     region: process.env?.AWS_S3_REGION,
@@ -194,6 +198,7 @@ export async function updateTagsOfObjects(
   oldUrls: string[],
   newUrls: string[],
 ) {
+  return;
   const commonUrls = oldUrls.filter((url) => newUrls.includes(url));
   const urlsToDelete = oldUrls.filter((url) => !commonUrls.includes(url));
   const urlsToUpdate = newUrls.filter((url) => !commonUrls.includes(url)); // New logic
@@ -221,6 +226,7 @@ export async function updateTagOfObject(
   oldUrl?: string,
   newUrl?: string,
 ) {
+  return;
   try {
     if (oldUrl === newUrl) return;
     oldUrl && (await deleteObjectAWS(userId, oldUrl));
@@ -235,6 +241,7 @@ export async function deleteObjectsAWS(
   userId: string | number,
   urls?: string[],
 ) {
+  return;
   console.log('deleted urls', urls);
   const s3Client = new S3Client({
     region: process.env?.AWS_S3_REGION,
