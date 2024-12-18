@@ -7,6 +7,9 @@ export class Organization extends IncrementEntity {
   @Column()
   name: string;
 
+  @Column({ nullable: true })
+  email: string;
+
   @Column('simple-array', { nullable: true })
   phones: string[];
 

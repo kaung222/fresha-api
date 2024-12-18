@@ -5,7 +5,7 @@ import {
 } from './dto/create-payment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Payment } from './entities/payment.entity';
-import { DataSource, In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 
@@ -42,6 +42,7 @@ export class PaymentsService {
       where: { orgId },
       skip: 10 * (page - 1),
       take: 10,
+      order: { createdAt: 'DESC' },
     });
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }

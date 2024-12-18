@@ -12,8 +12,11 @@ import { DataSource, In, Repository } from 'typeorm';
 import { Roles } from '@/security/user.decorator';
 import { Service } from '../services/entities/service.entity';
 import { CacheService, CacheTTL } from '@/global/cache.service';
-import { FilesService } from '../files/files.service';
-import { deleteObjectAWS, updateObject } from '@/utils/store-obj-s3';
+import {
+  deleteObjectAWS,
+  updateObjectAsUsed,
+  updateTagOfObject,
+} from '@/utils/store-obj-s3';
 
 @Injectable()
 export class MembersService {
@@ -22,7 +25,6 @@ export class MembersService {
     private readonly memberRepository: Repository<Member>,
     private dataSource: DataSource,
     private readonly cacheService: CacheService,
-    private readonly fileService: FilesService,
   ) {}
 
   // create new member
@@ -40,7 +42,7 @@ export class MembersService {
     });
 
     const member = await this.memberRepository.save(createMember);
-    profilePictureUrl && (await updateObject(member.profilePictureUrl, true));
+    await updateObjectAsUsed(member?.profilePictureUrl);
     this.clearCache(orgId);
     return {
       message: 'Create member successfully',
@@ -117,14 +119,8 @@ export class MembersService {
 
     // Save the updated member entity
     await this.memberRepository.save(member);
-    if (member.profilePictureUrl !== profilePictureUrl) {
-      await Promise.allSettled([
-        updateObject(profilePictureUrl, true),
-        updateObject(member.profilePictureUrl, false),
-      ]);
-    }
+    await updateTagOfObject(orgId, member.profilePictureUrl, profilePictureUrl);
     await this.clearCache(orgId);
-
     return {
       message: `Update member ${member.firstName} successfully`,
     };
@@ -217,8 +213,7 @@ export class MembersService {
     await this.memberRepository.delete({ id });
     this.clearCache(orgId),
       // if image exist then delete
-      profilePictureUrl && (await deleteObjectAWS(profilePictureUrl, orgId));
-
+      await deleteObjectAWS(orgId, profilePictureUrl);
     return {
       message: 'Delete member successfully',
     };

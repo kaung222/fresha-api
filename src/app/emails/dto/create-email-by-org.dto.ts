@@ -1,3 +1,4 @@
+import { ApiHideProperty } from '@nestjs/swagger';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -19,8 +20,7 @@ export class CreateEmailByOrg {
 
   @IsString()
   @IsNotEmpty()
-  recipientName: string;
-
+  // recipientName: string;
   @IsNotEmpty()
   @IsBoolean()
   isToAllClient: boolean;
@@ -31,5 +31,5 @@ export class CreateEmailByOrg {
   @ArrayMinSize(1)
   @ArrayMaxSize(10)
   @IsString({ each: true })
-  to: string[];
+  to: string[] | string;
 }

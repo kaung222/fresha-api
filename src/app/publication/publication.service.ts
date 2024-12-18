@@ -9,6 +9,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UpdateMultiScheduleDto } from '../org-schedule/dto/update-many.dto';
 import { OrgSchedule } from '../org-schedule/entities/org-schedule.entity';
 import { FilesService } from '../files/files.service';
+import { updateTagsOfObjects } from '@/utils/store-obj-s3';
 
 @Injectable()
 export class PublicationService {
@@ -63,8 +64,7 @@ export class PublicationService {
       });
 
       if (updateRes.affected === 1) {
-        this.fileService.updateFileAsUnused(organization.images, orgId);
-        this.fileService.updateFileAsUnused(images, orgId);
+        await updateTagsOfObjects(orgId, organization.images, images);
         return {
           message: 'Upload images successfullt',
         };

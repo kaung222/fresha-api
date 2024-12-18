@@ -30,7 +30,7 @@ export class Appointment extends UUIDEntity {
   @Generated('increment')
   bookingId: number;
 
-  @Column({ default: 'unknown' })
+  @Column()
   username: string;
 
   @Column('int')
@@ -85,6 +85,12 @@ export class Appointment extends UUIDEntity {
 
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
   user: User;
+
+  @Column({ nullable: true })
+  orgName: string;
+
+  @Column({ nullable: true })
+  orgEmail: string;
 
   @Index('orgId')
   @Column()

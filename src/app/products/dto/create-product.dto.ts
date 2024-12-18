@@ -1,6 +1,6 @@
 import { DiscountType } from '@/app/services/entities/service.entity';
 import {
-  IsBoolean,
+  Contains,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -8,12 +8,15 @@ import {
   IsPositive,
   IsString,
   Min,
-  ValidateIf,
 } from 'class-validator';
 
 export class CreateProductDto {
   @IsOptional()
   @IsString({ each: true })
+  @Contains('https://djiwkc53pq2w8.cloudfront.net/', {
+    each: true,
+    message: "only allowed baranie' images",
+  })
   images: string[];
 
   @IsNotEmpty()

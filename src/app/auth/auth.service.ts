@@ -88,7 +88,7 @@ export class AuthService {
     const isExisting = await this.memberRepository.findOneBy({ email });
     if (isExisting) throw new ConflictException('Email already taken');
     await this.checkIsConfirm(email);
-    const newOrg = this.organizationRepository.create({ name });
+    const newOrg = this.organizationRepository.create({ name, email });
     const organization = await this.organizationRepository.save(newOrg);
     const password = await this.hashPassword(createOrganization.password);
     const newMember = this.memberRepository.create({
@@ -138,11 +138,10 @@ export class AuthService {
     await this.otpRepository.save(createOtp);
     // send email otp
     this.emailService.createWithoutSave({
-      orgId: 1,
       to: email,
       text: `Your OTP for fresha is ${otp}.Dont share it anyone!`,
-      recipientName: 'Customer',
       subject: 'OTP',
+      from: process.env.SHOP_GMAIL,
     });
     return {
       message: `Send OTP to ${email} successfully`,

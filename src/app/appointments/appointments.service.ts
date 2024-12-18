@@ -10,13 +10,9 @@ import { Appointment, BookingStatus } from './entities/appointment.entity';
 import { Between, DataSource, In, Repository } from 'typeorm';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { Service } from '../services/entities/service.entity';
-import { getDatesBetweenDates } from '@/utils';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
 import { CommissionFeesType, Member } from '../members/entities/member.entity';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { PaymentsService } from '../payments/payments.service';
-import { CreateNotificationDto } from '../notifications/dto/create-notification.dto';
 import {
   BookingItemDto,
   ClientAppointmentDto,
@@ -25,25 +21,19 @@ import { CompleteAppointmentDto } from './dto/complete-booking.dto';
 import { User } from '../users/entities/user.entity';
 import { BookingItem } from './entities/booking-item.entity';
 import { Organization } from '../organizations/entities/organization.entity';
-import {
-  sendBookingNotiToMember,
-  sendBookingNotiToUser,
-} from '@/utils/helpers/email-fns';
 import { EmailsService } from '../emails/emails.service';
-import { CreateEmailDto } from '../emails/dto/crearte-email.dto';
 import { RescheduleBookingDto } from './dto/reschedule-booking.dto';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
-    private dataSource: DataSource,
-    private readonly emailService: EmailsService,
-    @InjectQueue('notificationQueue') private notificationQueue: Queue,
     @InjectRepository(Appointment)
     private readonly appointmentRepository: Repository<Appointment>,
     @InjectRepository(BookingItem)
     private readonly itemRepository: Repository<BookingItem>,
     private readonly paymentService: PaymentsService,
+    private dataSource: DataSource,
+    private readonly emailService: EmailsService,
   ) {}
 
   // create new appointment by user
@@ -62,6 +52,7 @@ export class AppointmentsService {
         organization,
         user,
         isOnlineBooking: true,
+        orgEmail: organization.email,
       });
 
       // create new appointment
@@ -69,21 +60,20 @@ export class AppointmentsService {
         await this.appointmentRepository.save(createAppointment);
       // save booking items and update the appointment
       const items = await this.saveBookingItems(bookingItems, appointment);
-      const { totalPrice, totalTime, discountPrice } =
+      const { totalPrice, totalTime, discountPrice, totalCommissionFees } =
         this.calculateTimeAndPrice(items);
 
       // update related data
       appointment.bookingItems = items;
       appointment.totalPrice = totalPrice;
       appointment.totalTime = totalTime;
-      appointment.totalCommissionFees =
-        this.calculateTotalCommissionFees(items);
+      appointment.totalCommissionFees = totalCommissionFees;
       appointment.endTime = appointment.startTime + totalTime;
       appointment.discountPrice = discountPrice;
       await this.appointmentRepository.save(appointment);
       // commit transaction
       await queryRunner.commitTransaction();
-      this.createAppointmentByUserEvent(appointment);
+      this.emailService.createAppointByUser(appointment);
       return {
         message: 'Book an appointment successfully',
         appointment,
@@ -96,20 +86,6 @@ export class AppointmentsService {
     }
   }
 
-  private async createAppointmentByUserEvent(appointment: Appointment) {
-    this.sendEmailToMembers(appointment);
-    this.sendEmailToUser(appointment);
-
-    // save and send notification
-    this.createNotification({
-      body: `You got an booking from ${appointment.username}`,
-      title: 'Appointment reveived',
-      link: appointment.id,
-      type: 'Appointment',
-      userId: appointment.orgId,
-    });
-  }
-
   // create client appointment from org dashboard
   async createClientAppointment(
     orgId: number,
@@ -120,11 +96,13 @@ export class AppointmentsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
+      const organization = await this.getOrgById(orgId);
       // save appointment
       const createAppointment = this.appointmentRepository.create({
         ...rest,
         organization: { id: orgId },
         startTime,
+        orgEmail: organization.email,
       });
       const appointment =
         await this.appointmentRepository.save(createAppointment);
@@ -132,21 +110,19 @@ export class AppointmentsService {
       const items = await this.saveBookingItems(bookingItems, appointment);
       console.log(items);
       // calculate time and price
-      const { totalPrice, totalTime, discountPrice } =
+      const { totalPrice, totalTime, discountPrice, totalCommissionFees } =
         this.calculateTimeAndPrice(items);
 
       // update totalPrice , time and fee
       appointment.bookingItems = items;
       appointment.totalPrice = totalPrice;
       appointment.totalTime = totalTime;
-      appointment.totalCommissionFees =
-        this.calculateTotalCommissionFees(items);
+      appointment.totalCommissionFees = totalCommissionFees;
       appointment.endTime = appointment.startTime + totalTime;
       appointment.discountPrice = discountPrice;
       await this.appointmentRepository.save(appointment);
       // send email to member and user
-      this.sendEmailToMembers(appointment);
-      this.sendEmailToUser(appointment);
+      this.emailService.createAppointByOrg(appointment);
       // commit trunsaction
       await queryRunner.commitTransaction();
       return {
@@ -233,20 +209,6 @@ export class AppointmentsService {
     return org;
   }
 
-  private sendEmailToMembers(appointment: Appointment) {
-    const allEmail = appointment.bookingItems?.map(
-      (item) => item.member?.email,
-    );
-    const emails = [...new Set(allEmail)];
-    const sendEmail = sendBookingNotiToMember(appointment, emails);
-    this.sendEmail(sendEmail);
-  }
-
-  private sendEmailToUser(appointment: Appointment) {
-    const sendEmail = sendBookingNotiToUser(appointment);
-    this.sendEmail(sendEmail);
-  }
-
   private async getMemberByIds(memberIds: string[], orgId: number) {
     const ids = [...new Set([...memberIds])];
     const members = await this.dataSource
@@ -271,8 +233,13 @@ export class AppointmentsService {
     const totalTime = items.reduce((pv, cv) => pv + cv.duration, 0);
     const totalPrice = items.reduce((pv, cv) => pv + cv.price, 0);
     const discountPrice = items.reduce((pv, cv) => pv + cv.discountPrice, 0);
+    const totalCommissionFees = items.reduce(
+      (pv, cv) => pv + cv.commissionFees,
+      0,
+    );
     return {
       totalPrice,
+      totalCommissionFees,
       totalTime,
       discountPrice,
     };
@@ -329,10 +296,6 @@ export class AppointmentsService {
     });
   }
 
-  private calculateTotalCommissionFees(items: BookingItem[]) {
-    return items.reduce((pv, cv) => pv + cv.commissionFees, 0);
-  }
-
   async update(
     id: string,
     updateAppointmentDto: UpdateAppointmentDto,
@@ -349,21 +312,18 @@ export class AppointmentsService {
     try {
       const items = await this.saveBookingItems(bookingItems, appointment);
       // calculate time and price
-      const { totalPrice, totalTime, discountPrice } =
+      const { totalPrice, totalTime, discountPrice, totalCommissionFees } =
         this.calculateTimeAndPrice(items);
       appointment.totalPrice = totalPrice;
       appointment.totalTime = totalTime;
-      appointment.totalCommissionFees =
-        this.calculateTotalCommissionFees(items);
+      appointment.totalCommissionFees = totalCommissionFees;
       appointment.endTime = appointment.startTime + totalTime;
       appointment.discountPrice = discountPrice;
       Object.assign(appointment, rest);
       // save the update data
       await this.appointmentRepository.save(appointment);
       // commit transaction
-      this.sendEmailToUser(appointment);
       await queryRunner.commitTransaction();
-
       return { message: 'Update the appointment successfully' };
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -378,15 +338,11 @@ export class AppointmentsService {
     // if completed , cannot be confirmed
     if (appointment.status === BookingStatus.completed)
       throw new ForbiddenException('Completed booking cannot be confirmed!');
-    this.appointmentRepository.update(id, { status: BookingStatus.confirmed });
-    // send email about booking confirmation
-    this.sendEmail({
-      orgId,
-      to: appointment.email,
-      text: 'Confirm your booking',
-      recipientName: appointment.username,
-      subject: 'Booking confirmed',
+    await this.appointmentRepository.update(id, {
+      status: BookingStatus.confirmed,
     });
+    // send email about booking confirmation
+    await this.emailService.confirmBookingByOrg(appointment);
     return {
       message: 'Confirm booking succesfully',
     };
@@ -408,13 +364,7 @@ export class AppointmentsService {
     // send email about booking cancelation
     if (updateRes.affected !== 1)
       throw new ForbiddenException('Cannot cancel booking now');
-    this.sendEmail({
-      orgId,
-      to: appointment.email,
-      text: `Cancel your booking for the reason ${cancelBookingDto.reason}`,
-      recipientName: appointment.username,
-      subject: 'Booking cancelation',
-    });
+    this.emailService.cancelBookingByOrg(appointment, cancelBookingDto.reason);
     return {
       message: 'Cancel booking succesfully',
     };
@@ -452,21 +402,13 @@ export class AppointmentsService {
   ) {
     const { reason, startTime, date } = rescheduleBookingDto;
     const appointment = await this.getBookingById(id, orgId, ['bookingItems']);
-
     const { totalTime } = this.calculateTimeAndPrice(appointment.bookingItems);
     await this.appointmentRepository.update(id, {
       date,
       startTime,
       endTime: startTime + totalTime,
     });
-    this.sendEmail({
-      orgId,
-      text: `Your booking is rescheduled from ${appointment.date} to ${date}. 
-      Check the due date and You can cancel before 5 hours before`,
-      recipientName: appointment.username,
-      subject: 'Booking Reschedule',
-      to: appointment.email,
-    });
+    await this.emailService.rescheduleBookingByOrg(appointment, reason);
     return {
       message: 'Marked as complete booking succesfully',
     };
@@ -492,15 +434,5 @@ export class AppointmentsService {
     });
     if (!appointment) throw new NotFoundException('Appointment not found');
     return appointment;
-  }
-
-  // send email job
-  sendEmail(emailPayload: CreateEmailDto) {
-    this.emailService.create(emailPayload);
-  }
-
-  // create notification job
-  createNotification(createNotification: CreateNotificationDto) {
-    this.notificationQueue.add('notification.created', createNotification);
   }
 }

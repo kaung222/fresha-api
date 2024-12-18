@@ -14,6 +14,11 @@ import { Category } from '../categories/entities/category.entity';
 import { GetServicesDto } from './dto/get-service.dto';
 import { CacheService } from '@/global/cache.service';
 import { FilesService } from '../files/files.service';
+import {
+  deleteObjectAWS,
+  updateObjectAsUsed,
+  updateTagOfObject,
+} from '@/utils/store-obj-s3';
 
 @Injectable()
 export class ServicesService {
@@ -48,8 +53,8 @@ export class ServicesService {
     });
     this.clearCache(orgId);
     this.updateCategoryUsage(category);
-    await this.serviceRepository.save(newService);
-    this.fileService.updateFileAsUsed(rest.thumbnailUrl, orgId);
+    const service = await this.serviceRepository.save(newService);
+    await updateObjectAsUsed(service.thumbnailUrl);
     return {
       message: 'Create service successfully',
     };
@@ -190,11 +195,7 @@ export class ServicesService {
     Object.assign(myPackage, rest);
     this.clearCache(orgId);
     await this.serviceRepository.save(myPackage);
-
-    if (myPackage.thumbnailUrl !== rest.thumbnailUrl) {
-      this.fileService.updateFileAsUsed(rest.thumbnailUrl, orgId);
-      this.fileService.updateFileAsUnused(myPackage.thumbnailUrl, orgId);
-    }
+    await updateTagOfObject(orgId, myPackage.thumbnailUrl, rest.thumbnailUrl);
     return { message: 'Update successfully' };
   }
 
@@ -249,10 +250,7 @@ export class ServicesService {
     Object.assign(service, rest);
     await this.serviceRepository.save(service);
     this.clearCache(orgId);
-    if (service.thumbnailUrl !== rest.thumbnailUrl) {
-      this.fileService.updateFileAsUsed(rest.thumbnailUrl, orgId);
-      this.fileService.updateFileAsUnused(service.thumbnailUrl, orgId);
-    }
+    await updateTagOfObject(orgId, service.thumbnailUrl, rest.thumbnailUrl);
     return { message: 'Update service successfully' };
   }
 
@@ -268,7 +266,7 @@ export class ServicesService {
     await this.serviceRepository.save(service);
     await this.serviceRepository.delete({ id });
     this.clearCache(orgId);
-    this.fileService.updateFileAsUnused(service.thumbnailUrl, orgId);
+    await deleteObjectAWS(orgId, service.thumbnailUrl);
     return {
       message: 'Deleted service successfully',
     };

@@ -32,16 +32,6 @@ export class FilesService {
       message: 'Deprecated',
     };
     const imageIds = await storeObjectsAWS(images, userId);
-    const imageUrls = this.generateImageUrls(imageIds);
-    await this.saveImageUrlsToDatabase(imageUrls, userId);
-    return { imageUrls };
-  }
-
-  private generateImageUrls(imageIds: string[]): string[] {
-    // Generate CloudFront URLs based on image IDs
-    return imageIds.map(
-      (imageId) => `${process.env.ClOUDFRONT_BASEURL}/${imageId}`,
-    );
   }
 
   private async saveImageUrlsToDatabase(
@@ -56,27 +46,27 @@ export class FilesService {
   }
 
   // update file as used
-  async updateFileAsUsed(fileUrls: string[] | string, userId: string | number) {
-    try {
-      const urlsArray = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
-      await this.fileQueue.add('updateFileUsed', { urls: urlsArray, userId });
-    } catch (error) {
-      console.log('Error updating file as used');
-    }
-  }
+  // async updateFileAsUsed(fileUrls: string[] | string, userId: string | number) {
+  //   try {
+  //     const urlsArray = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
+  //     await this.fileQueue.add('updateFileUsed', { urls: urlsArray, userId });
+  //   } catch (error) {
+  //     console.log('Error updating file as used');
+  //   }
+  // }
 
   // update file as unused
-  async updateFileAsUnused(
-    fileUrls: string[] | string,
-    userId: string | number,
-  ) {
-    try {
-      const urlsArray = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
-      await this.fileQueue.add('updateFileUnused', { urls: urlsArray, userId });
-    } catch (error) {
-      console.log('Error updating file as unused');
-    }
-  }
+  // async updateFileAsUnused(
+  //   fileUrls: string[] | string,
+  //   userId: string | number,
+  // ) {
+  //   try {
+  //     const urlsArray = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
+  //     await this.fileQueue.add('updateFileUnused', { urls: urlsArray, userId });
+  //   } catch (error) {
+  //     console.log('Error updating file as unused');
+  //   }
+  // }
 
   // get files for test
   getFiles() {

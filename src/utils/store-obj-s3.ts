@@ -36,7 +36,8 @@ export async function storeObjectAWS(
   }
 }
 
-export async function updateObject(url: string, isUsed?: boolean) {
+export async function updateObjectAsUsed(url?: string, isUsed?: boolean) {
+  if (!url) return null;
   const s3Client = new S3Client({
     region: process.env.AWS_S3_REGION,
     credentials: {
@@ -64,6 +65,45 @@ export async function updateObject(url: string, isUsed?: boolean) {
 
     await s3Client.send(command);
     return { message: 'Updated object tags successfully' };
+  } catch (error) {
+    console.error(error);
+    throw new HttpException('Error updating object tags in aws_s3', 403);
+  }
+}
+
+export async function updateObjectsAsUsed(urls?: string[], isUsed?: boolean) {
+  if (!urls) return null;
+  const s3Client = new S3Client({
+    region: process.env.AWS_S3_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  });
+
+  try {
+    await Promise.all(
+      urls.map(async (url) => {
+        const Key = getKeyFromUrl(url);
+
+        // Update the tags for the object
+        const command = new PutObjectTaggingCommand({
+          Bucket: process.env.AWS_S3_BUCKET_NAME,
+          Key,
+          Tagging: {
+            TagSet: [
+              {
+                Key: 'isUsed',
+                Value: isUsed ? isUsed.toString() : 'true',
+              },
+            ],
+          },
+        });
+
+        await s3Client.send(command);
+        return { message: 'Updated object tags successfully' };
+      }),
+    );
   } catch (error) {
     console.error(error);
     throw new HttpException('Error updating object tags in aws_s3', 403);
@@ -122,7 +162,7 @@ export async function storeObjectsAWS(
 }
 
 // delete single object
-export async function deleteObjectAWS(url: string, userId: string | number) {
+export async function deleteObjectAWS(userId: string | number, url?: string) {
   if (!url) return null;
   const s3Client = new S3Client({
     region: process.env?.AWS_S3_REGION,
@@ -133,6 +173,7 @@ export async function deleteObjectAWS(url: string, userId: string | number) {
   });
 
   const fileOwnerId = getUserIdFromUrl(url);
+  console.log(url, userId);
   if (fileOwnerId !== userId) return;
   const Key = getKeyFromUrl(url);
   try {
@@ -149,9 +190,9 @@ export async function deleteObjectAWS(url: string, userId: string | number) {
 
 // update and delete in two or more files update
 export async function updateTagsOfObjects(
+  userId: string | number,
   oldUrls: string[],
   newUrls: string[],
-  userId: string | number,
 ) {
   const commonUrls = oldUrls.filter((url) => newUrls.includes(url));
   const urlsToDelete = oldUrls.filter((url) => !commonUrls.includes(url));
@@ -160,12 +201,14 @@ export async function updateTagsOfObjects(
   try {
     // Delete objects not present in newUrls
     if (urlsToDelete.length > 0) {
-      await deleteObjectsAWS(urlsToDelete, userId);
+      await deleteObjectsAWS(userId, urlsToDelete);
     }
 
     // Update tags for newly added URLs
     if (urlsToUpdate.length > 0) {
-      await Promise.all(urlsToUpdate.map((url) => updateObject(url, true)));
+      await Promise.all(
+        urlsToUpdate.map((url) => updateObjectAsUsed(url, true)),
+      );
     }
   } catch (error) {
     console.error('Error updating tags or deleting objects:', error);
@@ -173,11 +216,26 @@ export async function updateTagsOfObjects(
   }
 }
 
+export async function updateTagOfObject(
+  userId: string | number,
+  oldUrl?: string,
+  newUrl?: string,
+) {
+  try {
+    if (oldUrl === newUrl) return;
+    oldUrl && (await deleteObjectAWS(userId, oldUrl));
+    newUrl && (await updateObjectAsUsed(newUrl));
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 // delete multiple objects
 export async function deleteObjectsAWS(
-  urls: string[],
   userId: string | number,
+  urls?: string[],
 ) {
+  console.log('deleted urls', urls);
   const s3Client = new S3Client({
     region: process.env?.AWS_S3_REGION,
     credentials: {
@@ -186,18 +244,21 @@ export async function deleteObjectsAWS(
     },
   });
   try {
-    const Objects = urls.map((url) => {
-      const fileOwnerId = getUserIdFromUrl(url);
-      if (fileOwnerId !== userId) return;
-      return { Key: getKeyFromUrl(url) };
-    });
+    const Objects = urls
+      .filter((url) => {
+        const fileOwnerId = getUserIdFromUrl(url);
+        return fileOwnerId === userId;
+      })
+      .map((url) => {
+        return { Key: getKeyFromUrl(url) };
+      });
     const command = new DeleteObjectsCommand({
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       Delete: {
         Objects,
       },
     });
-    return await s3Client.send(command);
+    await s3Client.send(command);
   } catch (error) {
     console.log(error);
   }

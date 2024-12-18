@@ -15,6 +15,8 @@ import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { SaleItem } from './entities/sale-item.entity';
 import { CreateSalePayment } from '../payments/dto/create-payment.dto';
 import { PaymentsService } from '../payments/payments.service';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Injectable()
 export class SalesService {
@@ -24,6 +26,7 @@ export class SalesService {
     @InjectRepository(Sale) private readonly saleRepository: Repository<Sale>,
     @InjectRepository(SaleItem)
     private saleItemRepository: Repository<SaleItem>,
+    @InjectQueue('SaleQueue') private saleQueue: Queue,
   ) {}
 
   async create(orgId: number, createQuickSaleDto: CreateQuickSaleDto) {
@@ -54,6 +57,7 @@ export class SalesService {
           orgId,
           saleId: sale.id,
         });
+      await this.saleQueue.add('ReduceStock', items);
       return {
         message: 'Create sale successfully',
       };
@@ -75,6 +79,8 @@ export class SalesService {
     const createSaleItems = this.saleItemRepository.create(
       saleItems.map(({ productId, quantity }) => {
         const product = products.find((product) => product.id === productId);
+        if (product.stock < quantity)
+          throw new ForbiddenException('Not enought stock');
         // add some discount here
         const subtotalPrice = product.discountPrice * quantity;
         return {
@@ -170,5 +176,19 @@ export class SalesService {
         saleItems: saleItems_include,
       },
     });
+  }
+
+  async reduceStock(saleItems: SaleItem[]) {
+    try {
+      await Promise.all(
+        saleItems.map(async ({ productId, quantity }) => {
+          await this.dataSource
+            .getRepository(Product)
+            .decrement({ id: productId }, 'stock', quantity);
+        }),
+      );
+    } catch (error) {
+      console.log('error reducing stock', error);
+    }
   }
 }

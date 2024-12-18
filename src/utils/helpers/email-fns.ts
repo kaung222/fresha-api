@@ -1,28 +1,30 @@
 import { Appointment } from '@/app/appointments/entities/appointment.entity';
-import { CreateEmailDto } from '@/app/emails/dto/crearte-email.dto';
+import { CreateEmailBySystem } from '@/app/emails/dto/crearte-email.dto';
 import { format } from 'date-fns';
 
 const getDate = (date: Date) => format(new Date(date), 'dd-MM-yyyy');
 
 export function sendBookingNotiToUser(
   appointment: Appointment,
-): CreateEmailDto {
+): CreateEmailBySystem {
   return {
     orgId: appointment.orgId,
-    recipientName: appointment.username,
     subject: 'Booking confirmation',
     text: `Your booking on ${getDate(appointment.date)} have been confirmed`,
     to: appointment.email,
+    from: appointment.orgEmail,
   };
 }
 
 export function sendBookingNotiToMember(
   appointment: Appointment,
-  emails: string[],
-): CreateEmailDto {
+): CreateEmailBySystem {
+  const emails = [
+    ...new Set(appointment.bookingItems.map((item) => item.member.email)),
+  ];
   return {
     orgId: appointment.orgId,
-    recipientName: appointment.username,
+    from: appointment.orgEmail,
     subject: 'Booking confirmation',
     text: `You got an booking from ${appointment.username} on ${getDate(appointment.date)}.`,
     to: emails,
@@ -32,12 +34,36 @@ export function sendBookingNotiToMember(
 export function cancelBookingByOrg(
   appointment: Appointment,
   reason: string,
-): CreateEmailDto {
+): CreateEmailBySystem {
   return {
     orgId: appointment.orgId,
-    recipientName: appointment.username,
+    from: appointment.orgEmail,
     subject: 'Booking cancellation',
     text: `Your booking on ${getDate(appointment.date)} have been cancelled for the reason ${reason}.`,
     to: appointment.email,
+  };
+}
+
+export function rescheduleBookingByOrg(
+  appointment: Appointment,
+  reason: string,
+) {
+  return {
+    orgId: appointment.orgId,
+    text: `Your booking is rescheduled from ${appointment.date} to ${appointment.date} for the reason ${reason}. 
+  Check the due date and You can cancel before 5 hours of your reservation.`,
+    subject: 'Booking Reschedule',
+    to: appointment.email,
+    from: appointment.orgEmail,
+  };
+}
+
+export function confirmBookingByOrg(appointment: Appointment) {
+  return {
+    orgId: appointment.orgId,
+    to: appointment.email,
+    text: 'Confirm your booking',
+    subject: 'Booking confirmed',
+    from: appointment.orgEmail,
   };
 }

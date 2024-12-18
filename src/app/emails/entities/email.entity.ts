@@ -9,21 +9,18 @@ export class Email extends UUIDEntity {
   @Column('text')
   text: string;
 
-  @Column({ nullable: true })
-  recipientName: string;
-
   @Column()
   subject: string;
 
   @Column('simple-array')
   to: string[] | string;
 
+  @Column({ nullable: true })
+  from: string;
+
   @Index('orgId')
   @Column()
   orgId: number;
-
-  @Column({ nullable: true })
-  sent_by: string;
 
   @ManyToOne(() => Organization)
   @JoinColumn({ name: 'orgId' })

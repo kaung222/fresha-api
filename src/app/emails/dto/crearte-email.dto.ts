@@ -1,7 +1,7 @@
-export class CreateEmailDto {
+export class CreateEmailBySystem {
   to: string | string[];
   text: string;
   subject: string;
-  recipientName: string;
-  orgId: number;
+  from: string;
+  orgId?: number;
 }

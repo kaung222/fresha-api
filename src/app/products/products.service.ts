@@ -9,6 +9,11 @@ import { DiscountType } from '../services/entities/service.entity';
 import { FilesService } from '../files/files.service';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { CacheService, CacheTTL } from '@/global/cache.service';
+import {
+  deleteObjectsAWS,
+  updateObjectsAsUsed,
+  updateTagsOfObjects,
+} from '@/utils/store-obj-s3';
 
 @Injectable()
 export class ProductsService {
@@ -32,7 +37,7 @@ export class ProductsService {
       organization: { id: orgId },
     });
     await this.productRepository.save(createProduct);
-    this.filesService.updateFileAsUsed(images, orgId);
+    await updateObjectsAsUsed(images);
     this.cacheService.del(this.getCacheKey(orgId));
     return {
       message: 'Product created successfully',
@@ -90,10 +95,7 @@ export class ProductsService {
       discountPrice,
     });
     await this.productRepository.save(newUpdate);
-    if (images !== product.images) {
-      this.filesService.updateFileAsUsed(images, orgId);
-      this.filesService.updateFileAsUnused(product.images, orgId);
-    }
+    await updateTagsOfObjects(orgId, product.images, updateProductDto.images);
     this.cacheService.del(this.getCacheKey(orgId));
     return {
       message: `Update product ${product.name} successfully`,
@@ -103,7 +105,7 @@ export class ProductsService {
   async remove(id: string, orgId: number) {
     const product = await this.getProductById(id, orgId);
     await this.productRepository.delete({ id });
-    this.filesService.updateFileAsUnused(product.images, orgId);
+    await deleteObjectsAWS(orgId, product.images);
     this.cacheService.del(this.getCacheKey(orgId));
     return {
       message: `Deleted product ${product.name} successfully`,

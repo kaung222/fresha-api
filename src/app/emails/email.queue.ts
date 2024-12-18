@@ -10,7 +10,8 @@ import { format } from 'date-fns';
 import { Email } from './entities/email.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateEmailDto } from './dto/crearte-email.dto';
+import { SendEmailToAdmin } from './dto/send-email-to-admin';
+import { CreateEmailBySystem } from './dto/crearte-email.dto';
 
 @Processor('emailQueue') // Replace with your queue name
 export class EmailQueue {
@@ -22,26 +23,37 @@ export class EmailQueue {
   @Process('sendEmail')
   async handleSendEmail({ data }: Job<Email>) {
     this.emailRepository.save(data);
-    const { recipientName, subject, text, to } = data;
+    const { subject, text, to } = data;
     return await this.mailerService.sendMail({
       from: process.env.SHOP_GMAIL,
       to,
       subject,
-      text: template(recipientName, text),
-      html: template(recipientName, text),
+      text: template(text),
+      html: template(text),
+    });
+  }
+
+  @Process('sendEmailToAdmin')
+  async sendEmailToAdmin({ data }: Job<SendEmailToAdmin>) {
+    await this.mailerService.sendMail({
+      from: data.from,
+      to: 'thirdgodiswinning@gmail.com',
+      subject: data.subject,
+      text: template(data.text),
+      html: template(data.text),
     });
   }
 
   @Process('sendEmailWithoutSaving')
-  async handleSendEmailwithourSave({ data }: Job<CreateEmailDto>) {
+  async handleSendEmailwithourSave({ data }: Job<CreateEmailBySystem>) {
     console.log(data);
-    const { recipientName, subject, text, to } = data;
+    const { subject, text, to, from } = data;
     return await this.mailerService.sendMail({
-      from: process.env.SHOP_GMAIL,
+      from,
       to,
       subject,
-      text: template(recipientName, text),
-      html: template(recipientName, text),
+      text: template(text),
+      html: template(text),
     });
   }
 
@@ -57,7 +69,7 @@ export class EmailQueue {
   }
 }
 
-const template = (recipientName: string, text: string) => {
+const template = (text: string) => {
   return `<!DOCTYPE html>
       <html lang="en">
       <head>
@@ -77,6 +89,8 @@ const template = (recipientName: string, text: string) => {
                   margin: 20px auto;
                   padding: 0 20px;
               }
+                  .content{
+                  font-size: 18px}
           </style>
       </head>
       <body>
@@ -87,8 +101,7 @@ const template = (recipientName: string, text: string) => {
               <p>Innobytex.com</p>
               <hr>
               <p>Date: ${format(new Date(), 'yyyy-MM-dd')}</p>
-              <p>Dear ${recipientName},</p>
-              <p>${text}</p>
+              <p class="content">${text}</p>
           </div>
       </body>
       </html>

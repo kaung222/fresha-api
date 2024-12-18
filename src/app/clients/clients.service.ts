@@ -11,7 +11,11 @@ import { Repository } from 'typeorm';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { CacheService, CacheTTL } from '@/global/cache.service';
-import { deleteObjectAWS, updateObject } from '@/utils/store-obj-s3';
+import {
+  deleteObjectAWS,
+  updateObjectAsUsed,
+  updateTagOfObject,
+} from '@/utils/store-obj-s3';
 
 @Injectable()
 export class ClientsService {
@@ -26,9 +30,10 @@ export class ClientsService {
       ...createClientDto,
       orgId,
     });
-    await updateObject(createClientDto.profilePicture);
+    await updateObjectAsUsed(createClientDto.profilePicture);
     await this.clientRepository.insert(createClient);
     await this.cacheService.del(this.getCacheKey(orgId));
+    // ..
     return {
       message: 'Create client successfully',
     };
@@ -66,21 +71,20 @@ export class ClientsService {
   async update(id: number, updateClientDto: UpdateClientDto, orgId: number) {
     const client = await this.getClientById(id, orgId);
     const response = await this.clientRepository.update(id, updateClientDto);
-    if (response.affected == 1) {
-      this.cacheService.del(this.getCacheKey(orgId, 1));
-      return { message: 'Update successfully' };
-    }
-    if (client.profilePicture !== updateClientDto.profilePicture) {
-      client.profilePicture &&
-        (await deleteObjectAWS(client.profilePicture, orgId));
-      await updateObject(updateClientDto.profilePicture);
-    }
+    this.cacheService.del(this.getCacheKey(orgId, 1));
+    updateTagOfObject(
+      orgId,
+      client?.profilePicture,
+      updateClientDto?.profilePicture,
+    );
+    return { message: 'Update client successfully' };
     throw new ForbiddenException('Error updating client');
   }
 
   async remove(id: number, orgId: number) {
     const { profilePicture } = await this.getClientById(id, orgId);
-    profilePicture && (await deleteObjectAWS(profilePicture, orgId));
+    profilePicture && (await deleteObjectAWS(orgId, profilePicture));
+    this.cacheService.del(this.getCacheKey(orgId));
     return this.clientRepository.delete({ id });
   }
 
