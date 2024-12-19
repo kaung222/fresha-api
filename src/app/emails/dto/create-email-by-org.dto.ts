@@ -1,13 +1,12 @@
-import { ApiHideProperty } from '@nestjs/swagger';
 import {
-  ArrayMaxSize,
-  ArrayMinSize,
   IsArray,
-  IsBoolean,
+  IsEmail,
+  IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
-  ValidateIf,
 } from 'class-validator';
+import { MailTo } from '../entities/email.entity';
 
 export class CreateEmailByOrg {
   @IsString()
@@ -18,18 +17,12 @@ export class CreateEmailByOrg {
   @IsNotEmpty()
   subject: string;
 
-  @IsString()
+  @IsEnum(MailTo)
   @IsNotEmpty()
-  // recipientName: string;
-  @IsNotEmpty()
-  @IsBoolean()
-  isToAllClient: boolean;
+  mailTo: MailTo;
 
-  @ValidateIf((obj) => !obj.isToAllClient)
-  @IsNotEmpty()
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
-  @ArrayMaxSize(10)
   @IsString({ each: true })
-  to: string[] | string;
+  to: string[];
 }

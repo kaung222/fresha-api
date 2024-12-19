@@ -73,7 +73,7 @@ export class StatisticsService {
     orgId: number,
     getStatisticsDto: GetStatisticsDto,
   ) {
-    const { startDate, endDate } = getStatisticsDto;
+    const { startDate, endDate, status } = getStatisticsDto;
     // const dates = getDatesBetweenDates(startDate, endDate);
     const data = await this.dataSource
       .getRepository(Appointment)
@@ -85,6 +85,7 @@ export class StatisticsService {
         endDate,
       })
       .select('appointment.date', 'date')
+      .andWhere('appointment.status=:status', { status })
       // .select('SUM(appointment.duration)', 'totalDuration')
       .addSelect('SUM(appointment.totalCommissionFees)', 'totalCommissionFees')
       .addSelect('SUM(appointment.discountPrice)', 'totalDiscountPrice')

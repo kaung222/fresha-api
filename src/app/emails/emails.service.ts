@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEmailBySystem } from './dto/crearte-email.dto';
-import { Email } from './entities/email.entity';
+import { Email, MailTo } from './entities/email.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bull';
@@ -19,6 +19,8 @@ import {
   sendBookingNotiToMember,
   sendBookingNotiToUser,
 } from '@/utils/helpers/email-fns';
+import { Organization } from '../organizations/entities/organization.entity';
+import { Member } from '../members/entities/member.entity';
 
 @Injectable()
 export class EmailsService {
@@ -61,43 +63,92 @@ export class EmailsService {
   }
 
   async createByOrg(orgId: number, createEmailDto: CreateEmailByOrg) {
-    const { isToAllClient, ...rest } = createEmailDto;
-    if (isToAllClient) {
-      const data: { email: string }[] = await this.dataSource
-        .getRepository(Client)
-        .createQueryBuilder()
-        .select('email', 'email')
-        .where('orgId=:orgId', { orgId })
-        .getRawMany();
-      if (data.length === 0) throw new NotFoundException('No client existed');
-      const emails = [...new Set(data?.map((d) => d.email))];
-      const email = this.emailRepository.create({ ...rest, orgId, to: emails });
-      await this.emailQueue.add('sendEmail', email);
-      return {
-        message: 'Send emails successfully',
-      };
-    }
-    const email = this.emailRepository.create({ orgId, ...createEmailDto });
-    await this.emailQueue.add('sendEmail', email);
-    await this.cacheService.del(this.getCacheKey(orgId));
-    return { message: 'Send emails successfully' };
+    const { mailTo } = createEmailDto;
+    const organization = await this.dataSource
+      .getRepository(Organization)
+      .findOneBy({ id: orgId });
+    if (mailTo == MailTo.client)
+      return this.sendEmailToClients(organization, createEmailDto);
+    if (mailTo == MailTo.members)
+      return this.sendEmailToMembers(organization, createEmailDto);
+    if (mailTo == MailTo.custom)
+      return this.sendEmailCustom(organization, createEmailDto);
   }
 
   async sendEmailToAdmins(sendEmail: SendEmailToAdmin) {
     const createEmail = this.emailRepository.create({
       ...sendEmail,
-      to: 'thirdgodiswinning@gmail.com',
+      to: ['thirdgodiswinning@gmail.com'],
     });
     const email = await this.emailRepository.save(createEmail);
     this.emailQueue.add('sendEmailWithoutSaving', email);
     return { message: 'Send message successfully' };
   }
 
-  private async sendEmailToClients(orgId: number) {
+  private async sendEmailToClients(
+    organization: Organization,
+    createEmailDto: CreateEmailByOrg,
+  ) {
+    const createEmail = this.emailRepository.create({
+      ...createEmailDto,
+      from: organization.email,
+      mailTo: MailTo.client,
+    });
+    this.emailRepository.save(createEmail);
+    // select client email list
     const clients = await this.dataSource
       .getRepository(Client)
-      .findBy({ orgId });
-    const emails = this.emailRepository.create({});
+      .find({ select: ['email'], where: { orgId: organization.id } });
+    const clientEmails = [...new Set(clients.map((client) => client.email))];
+    await this.createWithoutSave({
+      ...createEmailDto,
+      to: clientEmails,
+
+      from: organization.email,
+    });
+    return { message: 'Send message to clients successfully' };
+  }
+
+  private async sendEmailToMembers(
+    organization: Organization,
+    createEmailDto: CreateEmailByOrg,
+  ) {
+    const { subject, text } = createEmailDto;
+    const createEmail = this.emailRepository.create({
+      ...createEmailDto,
+      from: organization.email,
+      mailTo: MailTo.members,
+    });
+    this.emailRepository.save(createEmail);
+    // select client email list
+    const members = await this.dataSource
+      .getRepository(Member)
+      .find({ select: ['email'], where: { orgId: organization.id } });
+    const memberEmails = [...new Set(members.map((client) => client.email))];
+    await this.createWithoutSave({
+      ...createEmailDto,
+      to: memberEmails,
+
+      from: organization.email,
+    });
+    return { message: 'Send message to clients successfully' };
+  }
+
+  private async sendEmailCustom(
+    organization: Organization,
+    createEmailDto: CreateEmailByOrg,
+  ) {
+    const createEmail = this.emailRepository.create({
+      ...createEmailDto,
+      from: organization.email,
+      mailTo: MailTo.custom,
+    });
+    this.emailRepository.save(createEmail);
+    await this.createWithoutSave({
+      ...createEmailDto,
+      from: organization.email,
+    });
+    return { message: 'Sent email to provided emails successfully' };
   }
 
   async createWithoutSave(createEmailDto: CreateEmailBySystem) {
@@ -110,23 +161,23 @@ export class EmailsService {
   async createAppointByOrg(appointment: Appointment) {
     const memberEmail = sendBookingNotiToMember(appointment);
     const userEmail = sendBookingNotiToUser(appointment);
-    await this.emailQueue.add('sendEmailWithoutSaving', memberEmail);
-    await this.emailQueue.add('sendEmailWithoutSaving', userEmail);
+    await this.createWithoutSave(memberEmail);
+    await this.createWithoutSave(userEmail);
   }
 
   async cancelBookingByOrg(appointment: Appointment, reason: string) {
     const userEmail = cancelBookingByOrg(appointment, reason);
-    await this.emailQueue.add('sendEmailWithoutSaving', userEmail);
+    await this.createWithoutSave(userEmail);
   }
 
   async rescheduleBookingByOrg(appointment: Appointment, reason: string) {
     const userEmail = rescheduleBookingByOrg(appointment, reason);
-    await this.emailQueue.add('sendEmailWithoutSaving', userEmail);
+    await this.createWithoutSave(userEmail);
   }
 
   async confirmBookingByOrg(appointment: Appointment) {
     const userEmail = confirmBookingByOrg(appointment);
-    await this.emailQueue.add('sendEmailWithoutSaving', userEmail);
+    await this.createWithoutSave(userEmail);
   }
 
   private getCacheKey(orgId: number, page = 1) {

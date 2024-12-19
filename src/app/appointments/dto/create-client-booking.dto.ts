@@ -1,10 +1,11 @@
 import {
   ArrayMinSize,
   IsDateString,
+  IsEmail,
   IsEnum,
-  IsInt,
   IsNotEmpty,
   IsOptional,
+  IsPhoneNumber,
   IsPositive,
   IsString,
   IsUrl,
@@ -30,16 +31,18 @@ export class ClientAppointmentDto {
   date: string;
 
   @IsNotEmpty()
+  @IsString()
   username: string;
 
   @IsOptional()
+  @IsString()
   notes: string;
 
   @IsEnum(BookingStatus)
   status: BookingStatus;
 
-  @IsNotEmpty()
-  @IsString()
+  @IsOptional()
+  @IsPhoneNumber()
   phone: string;
 
   @IsEnum(Gender)
@@ -50,8 +53,8 @@ export class ClientAppointmentDto {
   @IsUrl()
   profilePicture: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IsOptional()
+  @IsEmail()
   email: string;
 
   @ValidateNested()

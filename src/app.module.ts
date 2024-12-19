@@ -67,6 +67,7 @@ import { OrgTypesModule } from './app/org-types/org-types.module';
 import { OrgType } from './app/org-types/entities/org-type.entity';
 import { AdminsModule } from './app/admins/admins.module';
 import { Email } from './app/emails/entities/email.entity';
+import { SearchModule } from './app/search/search.module';
 
 @Module({
   imports: [
@@ -114,6 +115,7 @@ import { Email } from './app/emails/entities/email.entity';
 
     GlobalModule,
     ServicesModule,
+    SearchModule,
     JwtModule.register({ secret: process.env.JWT_SECRET, global: true }),
     ThrottlerModule.forRoot([
       {
@@ -135,6 +137,7 @@ import { Email } from './app/emails/entities/email.entity';
         port: parseInt(process.env.REDIS_PORT),
         host: process.env.REDIS_HOST,
         password: process.env.REDIS_PASSWORD,
+        disconnectTimeout: 10,
       },
     }),
     CacheModule.register({ isGlobal: true }),
