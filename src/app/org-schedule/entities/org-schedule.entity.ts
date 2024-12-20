@@ -1,13 +1,10 @@
 import { DayOfWeek } from '@/app/member-schedule/entities/member-schedule.entity';
-import { Member } from '@/app/members/entities/member.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
 import {
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -34,6 +31,10 @@ export class OrgSchedule {
   @Column('enum', { enum: DayOfWeek, default: DayOfWeek.sunday })
   dayOfWeek: DayOfWeek;
 
+  @Column()
+  orgId: number;
+
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'orgId' })
   organization: Organization;
 }

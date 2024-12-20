@@ -68,6 +68,8 @@ import { OrgType } from './app/org-types/entities/org-type.entity';
 import { AdminsModule } from './app/admins/admins.module';
 import { Email } from './app/emails/entities/email.entity';
 import { SearchModule } from './app/search/search.module';
+import { FavouritesModule } from './app/favourites/favourites.module';
+import { Favourite } from './app/favourites/entities/favourite.entity';
 
 @Module({
   imports: [
@@ -110,6 +112,7 @@ import { SearchModule } from './app/search/search.module';
         ProductCategory,
         Sale,
         SaleItem,
+        Favourite,
       ],
     }),
 
@@ -172,6 +175,7 @@ import { SearchModule } from './app/search/search.module';
     EmailsModule,
     OrgTypesModule,
     AdminsModule,
+    FavouritesModule,
   ],
   controllers: [],
   providers: [

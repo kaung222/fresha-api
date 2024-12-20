@@ -16,12 +16,15 @@ import { Category } from '../categories/entities/category.entity';
 import { OrgReview } from '../org-reviews/entities/org-review.entity';
 import { UpdateCurrency } from './dto/update-currency';
 import { Product } from '../products/entities/product.entity';
+import { OrgSchedule } from '../org-schedule/entities/org-schedule.entity';
+import { CacheService, CacheTTL } from '@/global/cache.service';
 @Injectable()
 export class OrganizationsService {
   constructor(
     @InjectRepository(Organization)
     private orgRepository: Repository<Organization>,
     private dataSource: DataSource,
+    private readonly cacheService: CacheService,
   ) {}
 
   // create new org
@@ -33,20 +36,15 @@ export class OrganizationsService {
   async findAll(paginateQuery: PaginateQuery) {
     const { page = 1 } = paginateQuery;
     const [data, totalCount] = await this.orgRepository.findAndCount({
-      select: ['rating', 'totalReviews', 'name', 'id', 'types'],
+      where: { isPublished: true },
     });
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
   async findServices(orgId: number) {
-    const response = await this.dataSource
-      .getRepository(Service)
-      .createQueryBuilder()
-      .where('id=:id', { id: orgId })
-      .leftJoinAndSelect('category', 'category')
-      .groupBy('category')
-      .getRawMany();
-    return response;
+    return await this.dataSource
+      .getRepository(Category)
+      .find({ where: { orgId }, relations: { services: true } });
   }
 
   async findMember(orgId: number) {
@@ -63,16 +61,38 @@ export class OrganizationsService {
   }
 
   // find detail by public
-  async findOne(id: number) {
-    const organization = await this.orgRepository.findOneBy({ id });
-    const related = await this.orgRepository.find({
-      where: { types: In(organization.types) },
-      take: 3,
-    });
-    return {
+  async findOne(orgId: number) {
+    const cacheKey = `org-details:${orgId}`;
+    const dataInCache = await this.cacheService.get(cacheKey);
+    if (dataInCache) return dataInCache;
+    const organization = await this.orgRepository.findOneBy({ id: orgId });
+
+    const [related, members, schedules, services] = await Promise.all([
+      this.orgRepository.find({
+        where: { types: In(organization.types) },
+        take: 3,
+      }),
+      this.findTeam(orgId),
+      this.findSchedule(orgId),
+      this.findServices,
+    ]);
+    // const isLiked = await this.dataSource.getRepository(Favourite).findOneBy({
+    //   where: { post: { id: postId }, userId: requesterId },
+    // });
+    const response = {
       organization,
       related,
+      services,
+      members,
+      schedules,
+      // isFav: !!isLiked,
     };
+    await this.cacheService.set(cacheKey, response, CacheTTL.veryLong);
+    return response;
+  }
+
+  async findSchedule(orgId: number) {
+    return await this.dataSource.getRepository(OrgSchedule).findBy({ orgId });
   }
   async getProfile(orgId: number) {
     const organization = await this.orgRepository
@@ -94,8 +114,8 @@ export class OrganizationsService {
   }
 
   // find member by public
-  findTeam(orgId: number) {
-    return this.dataSource.getRepository(Member).findBy({ orgId });
+  async findTeam(orgId: number) {
+    return await this.dataSource.getRepository(Member).findBy({ orgId });
   }
 
   // find member by public
@@ -104,7 +124,7 @@ export class OrganizationsService {
   }
 
   async findReviews(orgId: number, paginateQuery: PaginateQuery) {
-    const { page } = paginateQuery;
+    const { page, search } = paginateQuery;
     const [data, totalCount] = await this.dataSource
       .getRepository(OrgReview)
       .findAndCount({
@@ -131,7 +151,7 @@ export class OrganizationsService {
     throw new ForbiddenException();
   }
 
-  async gerNearBy(lat: number, lng: number, radius: number) {
+  async getNearBy(lat: number, lng: number, radius: number) {
     const earthRadiusKm = 6371; // Radius of the Earth in kilometers
     const query = `
       SELECT *, 

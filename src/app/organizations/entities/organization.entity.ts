@@ -7,16 +7,16 @@ export class Organization extends IncrementEntity {
   @Column()
   name: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, unique: true })
   email: string;
 
   @Column('simple-array', { nullable: true })
   phones: string[];
 
-  @Column({ nullable: true, select: false })
+  @Column({ nullable: true })
   address: string;
 
-  @Column({ nullable: true, select: false })
+  @Column({ nullable: true })
   notes: string;
 
   @Column('simple-array', { nullable: true })
@@ -24,6 +24,9 @@ export class Organization extends IncrementEntity {
 
   @Column('simple-array', { nullable: true })
   types: string[];
+
+  @Column({ nullable: true })
+  country: string;
 
   @Column({ nullable: true })
   city: string;
