@@ -11,7 +11,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
@@ -34,15 +34,22 @@ export class UsersController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+    return this.usersService.getUserById(id);
+  }
+  @Get('info/profile')
+  @ApiOperation({ summary: 'Get my profile' })
+  getProfile(@User('id') id: string) {
+    return this.usersService.getProfile(id);
   }
 
-  @Patch(':id')
+  @Patch('profile')
+  @ApiOperation({ summary: 'update my profile' })
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete account' })
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }

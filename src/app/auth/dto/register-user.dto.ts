@@ -22,28 +22,28 @@ export class RegisterUserDto {
   lastName?: string;
 
   @IsEmail()
-  @IsOptional()
+  @IsNotEmpty()
   email: string;
 
-  @IsPhoneNumber('MM')
+  @IsPhoneNumber()
   @IsNotEmpty()
-  phone: string;
+  phone?: string;
 
   @IsNotEmpty()
   @IsStrongPassword()
-  password: string;
-
-  @IsUrl()
-  @IsOptional()
-  profilePicture?: string;
+  password?: string;
 
   @IsEnum(Gender)
   @IsOptional()
   gender?: Gender;
 
   @IsOptional()
+  @IsUrl()
+  profilePicture?: string;
+
+  @IsOptional()
   @IsDateString()
-  dob: Date;
+  dob?: Date;
 }
 
 export class LoginWithGoogle {

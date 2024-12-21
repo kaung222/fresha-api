@@ -25,13 +25,11 @@ export class CreateUserDto {
   @IsOptional()
   email: string;
 
-  @IsPhoneNumber('MM')
   @IsNotEmpty()
-  phone: string;
+  password?: string;
 
-  @IsString()
   @IsNotEmpty()
-  password: string;
+  phone?: string;
 
   @IsOptional()
   @IsUrl()
@@ -44,5 +42,5 @@ export class CreateUserDto {
   @IsDateString()
   @MinDate(() => new Date('2010-1-1'))
   @IsOptional()
-  dob: Date;
+  dob?: Date;
 }

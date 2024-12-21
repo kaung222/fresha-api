@@ -13,21 +13,20 @@ import { Roles } from '@/security/user.decorator';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { Response } from 'express';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { UsersService } from '../users/users.service';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Injectable()
 export class UserAuthService {
   constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
     private authService: AuthService,
+    private readonly userService: UsersService,
   ) {}
 
   // login user
   async loginUser(loginUserDto: LoginUserDto) {
     const { email, password } = loginUserDto;
-    const user = await this.userRepository.findOne({
-      where: { email },
-      select: ['id', 'password', 'firstName'],
-    });
+    const user = await this.userService.findOneByEmail(email);
     if (!user) throw new NotFoundException('User not found');
     const isAuthenticated = await this.authService.checkPassword(
       password,
@@ -52,22 +51,26 @@ export class UserAuthService {
         audience: process.env.GOOGLE_CLIENT_ID, // Specify the same client ID used in the strategy
       });
       const payload = ticket.getPayload();
-      const user = await this.userRepository.findOneBy({
-        email: payload.email,
-      });
-      if (!user) return await this.saveNewUser(payload);
+      const user = await this.userService.findOneByEmail(payload.email);
+      if (!user)
+        return await this.saveNewUser({
+          firstName: payload?.given_name,
+          lastName: payload?.family_name,
+          email: payload?.email,
+          profilePicture: payload?.picture,
+        });
       return {
         user,
         ...this.getTokens(user),
       };
     } catch (error) {
+      console.log(error);
       throw new UnauthorizedException('Invalid access token');
     }
   }
 
-  async saveNewUser(createUserDto: RegisterUserDto | TokenPayload) {
-    const createUser = this.userRepository.create(createUserDto);
-    const user = await this.userRepository.save(createUser);
+  async saveNewUser(createUserDto: CreateUserDto) {
+    const user = await this.userService.create(createUserDto);
     return {
       user,
       ...this.getTokens(user),
@@ -81,7 +84,7 @@ export class UserAuthService {
 
   async registerUser(registerUserDto: RegisterUserDto) {
     const { password, email } = registerUserDto;
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userService.findOneByEmail(email);
     if (user) throw new ConflictException('email already taken');
     const hashPassword = await this.authService.hashPassword(password);
     return await this.saveNewUser({
