@@ -1,4 +1,4 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class UpdateLocation {
   @IsNotEmpty()
@@ -9,4 +9,12 @@ export class UpdateLocation {
 
   @IsNotEmpty()
   longitude: number;
+
+  @IsNotEmpty()
+  @IsString()
+  city: string;
+
+  @IsNotEmpty()
+  @IsString()
+  country: string;
 }

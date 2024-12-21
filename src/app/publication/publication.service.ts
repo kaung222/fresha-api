@@ -47,12 +47,15 @@ export class PublicationService {
   }
 
   async updateLocation(orgId: number, updateLocation: UpdateLocation) {
-    const { address, latitude, longitude } = updateLocation;
+    const { address, latitude, longitude, country, city } = updateLocation;
     await this.orgRepository.update(orgId, {
       address,
       latitude,
       longitude,
+      city,
+      country,
     });
+    return { message: 'Update location and address successfully' };
   }
 
   async uploadImages(orgId: number, uploadImages: UploadImages) {

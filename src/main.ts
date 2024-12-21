@@ -20,6 +20,7 @@ async function bootstrap() {
       'https://fresha-clone.vercel.app',
       'https://baranie.com',
       'https://www.baranie.com',
+      'https://management.baranie.com',
     ],
     credentials: true,
   });

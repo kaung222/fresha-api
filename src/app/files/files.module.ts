@@ -3,7 +3,7 @@ import { FilesService } from './files.service';
 import { FilesController } from './files.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { File } from './entities/file.entity';
-import { FileQueue } from './file.queue';
+// import { FileQueue } from './file.queue';
 import { BullModule } from '@nestjs/bull';
 
 @Module({
@@ -12,6 +12,6 @@ import { BullModule } from '@nestjs/bull';
     TypeOrmModule.forFeature([File]),
   ],
   controllers: [FilesController],
-  providers: [FilesService, FileQueue],
+  providers: [FilesService],
 })
 export class FilesModule {}
