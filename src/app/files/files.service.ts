@@ -4,16 +4,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { File } from './entities/file.entity';
 import { storeObjectAWS, storeObjectsAWS } from '@/utils/store-obj-s3';
 import { deleteObjectAWS } from '@/utils/delete-obj-s3';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
 
 @Injectable()
 export class FilesService {
   constructor(
     @InjectRepository(File)
     private fileRepository: Repository<File>,
-    @InjectQueue('FileQueue')
-    private fileQueue: Queue,
   ) {}
 
   //store image

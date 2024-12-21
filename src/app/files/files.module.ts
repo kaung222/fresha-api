@@ -8,7 +8,7 @@ import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
-    BullModule.registerQueue({ name: 'FileQueue' }),
+    // BullModule.registerQueue({ name: 'FileQueue' }),
     TypeOrmModule.forFeature([File]),
   ],
   controllers: [FilesController],

@@ -46,13 +46,11 @@ export class EmailQueue {
 
   @Process('sendEmailWithoutSaving')
   async handleSendEmailwithourSave({ data }: Job<CreateEmailBySystem>) {
-    console.log(data);
     const { subject, text, to, from } = data;
     return await this.mailerService.sendMail({
       from,
       to,
       subject,
-      text: template(text),
       html: template(text),
     });
   }
@@ -95,8 +93,8 @@ const template = (text: string) => {
       </head>
       <body>
           <div class="container">
-              <img src="https://yourcompanylogo.com/logo.png" alt="Your Company Logo" style="max-width: 100%;">
-              <h2>Fresha Company Ltd.</h2>
+              <img src="https://djiwkc53pq2w8.cloudfront.net/user_1_24a33f1a-b683-40d1-8601-d01c0a920b65_INBX_IMG.png" alt="Baranie company logo" style="max-width: 100%;">
+              <h2>Baranie.com Company Ltd.</h2>
               <p>Yangon Myanmar</p>
               <p>Innobytex.com</p>
               <hr>

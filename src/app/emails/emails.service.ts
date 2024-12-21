@@ -67,12 +67,14 @@ export class EmailsService {
     const organization = await this.dataSource
       .getRepository(Organization)
       .findOneBy({ id: orgId });
-    if (mailTo == MailTo.client)
-      return this.sendEmailToClients(organization, createEmailDto);
-    if (mailTo == MailTo.members)
-      return this.sendEmailToMembers(organization, createEmailDto);
-    if (mailTo == MailTo.custom)
-      return this.sendEmailCustom(organization, createEmailDto);
+    switch (mailTo) {
+      case 'clients':
+        return this.sendEmailToClients(organization, createEmailDto);
+      case 'members':
+        return this.sendEmailToMembers(organization, createEmailDto);
+      default:
+        return this.sendEmailCustom(organization, createEmailDto);
+    }
   }
 
   async sendEmailToAdmins(sendEmail: SendEmailToAdmin) {
@@ -170,8 +172,12 @@ export class EmailsService {
     await this.createWithoutSave(userEmail);
   }
 
-  async rescheduleBookingByOrg(appointment: Appointment, reason: string) {
-    const userEmail = rescheduleBookingByOrg(appointment, reason);
+  async rescheduleBookingByOrg(
+    appointment: Appointment,
+    newDate: Date,
+    reason: string,
+  ) {
+    const userEmail = rescheduleBookingByOrg(appointment, newDate, reason);
     await this.createWithoutSave(userEmail);
   }
 

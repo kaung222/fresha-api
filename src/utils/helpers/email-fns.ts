@@ -10,7 +10,7 @@ export function sendBookingNotiToUser(
   return {
     orgId: appointment.orgId,
     subject: 'Booking confirmation',
-    text: `Your booking on ${getDate(appointment.date)} have been confirmed`,
+    text: `Your booking on <b>${getDate(appointment.date)}</b> have been confirmed`,
     to: appointment.email,
     from: appointment.orgEmail,
   };
@@ -26,7 +26,7 @@ export function sendBookingNotiToMember(
     orgId: appointment.orgId,
     from: appointment.orgEmail,
     subject: 'Booking confirmation',
-    text: `You got an booking from ${appointment.username} on ${getDate(appointment.date)}.`,
+    text: `You got bookings from ${appointment.username} on ${getDate(appointment.date)}.`,
     to: emails,
   };
 }
@@ -46,12 +46,13 @@ export function cancelBookingByOrg(
 
 export function rescheduleBookingByOrg(
   appointment: Appointment,
+  newDate: Date,
   reason: string,
 ) {
   return {
     orgId: appointment.orgId,
-    text: `Your booking is rescheduled from ${appointment.date} to ${appointment.date} for the reason ${reason}. 
-  Check the due date and You can cancel before 5 hours of your reservation.`,
+    text: `Your booking is rescheduled from ${getDate(appointment.date)} to ${getDate(newDate)} for the reason ${reason}. 
+    Check the due date and You can cancel before 5 hours of your reservation.`,
     subject: 'Booking Reschedule',
     to: appointment.email,
     from: appointment.orgEmail,
@@ -62,8 +63,8 @@ export function confirmBookingByOrg(appointment: Appointment) {
   return {
     orgId: appointment.orgId,
     to: appointment.email,
-    text: 'Confirm your booking',
-    subject: 'Booking confirmed',
+    text: `Your booking on <b>${getDate(appointment.date)}</b> have been confirmed by the ${appointment.orgName}.`,
+    subject: 'Booking confirmation',
     from: appointment.orgEmail,
   };
 }

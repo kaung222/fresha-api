@@ -13,7 +13,7 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Role } from '@/security/role.decorator';
-import { Roles, User } from '@/security/user.decorator';
+import { Roles, SignedUser, User } from '@/security/user.decorator';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { ClientAppointmentDto } from './dto/create-client-booking.dto';
@@ -71,9 +71,13 @@ export class AppointmentsController {
   }
 
   @Get(':id')
+  @Role(Roles.org, Roles.user)
   @ApiOperation({ summary: 'Get details' })
-  findOne(@Param('id') id: string) {
-    return this.appointmentsService.findOne(id);
+  findOne(@Param('id') id: string, @User() signUser: SignedUser) {
+    if (signUser.role === Roles.org) {
+      return this.appointmentsService.findOne(id, signUser.orgId);
+    }
+    return this.appointmentsService.findOneByUser(id, signUser.id);
   }
 
   @Patch(':id')

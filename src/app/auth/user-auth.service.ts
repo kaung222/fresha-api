@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 import { Roles } from '@/security/user.decorator';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { Response } from 'express';
+import { OAuth2Client, TokenPayload } from 'google-auth-library';
 
 @Injectable()
 export class UserAuthService {
@@ -43,26 +44,50 @@ export class UserAuthService {
     };
   }
 
+  async loginWithProvider(token: string) {
+    const oAuth2Client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    try {
+      const ticket = await oAuth2Client.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID, // Specify the same client ID used in the strategy
+      });
+      const payload = ticket.getPayload();
+      const user = await this.userRepository.findOneBy({
+        email: payload.email,
+      });
+      if (!user) return await this.saveNewUser(payload);
+      return {
+        user,
+        ...this.getTokens(user),
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid access token');
+    }
+  }
+
+  async saveNewUser(createUserDto: RegisterUserDto | TokenPayload) {
+    const createUser = this.userRepository.create(createUserDto);
+    const user = await this.userRepository.save(createUser);
+    return {
+      user,
+      ...this.getTokens(user),
+    };
+  }
+
+  private getTokens(user: User) {
+    const jwtPayload = { id: user.id, role: Roles.user };
+    return this.authService.generateTokens(jwtPayload);
+  }
+
   async registerUser(registerUserDto: RegisterUserDto) {
-    const { password, email, ...rest } = registerUserDto;
+    const { password, email } = registerUserDto;
     const user = await this.userRepository.findOneBy({ email });
     if (user) throw new ConflictException('email already taken');
-    const hashPassword = await this.authService.hashPassword(
-      registerUserDto.password,
-    );
-    const createUser = this.userRepository.create({
-      ...rest,
-      email,
+    const hashPassword = await this.authService.hashPassword(password);
+    return await this.saveNewUser({
+      ...registerUserDto,
       password: hashPassword,
     });
-    const newUser = await this.userRepository.save(createUser);
-    const jwtPayload = { id: newUser.id, role: Roles.user };
-    const tokens = this.authService.generateTokens(jwtPayload);
-    return {
-      ...newUser,
-      ...tokens,
-      message: 'Register successfully',
-    };
   }
 
   //set refresh token cookie in response headers

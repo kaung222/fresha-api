@@ -139,7 +139,7 @@ export class AuthService {
     // send email otp
     this.emailService.createWithoutSave({
       to: email,
-      text: `Your OTP for fresha is ${otp}.Dont share it anyone!`,
+      text: `Your OTP for fresha is <b>${otp}</b>.Dont share it anyone!`,
       subject: 'OTP',
       from: process.env.SHOP_GMAIL,
     });

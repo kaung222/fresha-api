@@ -83,7 +83,11 @@ export class Appointment extends UUIDEntity {
   @OneToMany(() => BookingItem, (item) => item.appointment)
   bookingItems: BookingItem[];
 
+  @Column({ nullable: true })
+  userId: string;
+
   @ManyToOne(() => User, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'userId' })
   user: User;
 
   @Column({ nullable: true })

@@ -45,3 +45,9 @@ export class RegisterUserDto {
   @IsDateString()
   dob: Date;
 }
+
+export class LoginWithGoogle {
+  @IsNotEmpty()
+  @IsString()
+  token: string;
+}

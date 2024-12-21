@@ -23,6 +23,7 @@ import { BookingItem } from './entities/booking-item.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { EmailsService } from '../emails/emails.service';
 import { RescheduleBookingDto } from './dto/reschedule-booking.dto';
+import { CacheService, CacheTTL } from '@/global/cache.service';
 
 @Injectable()
 export class AppointmentsService {
@@ -34,6 +35,7 @@ export class AppointmentsService {
     private readonly paymentService: PaymentsService,
     private dataSource: DataSource,
     private readonly emailService: EmailsService,
+    private readonly cacheService: CacheService,
   ) {}
 
   // create new appointment by user
@@ -256,26 +258,37 @@ export class AppointmentsService {
     });
   }
 
-  // find all appointment by org for a given date
+  // find all appointment by org for a given date by created date
   async findAllByCreatedDate(
     orgId: number,
     getAppointmentDto: GetAppointmentDto,
   ) {
     const { startDate, endDate } = getAppointmentDto;
-    return await this.appointmentRepository.find({
+    const cacheKey = this.getCacheKey(orgId, getAppointmentDto);
+    const dataInCache = await this.cacheService.get(cacheKey);
+    if (dataInCache) return dataInCache;
+    const appointments = await this.appointmentRepository.find({
       where: { orgId, createdAt: Between(startDate, endDate) },
       relations: {
         bookingItems: true,
       },
       order: { createdAt: 'desc' },
     });
+    await this.cacheService.set(cacheKey, appointments, CacheTTL.veryLong);
+    return appointments;
+  }
+
+  getCacheKey(orgId: number, getAppointmentDto: GetAppointmentDto) {
+    const { startDate, endDate } = getAppointmentDto;
+    return `org:${orgId}:${startDate}:${endDate}`;
   }
 
   // get appointment detail by org
-  findOne(id: string) {
+  findOne(id: string, orgId: number) {
     const appointment = this.appointmentRepository
       .createQueryBuilder('appointment')
       .where('appointment.id=:id', { id })
+      .andWhere('appointment.orgId=:orgId', { orgId })
       .leftJoinAndSelect('appointment.user', 'user')
       .leftJoinAndSelect('appointment.bookingItems', 'bookingItems')
       .leftJoinAndSelect('bookingItems.service', 'service')
@@ -283,15 +296,17 @@ export class AppointmentsService {
       .leftJoin('member.services', 'services')
       .addSelect('services.id')
       .getOne();
+    if (!appointment) throw new NotFoundException('Booking not found');
     return appointment;
   }
 
   // get appointment detail by user
-  findOneByUser(id: string) {
+  findOneByUser(id: string, userId: string) {
     return this.appointmentRepository.findOne({
-      where: { id },
+      where: { id, userId },
       relations: {
         organization: true,
+        bookingItems: true,
       },
     });
   }
@@ -408,7 +423,8 @@ export class AppointmentsService {
       startTime,
       endTime: startTime + totalTime,
     });
-    await this.emailService.rescheduleBookingByOrg(appointment, reason);
+    // const newDate = new Date(date)
+    await this.emailService.rescheduleBookingByOrg(appointment, date, reason);
     return {
       message: 'Marked as complete booking succesfully',
     };
