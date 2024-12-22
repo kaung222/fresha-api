@@ -218,13 +218,6 @@ export class AuthService {
       const { exp, iat, ...rest } = this.jwtService.verify(token, {
         secret: this.configService.get('JWT_REFRESH_SECRET'),
       });
-      const member = await this.memberRepository
-        .createQueryBuilder('member')
-        .where('member.id=:id', { id: rest?.id })
-        .addSelect('member.state')
-        .getOne();
-      if (!member || member.state === UserState.logout)
-        throw new ForbiddenException();
       const { accessToken, refreshToken } = this.generateTokens(rest);
       return { accessToken, refreshToken };
     } catch (error) {

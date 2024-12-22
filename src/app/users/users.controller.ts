@@ -36,10 +36,17 @@ export class UsersController {
   findOne(@Param('id') id: string) {
     return this.usersService.getUserById(id);
   }
+
   @Get('info/profile')
   @ApiOperation({ summary: 'Get my profile' })
   getProfile(@User('id') id: string) {
     return this.usersService.getProfile(id);
+  }
+
+  @Get(':id/appointments')
+  @ApiOperation({ summary: 'Get my profile' })
+  getMyAppointments(@User('id') id: string, @Query('page') page: number) {
+    return this.usersService.getMyAppointments(id, page);
   }
 
   @Patch('profile')

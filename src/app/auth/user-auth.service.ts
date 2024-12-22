@@ -51,6 +51,7 @@ export class UserAuthService {
         audience: process.env.GOOGLE_CLIENT_ID, // Specify the same client ID used in the strategy
       });
       const payload = ticket.getPayload();
+
       const user = await this.userService.findOneByEmail(payload.email);
       if (!user)
         return await this.saveNewUser({

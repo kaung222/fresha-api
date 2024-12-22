@@ -10,6 +10,8 @@ import { UpdateMultiScheduleDto } from '../org-schedule/dto/update-many.dto';
 import { OrgSchedule } from '../org-schedule/entities/org-schedule.entity';
 import { FilesService } from '../files/files.service';
 import { updateTagsOfObjects } from '@/utils/store-obj-s3';
+import { generateOpt } from '@/utils';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class PublicationService {
@@ -47,13 +49,16 @@ export class PublicationService {
   }
 
   async updateLocation(orgId: number, updateLocation: UpdateLocation) {
+    const organization = await this.orgRepository.findOneBy({ id: orgId });
     const { address, latitude, longitude, country, city } = updateLocation;
+    const slug = `${organization.name.split(' ').join('-')}-in-${city}-of-${country}-${generateOpt()}-${uuidv4()}`;
     await this.orgRepository.update(orgId, {
       address,
       latitude,
       longitude,
       city,
       country,
+      slug,
     });
     return { message: 'Update location and address successfully' };
   }

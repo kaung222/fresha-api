@@ -26,9 +26,9 @@ export class OrganizationsController {
     return this.organizationsService.findAll(paginateQuery);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.organizationsService.findOne(+id);
+  @Get(':slug')
+  findOne(@Param('slug') slug: string) {
+    return this.organizationsService.findOne(slug);
   }
 
   @Get('info/profile')

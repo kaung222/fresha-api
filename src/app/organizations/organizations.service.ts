@@ -61,20 +61,20 @@ export class OrganizationsService {
   }
 
   // find detail by public
-  async findOne(orgId: number) {
-    const cacheKey = `org-details:${orgId}`;
+  async findOne(slug: string) {
+    const cacheKey = `org-details:${slug}`;
     const dataInCache = await this.cacheService.get(cacheKey);
     if (dataInCache) return dataInCache;
-    const organization = await this.orgRepository.findOneBy({ id: orgId });
+    const organization = await this.orgRepository.findOneBy({ slug });
 
     const [related, members, schedules, services] = await Promise.all([
       this.orgRepository.find({
         where: { types: In(organization.types) },
         take: 3,
       }),
-      this.findTeam(orgId),
-      this.findSchedule(orgId),
-      this.findServices,
+      this.findTeam(organization.id),
+      this.findSchedule(organization.id),
+      this.findServices(organization.id),
     ]);
     // const isLiked = await this.dataSource.getRepository(Favourite).findOneBy({
     //   where: { post: { id: postId }, userId: requesterId },
