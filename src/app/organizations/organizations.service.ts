@@ -7,7 +7,13 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Organization } from './entities/organization.entity';
-import { DataSource, In, Repository, TableInheritance } from 'typeorm';
+import {
+  DataSource,
+  In,
+  JsonContains,
+  Repository,
+  TableInheritance,
+} from 'typeorm';
 import { Service } from '../services/entities/service.entity';
 import { Member } from '../members/entities/member.entity';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
@@ -36,7 +42,8 @@ export class OrganizationsService {
   async findAll(paginateQuery: PaginateQuery) {
     const { page = 1 } = paginateQuery;
     const [data, totalCount] = await this.orgRepository.findAndCount({
-      where: { isPublished: true },
+      // where: { isPublished: true },
+      order: { rating: 'DESC' },
     });
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
@@ -65,13 +72,22 @@ export class OrganizationsService {
     const cacheKey = `org-details:${slug}`;
     const dataInCache = await this.cacheService.get(cacheKey);
     if (dataInCache) return dataInCache;
-    const organization = await this.orgRepository.findOneBy({ slug });
-
+    const organization = await this.orgRepository.findOneBy({
+      slug,
+      // isPublished: true,
+    });
+    if (!organization) throw new NotFoundException('Organization not found');
+    // to select related org
+    const organizationType = organization.types[0];
     const [related, members, schedules, services] = await Promise.all([
-      this.orgRepository.find({
-        where: { types: In(organization.types) },
-        take: 3,
-      }),
+      this.orgRepository
+        .createQueryBuilder('org')
+        .where('JSON_CONTAINS(org.types, :type)', {
+          type: `"${organizationType}"`,
+        })
+        .andWhere('org.id!=:id AND isPublished=true', { id: organization.id })
+
+        .getOne(),
       this.findTeam(organization.id),
       this.findSchedule(organization.id),
       this.findServices(organization.id),

@@ -22,7 +22,7 @@ export class Organization extends IncrementEntity {
   @Column('simple-array', { nullable: true })
   images: string[];
 
-  @Column('simple-array', { nullable: true })
+  @Column('json', { nullable: true })
   types: string[];
 
   @Column({ nullable: true })
