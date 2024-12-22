@@ -52,4 +52,7 @@ export class Organization extends IncrementEntity {
   @Index('org-slug')
   @Column({ nullable: true, unique: true })
   slug: string;
+
+  @Column({ nullable: true })
+  thumbnail: string;
 }

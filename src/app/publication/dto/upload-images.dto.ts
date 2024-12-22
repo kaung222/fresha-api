@@ -11,6 +11,6 @@ export class UploadImages {
   @IsArray()
   @IsString({ each: true })
   @ArrayMinSize(3)
-  @ArrayMaxSize(6)
+  @ArrayMaxSize(8)
   images: string[];
 }

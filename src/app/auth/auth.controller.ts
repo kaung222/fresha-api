@@ -11,8 +11,6 @@ import {
 import { AuthService } from './auth.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { loginOrganizationDto } from './dto/login-org.dto';
-import { Role } from '@/security/role.decorator';
-import { Roles, User } from '@/security/user.decorator';
 import { Request, Response } from 'express';
 import { ConfirmOTPDto } from './dto/confirm-otp.dto';
 import { GetOTPDto } from './dto/get-otp.dto';
@@ -68,7 +66,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Get new access token when expired' })
   async getNewAccessToken(@Req() req: Request, @Res() res: Response) {
     const cookie = req.headers.cookie;
-    if (!cookie)
+    const accessToken = req.headers.authorization.split(' ');
+
+    if (!cookie || !accessToken)
       throw new UnauthorizedException('Session expires, login again!');
     const token = this.authService.getRefreshTokenFromCookie(cookie);
     const tokens = await this.authService.getNewAccessToken(token);
@@ -89,9 +89,10 @@ export class AuthController {
   }
 
   @Post('logout')
-  @ApiOperation({ summary: 'logout member' })
-  @Role(Roles.org, Roles.member)
-  handleLogout(@User('id') memberId: string, @Res() res: Response) {
+  @ApiOperation({ summary: 'logout member, user, and org' })
+  handleLogout(@Req() req: Request, @Res() res: Response) {
+    const cookie = req.headers.cookie;
+    if (!cookie) return res.status(200).send({ message: 'Already logged out' });
     this.authService.setCookieHeaders(res, '');
     res.send({ message: 'logout successfully' });
   }

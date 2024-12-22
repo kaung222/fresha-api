@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUrl,
 } from 'class-validator';
 
 export class UpdateBasiceInfo {
@@ -18,6 +19,10 @@ export class UpdateBasiceInfo {
   @IsOptional()
   @IsString()
   notes: string;
+
+  @IsNotEmpty()
+  @IsUrl()
+  thumbnail: string;
 }
 
 export class UpdateTypes {

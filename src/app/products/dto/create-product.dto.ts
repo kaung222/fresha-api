@@ -1,5 +1,7 @@
 import { DiscountType } from '@/app/services/entities/service.entity';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
   Contains,
   IsEnum,
   IsInt,
@@ -7,12 +9,14 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  IsUrl,
   Min,
 } from 'class-validator';
 
 export class CreateProductDto {
   @IsOptional()
   @IsString({ each: true })
+  @ArrayMaxSize(8)
   @Contains('https://djiwkc53pq2w8.cloudfront.net/', {
     each: true,
     message: "only allowed baranie' images",
@@ -46,6 +50,10 @@ export class CreateProductDto {
   @IsNotEmpty()
   @IsInt()
   stock: number;
+
+  @IsUrl()
+  @IsNotEmpty()
+  thumbnail: string;
 
   @IsOptional()
   @IsPositive()

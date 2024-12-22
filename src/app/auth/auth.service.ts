@@ -257,7 +257,9 @@ export class AuthService {
       sameSite: 'none',
       secure: true,
       httpOnly: true,
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      expires: refreshToken
+        ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+        : new Date(0),
     });
   }
   // Helper function to extract the refresh token from the cookie

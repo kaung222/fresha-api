@@ -45,6 +45,9 @@ export class Product extends UUIDEntity {
   @Column()
   orgId: number;
 
+  @Column({ nullable: true })
+  thumbnail: string;
+
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orgId' })
   organization: Organization;

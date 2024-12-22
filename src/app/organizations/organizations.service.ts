@@ -77,17 +77,8 @@ export class OrganizationsService {
       isPublished: true,
     });
     if (!organization) throw new NotFoundException('Organization not found');
-    // to select related org
-    const organizationType = organization.types[0];
     const [related, members, schedules, services] = await Promise.all([
-      this.orgRepository
-        .createQueryBuilder('org')
-        .where('JSON_CONTAINS(org.types, :type)', {
-          type: `"${organizationType}"`,
-        })
-        .andWhere('org.id!=:id AND isPublished=true', { id: organization.id })
-
-        .getOne(),
+      this.getRelatedOrgs(organization),
       this.findTeam(organization.id),
       this.findSchedule(organization.id),
       this.findServices(organization.id),
@@ -107,6 +98,18 @@ export class OrganizationsService {
     return response;
   }
 
+  async getRelatedOrgs(organization: Organization) {
+    const organizationType = organization.types[0];
+    return await this.orgRepository
+      .createQueryBuilder('org')
+      .where('JSON_CONTAINS(org.types, :type)', {
+        type: `"${organizationType}"`,
+      })
+      .andWhere('org.id!=:id AND isPublished=true', { id: organization.id })
+      .andWhere('org.city=:city', { city: organization.city })
+      .getOne();
+  }
+
   async findSchedule(orgId: number) {
     return await this.dataSource.getRepository(OrgSchedule).findBy({ orgId });
   }
@@ -115,8 +118,6 @@ export class OrganizationsService {
       .createQueryBuilder('organization')
       .where('organization.id=:orgId', { orgId })
       .addSelect('organization.isPublished')
-      .addSelect('organization.notes')
-      .addSelect('organization.address')
       .getOne();
     return organization;
   }

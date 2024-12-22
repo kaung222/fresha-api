@@ -23,11 +23,12 @@ export class PublicationService {
   ) {}
 
   async updateBasicInfo(orgId: number, updateBasiceInfo: UpdateBasiceInfo) {
-    const { name, phones, notes } = updateBasiceInfo;
+    const { name, phones, notes, thumbnail } = updateBasiceInfo;
     const updateRes = await this.orgRepository.update(orgId, {
       name,
       phones,
       notes,
+      thumbnail,
     });
     if (updateRes.affected == 1)
       return {
@@ -51,7 +52,10 @@ export class PublicationService {
   async updateLocation(orgId: number, updateLocation: UpdateLocation) {
     const organization = await this.orgRepository.findOneBy({ id: orgId });
     const { address, latitude, longitude, country, city } = updateLocation;
-    const slug = `${organization.name.split(' ').join('-')}-in-${city}-of-${country}-${generateOpt()}-${uuidv4()}`;
+    // if slug exit, don't update , if not exit insert
+    const slug = organization?.slug
+      ? organization.slug
+      : `${organization.name.split(' ').join('-')}-in-${city}-of-${country}-${generateOpt()}-${uuidv4()}`;
     await this.orgRepository.update(orgId, {
       address,
       latitude,
