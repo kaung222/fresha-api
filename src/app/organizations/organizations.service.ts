@@ -42,7 +42,7 @@ export class OrganizationsService {
   async findAll(paginateQuery: PaginateQuery) {
     const { page = 1 } = paginateQuery;
     const [data, totalCount] = await this.orgRepository.findAndCount({
-      // where: { isPublished: true },
+      where: { isPublished: true },
       order: { rating: 'DESC' },
     });
     return new PaginationResponse({ data, totalCount, page }).toResponse();
@@ -74,7 +74,7 @@ export class OrganizationsService {
     if (dataInCache) return dataInCache;
     const organization = await this.orgRepository.findOneBy({
       slug,
-      // isPublished: true,
+      isPublished: true,
     });
     if (!organization) throw new NotFoundException('Organization not found');
     // to select related org
