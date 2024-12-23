@@ -24,7 +24,7 @@ export class SearchService {
       case 'appointment':
         return await this.searchAppointment(q, page);
 
-      case 'post':
+      case 'sale':
         return await this.searchSale(q, page);
 
       default:
@@ -54,8 +54,8 @@ export class SearchService {
       .findAndCount({
         where: [
           { firstName: Like(`%${q}%`) },
-          { email: q },
           { lastName: Like(`%${q}%`) },
+          { email: q },
           { phone: q },
         ],
         take: 10,
@@ -90,7 +90,12 @@ export class SearchService {
     const [data, totalCount] = await this.dataSource
       .getRepository(Appointment)
       .findAndCount({
-        where: [{ notes: Like(`%${q}%`), bookingId: parseInt(q) }],
+        where: [
+          { username: Like(`%${q}%`) },
+          { email: q },
+          { phone: q },
+          { notes: Like(`%${q}%`), token: parseInt(q) },
+        ],
         take: 10,
         skip: 10 * (page - 1),
       });

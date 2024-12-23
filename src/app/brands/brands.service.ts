@@ -7,7 +7,7 @@ import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brand } from './entities/brand.entity';
-import { Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CacheService, CacheTTL } from '@/global/cache.service';
 
 @Injectable()
@@ -24,10 +24,11 @@ export class BrandsService {
       orgId,
     });
 
-    this.brandRepository.save(createBrand);
+    const brand = await this.brandRepository.save(createBrand);
     this.clearCache(orgId);
     return {
       message: 'Created brand successfully',
+      brand,
     };
   }
 

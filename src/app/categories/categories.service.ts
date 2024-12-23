@@ -1,5 +1,5 @@
 import {
-  ForbiddenException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -7,7 +7,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
-import { Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CacheService, CacheTTL } from '@/global/cache.service';
 
 @Injectable()
@@ -43,7 +43,7 @@ export class CategoriesService {
       name: categoryName,
       orgId,
     });
-    if (brand) throw new ForbiddenException('Category already exist');
+    if (brand) throw new ConflictException('Category already exist');
     return true;
   }
 

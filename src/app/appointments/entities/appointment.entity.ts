@@ -27,9 +27,6 @@ export class Appointment extends UUIDEntity {
   @Column('date')
   date: Date;
 
-  @Generated('increment')
-  bookingId: number;
-
   @Column()
   username: string;
 

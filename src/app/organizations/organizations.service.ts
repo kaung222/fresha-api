@@ -67,6 +67,9 @@ export class OrganizationsService {
     return members;
   }
 
+  findOneById(id: number) {
+    return this.orgRepository.findOneBy({ id });
+  }
   // find detail by public
   async findOne(slug: string) {
     const cacheKey = `org-details:${slug}`;

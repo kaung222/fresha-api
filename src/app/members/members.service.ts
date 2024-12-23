@@ -49,6 +49,20 @@ export class MembersService {
     };
   }
 
+  //  find members of selected services
+  findMembers(serviceIds: string[]) {
+    return this.dataSource
+      .getRepository(Member)
+      .createQueryBuilder('member')
+      .innerJoin('member.services', 'service') // Join the services relation
+      .where('service.id IN (:...serviceIds)', { serviceIds }) // Filter by selected services
+      .groupBy('member.id') // Group by member
+      .having('COUNT(DISTINCT service.id) = :serviceCount', {
+        serviceCount: serviceIds.length,
+      }) // Ensure all selected services match
+      .getMany();
+  }
+
   async getServicesByIds(serviceIds: number[], orgId: number) {
     const services = await this.dataSource
       .getRepository(Service)

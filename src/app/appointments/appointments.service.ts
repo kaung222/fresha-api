@@ -35,7 +35,7 @@ export class AppointmentsService {
     private readonly paymentService: PaymentsService,
     private dataSource: DataSource,
     private readonly emailService: EmailsService,
-    private readonly cacheService: CacheService,
+    // private readonly cacheService: CacheService,
   ) {}
 
   // create new appointment by user
@@ -55,6 +55,7 @@ export class AppointmentsService {
         user,
         isOnlineBooking: true,
         orgEmail: organization.email,
+        orgName: organization.name,
       });
 
       // create new appointment
@@ -102,9 +103,11 @@ export class AppointmentsService {
       // save appointment
       const createAppointment = this.appointmentRepository.create({
         ...rest,
-        organization: { id: orgId },
+
         startTime,
+        orgId,
         orgEmail: organization.email,
+        orgName: organization.name,
       });
       const appointment =
         await this.appointmentRepository.save(createAppointment);
@@ -250,12 +253,13 @@ export class AppointmentsService {
   // find all appointment by org for a given date
   async findAll(orgId: number, getAppointmentDto: GetAppointmentDto) {
     const { startDate, endDate } = getAppointmentDto;
-    return await this.appointmentRepository.find({
+    const response = await this.appointmentRepository.find({
       where: { orgId, date: Between(startDate, endDate) },
       relations: {
         bookingItems: true,
       },
     });
+    return response;
   }
 
   // find all appointment by org for a given date by created date
@@ -264,9 +268,6 @@ export class AppointmentsService {
     getAppointmentDto: GetAppointmentDto,
   ) {
     const { startDate, endDate } = getAppointmentDto;
-    const cacheKey = this.getCacheKey(orgId, getAppointmentDto);
-    const dataInCache = await this.cacheService.get(cacheKey);
-    if (dataInCache) return dataInCache;
     const appointments = await this.appointmentRepository.find({
       where: { orgId, createdAt: Between(startDate, endDate) },
       relations: {
@@ -274,11 +275,10 @@ export class AppointmentsService {
       },
       order: { createdAt: 'desc' },
     });
-    await this.cacheService.set(cacheKey, appointments, CacheTTL.veryLong);
     return appointments;
   }
 
-  getCacheKey(orgId: number, getAppointmentDto: GetAppointmentDto) {
+  private getCacheKey(orgId: number, getAppointmentDto: GetAppointmentDto) {
     const { startDate, endDate } = getAppointmentDto;
     return `org:${orgId}:${startDate}:${endDate}`;
   }

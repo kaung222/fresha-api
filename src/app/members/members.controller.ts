@@ -38,6 +38,11 @@ export class MembersController {
     return this.membersService.findAll(orgId);
   }
 
+  @Get('of/services')
+  findMembersOfServices(@Query('serviceIds') serviceIds: string[]) {
+    return this.membersService.findMembers(serviceIds);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.membersService.findOne(id);

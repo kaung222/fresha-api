@@ -14,7 +14,7 @@ import { BookingStatus } from '@/app/appointments/entities/appointment.entity';
 
 @Entity()
 export class Sale extends UUIDEntity {
-  @Column({ default: 'unknown' })
+  @Column()
   username: string;
 
   @Column({ nullable: true })
