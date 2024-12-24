@@ -30,8 +30,8 @@ export class Appointment extends UUIDEntity {
   @Column()
   username: string;
 
-  @Column('int')
-  token: number;
+  @Column({ nullable: true })
+  token: string;
 
   @Column({ type: 'text', nullable: true })
   notes: string;
@@ -103,6 +103,6 @@ export class Appointment extends UUIDEntity {
 
   @BeforeInsert()
   generateToken() {
-    this.token = parseInt(generateOpt());
+    this.token = generateOpt();
   }
 }

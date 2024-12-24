@@ -12,35 +12,35 @@ import { Client } from '../clients/entities/client.entity';
 export class SearchService {
   constructor(private readonly dataSource: DataSource) {}
 
-  async search(searchDto: SearchDto) {
+  async search(orgId: number, searchDto: SearchDto) {
     const { q, name, page } = searchDto;
     switch (name) {
       case 'product':
-        return await this.searchProducts(q, page);
+        return await this.searchProducts(q, page, orgId);
 
       case 'service':
-        return await this.searchService(q, page);
+        return await this.searchService(q, page, orgId);
 
       case 'appointment':
-        return await this.searchAppointment(q, page);
+        return await this.searchAppointment(q, page, orgId);
 
       case 'sale':
-        return await this.searchSale(q, page);
+        return await this.searchSale(q, page, orgId);
 
       default:
-        return await this.searchClient(q, page);
+        return await this.searchClient(q, page, orgId);
     }
   }
 
-  private async searchSale(q: string, page = 1) {
+  private async searchSale(q: string, page = 1, orgId: number) {
     const [data, totalCount] = await this.dataSource
       .getRepository(Sale)
       .findAndCount({
         where: [
-          { username: Like(`%${q}%`) },
-          { email: q },
-          { notes: Like(`%${q}%`) },
-          { phone: q },
+          { username: Like(`%${q}%`), orgId },
+          { email: q, orgId },
+          { notes: Like(`%${q}%`), orgId },
+          { phone: q, orgId },
         ],
         take: 10,
         skip: 10 * (page - 1),
@@ -48,15 +48,15 @@ export class SearchService {
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
-  private async searchClient(q: string, page = 1) {
+  private async searchClient(q: string, page = 1, orgId: number) {
     const [data, totalCount] = await this.dataSource
       .getRepository(Client)
       .findAndCount({
         where: [
-          { firstName: Like(`%${q}%`) },
-          { lastName: Like(`%${q}%`) },
-          { email: q },
-          { phone: q },
+          { firstName: Like(`%${q}%`), orgId },
+          { lastName: Like(`%${q}%`), orgId },
+          { email: q, orgId },
+          { phone: q, orgId },
         ],
         take: 10,
         skip: 10 * (page - 1),
@@ -64,37 +64,41 @@ export class SearchService {
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
-  private async searchProducts(q: string, page = 1) {
+  private async searchProducts(q: string, page = 1, orgId: number) {
     const [data, totalCount] = await this.dataSource
       .getRepository(Product)
       .findAndCount({
-        where: { name: Like(`%${q}%`) },
+        where: { name: Like(`%${q}%`), orgId },
         take: 10,
         skip: 10 * (page - 1),
       });
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
-  private async searchService(q: string, page = 1) {
+  private async searchService(q: string, page = 1, orgId: number) {
     const [data, totalCount] = await this.dataSource
       .getRepository(Service)
       .findAndCount({
-        where: [{ name: Like(`%${q}%`) }, { description: Like(`%${q}%`) }],
+        where: [
+          { name: Like(`%${q}%`), orgId },
+          { description: Like(`%${q}%`), orgId },
+        ],
         take: 10,
         skip: 10 * (page - 1),
       });
     return new PaginationResponse({ data, totalCount, page }).toResponse();
   }
 
-  private async searchAppointment(q: string, page = 1) {
+  private async searchAppointment(q: string, page = 1, orgId: number) {
     const [data, totalCount] = await this.dataSource
       .getRepository(Appointment)
       .findAndCount({
         where: [
-          { username: Like(`%${q}%`) },
-          { email: q },
-          { phone: q },
-          { notes: Like(`%${q}%`), token: parseInt(q) },
+          { username: Like(`%${q}%`), orgId },
+          { email: q, orgId },
+          { phone: q, orgId },
+          { notes: Like(`%${q}%`), orgId },
+          { token: q, orgId },
         ],
         take: 10,
         skip: 10 * (page - 1),
