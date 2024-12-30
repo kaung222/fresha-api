@@ -36,6 +36,12 @@ export class OrganizationsController {
     return this.organizationsService.findOneById(+id);
   }
 
+  @Get('in/:city')
+  @ApiOperation({ summary: 'Find org in given city' })
+  findInCity(@Param('city') city: string) {
+    return this.organizationsService.findInCity(city);
+  }
+
   @Get('info/profile')
   @Role(Roles.org)
   @ApiOperation({ summary: 'Get profile with access token' })

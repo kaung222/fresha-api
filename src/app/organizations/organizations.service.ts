@@ -101,6 +101,15 @@ export class OrganizationsService {
     return response;
   }
 
+  async findInCity(city: string) {
+    const organizations = await this.orgRepository.find({
+      where: { city },
+      take: 5,
+      order: { rating: 'DESC' },
+    });
+    return organizations;
+  }
+
   async getRelatedOrgs(organization: Organization) {
     const organizationType = organization.types[0];
     return await this.orgRepository

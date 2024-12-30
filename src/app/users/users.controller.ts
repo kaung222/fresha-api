@@ -56,9 +56,9 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Delete(':id')
+  @Delete('my-account')
   @ApiOperation({ summary: 'Delete account' })
-  remove(@Param('id') id: string) {
+  remove(@User('id') id: string) {
     return this.usersService.remove(id);
   }
 }
