@@ -37,7 +37,6 @@ export class UsersService {
     return await this.userRepository
       .createQueryBuilder('user')
       .where('user.email=:email', { email })
-      .addSelect('user.email')
       .getOne();
   }
 
