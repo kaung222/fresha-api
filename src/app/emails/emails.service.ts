@@ -42,6 +42,7 @@ export class EmailsService {
       where: { orgId },
       take: 20,
       skip: 20 * (page - 1),
+      order: { createdAt: 'desc' },
     });
 
     const response = new PaginationResponse({
@@ -78,13 +79,8 @@ export class EmailsService {
   }
 
   async sendEmailToAdmins(sendEmail: SendEmailToAdmin) {
-    const createEmail = this.emailRepository.create({
-      ...sendEmail,
-      to: ['thirdgodiswinning@gmail.com'],
-    });
-    const email = await this.emailRepository.save(createEmail);
-    this.emailQueue.add('sendEmailWithoutSaving', email);
-    return { message: 'Send message successfully' };
+    this.emailQueue.add('sendEmailToAdmin', sendEmail);
+    return { message: 'Thank for contact with us. We will response you ASAP.' };
   }
 
   private async sendEmailToClients(
@@ -106,7 +102,6 @@ export class EmailsService {
     await this.createWithoutSave({
       ...createEmailDto,
       to: clientEmails,
-
       from: organization.email,
     });
     return { message: 'Send message to clients successfully' };

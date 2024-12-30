@@ -6,6 +6,7 @@ export enum MailTo {
   client = 'clients',
   members = 'members',
   custom = 'custom',
+  admin = 'admin',
 }
 
 @Entity()

@@ -13,7 +13,7 @@ import { Roles, User } from '@/security/user.decorator';
 import { ApiTags } from '@nestjs/swagger';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { CreateEmailByOrg } from './dto/create-email-by-org.dto';
-import { CreateEmailBySystem } from './dto/crearte-email.dto';
+import { SendEmailToAdmin } from './dto/send-email-to-admin';
 
 @Controller('emails')
 @ApiTags('Email')
@@ -30,7 +30,7 @@ export class EmailsController {
   }
 
   @Post('to/admins')
-  sendEmailToAdmin(@Body() createEmailDto: CreateEmailBySystem) {
+  sendEmailToAdmin(@Body() createEmailDto: SendEmailToAdmin) {
     return this.emailsService.sendEmailToAdmins(createEmailDto);
   }
 
