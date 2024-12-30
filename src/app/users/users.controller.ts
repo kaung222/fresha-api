@@ -38,6 +38,7 @@ export class UsersController {
   }
 
   @Get('info/profile')
+  @Role(Roles.user)
   @ApiOperation({ summary: 'Get my profile' })
   getProfile(@User('id') id: string) {
     return this.usersService.getProfile(id);

@@ -60,7 +60,8 @@ export class UsersService {
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.getUserById(id);
-    Object.assign(user, updateUserDto);
+    const { password, email, ...rest } = updateUserDto;
+    Object.assign(user, rest);
     const newUser = await this.userRepository.save(user);
     return {
       message: 'Update profile successfully',

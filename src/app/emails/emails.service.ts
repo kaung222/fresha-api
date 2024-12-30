@@ -95,6 +95,7 @@ export class EmailsService {
       ...createEmailDto,
       from: organization.email,
       mailTo: MailTo.client,
+      orgId: organization.id,
     });
     this.emailRepository.save(createEmail);
     // select client email list
@@ -115,11 +116,11 @@ export class EmailsService {
     organization: Organization,
     createEmailDto: CreateEmailByOrg,
   ) {
-    const { subject, text } = createEmailDto;
     const createEmail = this.emailRepository.create({
       ...createEmailDto,
       from: organization.email,
       mailTo: MailTo.members,
+      orgId: organization.id,
     });
     this.emailRepository.save(createEmail);
     // select client email list
@@ -130,7 +131,6 @@ export class EmailsService {
     await this.createWithoutSave({
       ...createEmailDto,
       to: memberEmails,
-
       from: organization.email,
     });
     return { message: 'Send message to clients successfully' };
@@ -144,6 +144,7 @@ export class EmailsService {
       ...createEmailDto,
       from: organization.email,
       mailTo: MailTo.custom,
+      orgId: organization.id,
     });
     this.emailRepository.save(createEmail);
     await this.createWithoutSave({
