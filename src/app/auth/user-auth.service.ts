@@ -28,6 +28,8 @@ export class UserAuthService {
     const { email, password } = loginUserDto;
     const user = await this.userService.findOneByEmail(email);
     if (!user) throw new NotFoundException('User not found');
+    if (user.password === null)
+      throw new UnauthorizedException('Please login with google');
     const isAuthenticated = await this.authService.checkPassword(
       password,
       user.password,
@@ -51,32 +53,29 @@ export class UserAuthService {
         audience: process.env.GOOGLE_CLIENT_ID, // Specify the same client ID used in the strategy
       });
       const payload = ticket.getPayload();
-
-      const user = await this.userService.findOneByEmail(payload.email);
+      console.log(payload);
+      let user = await this.userService.findOneByEmail(payload.email);
       if (!user)
-        return await this.saveNewUser({
+        user = await this.userService.create({
           firstName: payload?.given_name,
           lastName: payload?.family_name,
           email: payload?.email,
           profilePicture: payload?.picture,
         });
-      return {
-        user,
-        ...this.getTokens(user),
-      };
+      return this.getTokens(user);
     } catch (error) {
       console.log(error);
       throw new UnauthorizedException('Invalid access token');
     }
   }
 
-  async saveNewUser(createUserDto: CreateUserDto) {
-    const user = await this.userService.create(createUserDto);
-    return {
-      user,
-      ...this.getTokens(user),
-    };
-  }
+  // async saveNewUser(createUserDto: CreateUserDto) {
+  //   const user = await this.userService.create(createUserDto);
+  //   return {
+  //     user,
+  //     ...this.getTokens(user),
+  //   };
+  // }
 
   private getTokens(user: User) {
     const jwtPayload = { id: user.id, role: Roles.user };
@@ -88,10 +87,11 @@ export class UserAuthService {
     const user = await this.userService.findOneByEmail(email);
     if (user) throw new ConflictException('email already taken');
     const hashPassword = await this.authService.hashPassword(password);
-    return await this.saveNewUser({
+    const newUser = await this.userService.create({
       ...registerUserDto,
       password: hashPassword,
     });
+    return this.getTokens(newUser);
   }
 
   //set refresh token cookie in response headers
