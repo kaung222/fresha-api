@@ -26,7 +26,6 @@ import { ConfirmOTPDto } from './dto/confirm-otp.dto';
 import { RegisterOrganizationDto } from './dto/create-org.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EmailsService } from '../emails/emails.service';
-import { retry } from 'rxjs';
 
 @Injectable()
 export class AuthService {

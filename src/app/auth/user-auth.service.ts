@@ -28,7 +28,7 @@ export class UserAuthService {
     const { email, password } = loginUserDto;
     const user = await this.userService.findOneByEmail(email);
     if (!user) throw new NotFoundException('User not found');
-    if (user.password === null)
+    if (!user.password)
       throw new UnauthorizedException('Please login with google');
     const isAuthenticated = await this.authService.checkPassword(
       password,

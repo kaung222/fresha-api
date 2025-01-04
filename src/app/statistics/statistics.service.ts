@@ -74,25 +74,26 @@ export class StatisticsService {
     getStatisticsDto: GetStatisticsDto,
   ) {
     const { startDate, endDate, status } = getStatisticsDto;
-    // const dates = getDatesBetweenDates(startDate, endDate);
-    const data = await this.dataSource
+    let queryBuilder = this.dataSource
       .getRepository(Appointment)
       .createQueryBuilder('appointment')
       .where('appointment.orgId=:orgId', { orgId })
-      // .andWhere('appointment.date IN (:...dates)', { dates })
       .andWhere('appointment.date BETWEEN :startDate AND :endDate', {
         startDate,
         endDate,
       })
       .select('appointment.date', 'date')
-      .andWhere('appointment.status=:status', { status })
-      // .select('SUM(appointment.duration)', 'totalDuration')
+      .addSelect('appointment.status', 'status')
       .addSelect('SUM(appointment.totalCommissionFees)', 'totalCommissionFees')
       .addSelect('SUM(appointment.discountPrice)', 'totalDiscountPrice')
       .addSelect('COUNT(*)', 'totalAppointments')
+      .groupBy('date');
 
-      .groupBy('date')
-      .getRawMany();
+    if (status) {
+      queryBuilder.andWhere('appointment.status=:status', { status });
+    }
+
+    const data = await queryBuilder.getRawMany();
     return data;
   }
 
