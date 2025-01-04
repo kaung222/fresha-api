@@ -256,6 +256,8 @@ export class AuthService {
       sameSite: 'none',
       secure: true,
       httpOnly: true,
+      domain: process.env.MANAGEMENT_COOKIE_DOMAIN,
+      path: '/',
       expires: refreshToken
         ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
         : new Date(0),
