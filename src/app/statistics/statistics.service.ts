@@ -87,7 +87,8 @@ export class StatisticsService {
       .addSelect('SUM(appointment.totalCommissionFees)', 'totalCommissionFees')
       .addSelect('SUM(appointment.discountPrice)', 'totalDiscountPrice')
       .addSelect('COUNT(*)', 'totalAppointments')
-      .groupBy('date');
+      .groupBy('date')
+      .addGroupBy('status');
 
     if (status) {
       queryBuilder.andWhere('appointment.status=:status', { status });
