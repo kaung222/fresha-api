@@ -52,6 +52,7 @@ export class UsersService {
         relations: { organization: true, bookingItems: true },
         take: 10,
         skip: 10 * (page - 1),
+        order: { createdAt: 'DESC' },
       });
 
     return new PaginationResponse({ data, totalCount, page }).toResponse();

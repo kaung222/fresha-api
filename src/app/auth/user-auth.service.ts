@@ -4,17 +4,14 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
-import { Repository } from 'typeorm';
 import { LoginUserDto } from './dto/login-user.dto';
 import { AuthService } from './auth.service';
 import { Roles } from '@/security/user.decorator';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { Response } from 'express';
-import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { OAuth2Client } from 'google-auth-library';
 import { UsersService } from '../users/users.service';
-import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Injectable()
 export class UserAuthService {

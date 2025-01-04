@@ -82,10 +82,10 @@ export class AppointmentsService {
         appointment,
       };
     } catch (error) {
-      queryRunner.rollbackTransaction();
-      throw new ForbiddenException('Cannot book the appointment!');
+      await queryRunner.rollbackTransaction();
+      throw new ForbiddenException(error.message);
     } finally {
-      queryRunner.release();
+      await queryRunner.release();
     }
   }
 

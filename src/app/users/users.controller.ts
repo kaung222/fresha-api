@@ -45,14 +45,19 @@ export class UsersController {
   }
 
   @Get(':id/appointments')
+  @Role(Roles.user)
   @ApiOperation({ summary: 'Get my profile' })
-  getMyAppointments(@User('id') id: string, @Query('page') page: number) {
-    return this.usersService.getMyAppointments(id, page);
+  getMyAppointments(
+    @User('id') id: string,
+    @Query() paginateQuery: PaginateQuery,
+  ) {
+    return this.usersService.getMyAppointments(id, paginateQuery.page);
   }
 
   @Patch('profile')
+  @Role(Roles.user)
   @ApiOperation({ summary: 'update my profile' })
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(@User('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
