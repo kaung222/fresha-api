@@ -252,7 +252,7 @@ export class AuthService {
 
   //set refresh token cookie in response headers
   setCookieHeaders(res: Response, refreshToken: string) {
-    res.cookie('refreshToken', refreshToken, {
+    return res.cookie('refreshToken', refreshToken, {
       sameSite: 'none',
       secure: true,
       httpOnly: true,

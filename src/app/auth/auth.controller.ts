@@ -89,7 +89,7 @@ export class AuthController {
   }
 
   @Post('logout')
-  @ApiOperation({ summary: 'logout member, user, and org' })
+  @ApiOperation({ summary: 'logout member and org' })
   handleLogout(@Req() req: Request, @Res() res: Response) {
     const cookie = req.headers.cookie;
     if (!cookie) return res.status(200).send({ message: 'Already logged out' });
