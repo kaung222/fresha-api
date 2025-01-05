@@ -7,12 +7,14 @@ import { DataSource, Repository } from 'typeorm';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { Appointment } from '../appointments/entities/appointment.entity';
+import { CacheService } from '@/global/cache.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     private readonly dataSource: DataSource,
+    private readonly cacheService: CacheService,
   ) {}
   async create(createUserDto: CreateUserDto) {
     const newUser = this.userRepository.create(createUserDto);
@@ -20,11 +22,19 @@ export class UsersService {
   }
 
   async findAll({ page = 1 }: PaginateQuery) {
+    const cached = await this.cacheService.get('users');
+    if (cached) return cached;
     const [data, totalCount] = await this.userRepository.findAndCount({
       take: 10,
       skip: 10 * (page - 1),
     });
-    return new PaginationResponse({ page, data, totalCount }).toResponse();
+    const response = new PaginationResponse({
+      page,
+      data,
+      totalCount,
+    }).toResponse();
+    this.cacheService.set('users', response);
+    return response;
   }
 
   async getUserById(id: string) {

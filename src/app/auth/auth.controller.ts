@@ -67,11 +67,10 @@ export class AuthController {
   async getNewAccessToken(@Req() req: Request, @Res() res: Response) {
     const cookie = req.headers.cookie;
     const accessToken = req.headers.authorization.split(' ');
-
     if (!cookie || !accessToken)
       throw new UnauthorizedException('Session expires, login again!');
-    const token = this.authService.getRefreshTokenFromCookie(cookie);
-    const tokens = await this.authService.getNewAccessToken(token);
+    const sessionId = this.authService.getSessionIdFromCookie(cookie);
+    const tokens = await this.authService.getNewAccessToken(sessionId);
     this.authService.setCookieHeaders(res, tokens.refreshToken);
     res.send({ accessToken: tokens.accessToken });
   }

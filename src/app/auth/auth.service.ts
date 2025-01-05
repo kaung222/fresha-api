@@ -26,6 +26,8 @@ import { ConfirmOTPDto } from './dto/confirm-otp.dto';
 import { RegisterOrganizationDto } from './dto/create-org.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EmailsService } from '../emails/emails.service';
+import { v4 as uuidv4 } from 'uuid';
+import { CacheService } from '@/global/cache.service';
 
 @Injectable()
 export class AuthService {
@@ -34,6 +36,7 @@ export class AuthService {
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
     private emailService: EmailsService,
+    private cacheService: CacheService,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
     @InjectRepository(Organization)
@@ -212,7 +215,10 @@ export class AuthService {
     };
   }
 
-  async getNewAccessToken(token: string) {
+  async getNewAccessToken(sessionId: string) {
+    const token = await this.cacheService.get(sessionId);
+    if (!token)
+      throw new UnauthorizedException('Session expires, login again!');
     try {
       const { exp, iat, ...rest } = this.jwtService.verify(token, {
         secret: this.configService.get('JWT_REFRESH_SECRET'),
@@ -252,22 +258,22 @@ export class AuthService {
 
   //set refresh token cookie in response headers
   setCookieHeaders(res: Response, refreshToken: string) {
-    return res.cookie('refreshToken', refreshToken, {
-      sameSite: 'none',
+    const sessionId = uuidv4();
+    this.cacheService.set(sessionId, refreshToken, 7 * 24 * 60 * 60 * 1000);
+    return res.cookie('sessionId', sessionId, {
+      sameSite: 'lax',
       secure: true,
       httpOnly: true,
-      domain: process.env.MANAGEMENT_COOKIE_DOMAIN,
-      path: '/',
       expires: refreshToken
         ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
         : new Date(0),
     });
   }
   // Helper function to extract the refresh token from the cookie
-  getRefreshTokenFromCookie(cookie: string): string | null {
-    const refreshTokenMatch = cookie
+  getSessionIdFromCookie(cookie: string): string | null {
+    const sessionId = cookie
       .split(';')
-      .find((c) => c.trim().startsWith('refreshToken='));
-    return refreshTokenMatch ? refreshTokenMatch.split('=')[1] : null;
+      .find((c) => c.trim().startsWith('sessionId='));
+    return sessionId ? sessionId.split('=')[1] : null;
   }
 }

@@ -93,19 +93,10 @@ export class UserAuthService {
 
   //set refresh token cookie in response headers
   setCookieHeaders(res: Response, refreshToken: string) {
-    return res.cookie('refreshToken', refreshToken, {
-      sameSite: 'none',
-      secure: true,
-      httpOnly: true,
-      path: '/',
-      domain: process.env.USER_COOKIE_DOMAIN,
-      expires: refreshToken
-        ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
-        : new Date(0),
-    });
+    this.authService.setCookieHeaders(res, refreshToken);
   }
   // Helper function to extract the refresh token from the cookie
   getRefreshTokenFromCookie(cookie: string): string | null {
-    return this.authService.getRefreshTokenFromCookie(cookie);
+    return this.authService.getSessionIdFromCookie(cookie);
   }
 }

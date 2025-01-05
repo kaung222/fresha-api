@@ -70,6 +70,7 @@ import { Email } from './app/emails/entities/email.entity';
 import { SearchModule } from './app/search/search.module';
 import { FavouritesModule } from './app/favourites/favourites.module';
 import { Favourite } from './app/favourites/entities/favourite.entity';
+import { redisStore } from 'cache-manager-redis-store';
 
 @Module({
   imports: [
@@ -143,7 +144,22 @@ import { Favourite } from './app/favourites/entities/favourite.entity';
         disconnectTimeout: 10,
       },
     }),
-    CacheModule.register({ isGlobal: true }),
+    // CacheModule.registerAsync({
+    //   useFactory: async () => {
+    //     const store = await redisStore({
+    //       socket: {
+    //         host: 'localhost',
+    //         port: 6379,
+
+    //       },
+    //     });
+
+    //     return {
+    //       store: store as any,
+    //       ttl: 3 * 60000, // 3 minutes (milliseconds)
+    //     };
+    //   },
+    // }),
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     MembersModule,
