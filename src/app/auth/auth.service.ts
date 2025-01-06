@@ -61,7 +61,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
     // generate tokens
-    const { accessToken, refreshToken } = this.generateTokens(member);
+    const { accessToken, refreshToken } = this.getTokens(member);
     // save token in db
     const sessionId = await this.saveToken(refreshToken, member.id);
     return {
@@ -102,7 +102,7 @@ export class AuthService {
       commissionFeesType: CommissionFeesType.percent,
     });
     const member = await this.memberRepository.save(newMember);
-    const { accessToken, refreshToken } = this.generateTokens(member);
+    const { accessToken, refreshToken } = this.getTokens(member);
     // event an event , to see more ==> org-schedule.service.ts
     this.eventEmitter.emit('organization.created', organization.id);
     const sessionId = await this.saveToken(refreshToken, member.id);
