@@ -29,6 +29,7 @@ export class CreateUserDto {
   password?: string;
 
   @IsNotEmpty()
+  @IsPhoneNumber()
   phone?: string;
 
   @IsOptional()
@@ -40,7 +41,7 @@ export class CreateUserDto {
   gender?: Gender;
 
   @IsDateString()
-  @MinDate(() => new Date('2010-1-1'))
+  @MinDate(new Date('2010-01-01'))
   @IsOptional()
   dob?: Date;
 }

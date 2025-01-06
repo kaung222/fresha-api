@@ -21,7 +21,7 @@ export class BookingItemDto {
   @IsUUID()
   serviceId: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
   memberId: string;
 }

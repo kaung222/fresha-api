@@ -8,6 +8,7 @@ import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { CacheService } from '@/global/cache.service';
+import { EmailsService } from '../emails/emails.service';
 
 @Injectable()
 export class UsersService {
@@ -15,10 +16,19 @@ export class UsersService {
     @InjectRepository(User) private userRepository: Repository<User>,
     private readonly dataSource: DataSource,
     private readonly cacheService: CacheService,
+    private emailService: EmailsService,
   ) {}
   async create(createUserDto: CreateUserDto) {
     const newUser = this.userRepository.create(createUserDto);
     return await this.userRepository.save(newUser);
+  }
+
+  async getOTP(userId: string) {
+    return await this.emailService.sendOTPToEmail(userId);
+  }
+
+  async verifyEmail(userId) {
+    // this.emailService.confirmOTP({email: '',otp:''})
   }
 
   async findAll({ page = 1 }: PaginateQuery) {
@@ -43,6 +53,7 @@ export class UsersService {
     return user;
   }
 
+  // get user including password to check
   async findOneByEmail(email: string) {
     return await this.userRepository
       .createQueryBuilder('user')
@@ -72,8 +83,8 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.getUserById(id);
     const { password, email, ...rest } = updateUserDto;
-    Object.assign(user, rest);
-    const newUser = await this.userRepository.save(user);
+    const createUser = this.userRepository.create({ ...user, ...rest });
+    const newUser = await this.userRepository.save(createUser);
     return {
       message: 'Update profile successfully',
       user: newUser,

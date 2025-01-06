@@ -1,35 +1,33 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { HttpException } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
+import * as CryptoJS from 'crypto-js';
 
-export async function storeObjectAWS(file: Express.Multer.File) {
-  const s3Client = new S3Client({
-    region: process.env.AWS_S3_REGION,
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+// Replace with secure, unique keys in production
+const ENCRYPTION_KEY = '000102030405060238090a0b0c0d0e0f'; // Must be 32 characters for AES-256
+const IV = CryptoJS.enc.Hex.parse('000102030405060708090a0b0c0d0e0f'); // 16 bytes (32 hex chars)
+
+// Function to encrypt a token
+export function encryptToken(token: string) {
+  const encrypted = CryptoJS.AES.encrypt(
+    token,
+    CryptoJS.enc.Utf8.parse(ENCRYPTION_KEY),
+    {
+      iv: IV,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
     },
-  });
-
-  const tagString = 'isUsed=false';
-  try {
-    const key = generateKey(file.originalname);
-    const command = new PutObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Key: key,
-      Body: file.buffer,
-      Tagging: tagString,
-    });
-    await s3Client.send(command);
-    return { key };
-  } catch (error) {
-    console.error(error);
-    throw new HttpException('Error storing file in aws_s3', 403);
-  }
+  );
+  return encrypted.toString(); // Encrypted string
 }
 
-// generate image key
-function generateKey(originalName: string): string {
-  const extension = originalName.split('.')[1];
-  return `${uuidv4()}INBX_IMG.${extension}`;
+// Function to decrypt a token
+export function decryptToken(encryptedToken: string) {
+  const decrypted = CryptoJS.AES.decrypt(
+    encryptedToken,
+    CryptoJS.enc.Utf8.parse(ENCRYPTION_KEY),
+    {
+      iv: IV,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    },
+  );
+  return decrypted.toString(CryptoJS.enc.Utf8); // Decrypted token as string
 }

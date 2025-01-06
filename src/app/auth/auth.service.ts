@@ -9,9 +9,9 @@ import { loginOrganizationDto } from './dto/login-org.dto';
 import { Repository } from 'typeorm';
 import { Organization } from '../organizations/entities/organization.entity';
 import {
+  CommissionFeesType,
   Member,
   MemberType,
-  UserState,
 } from '../members/entities/member.entity';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -20,14 +20,13 @@ import { Roles } from '@/security/user.decorator';
 import { ConfigService } from '@nestjs/config';
 import { CreatePasswordDto } from './dto/create-password.dto';
 import { Response } from 'express';
-import { generateOpt } from '@/utils';
-import { OTP } from './entities/otp.entity';
 import { ConfirmOTPDto } from './dto/confirm-otp.dto';
 import { RegisterOrganizationDto } from './dto/create-org.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EmailsService } from '../emails/emails.service';
-import { v4 as uuidv4 } from 'uuid';
 import { CacheService } from '@/global/cache.service';
+import { TokenSession } from './entities/token.entity';
+import { decryptToken } from '@/utils/test';
 
 @Injectable()
 export class AuthService {
@@ -37,11 +36,12 @@ export class AuthService {
     private eventEmitter: EventEmitter2,
     private emailService: EmailsService,
     private cacheService: CacheService,
+    @InjectRepository(TokenSession)
+    private readonly tokenRepository: Repository<TokenSession>,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
     @InjectRepository(Organization)
     private readonly organizationRepository: Repository<Organization>,
-    @InjectRepository(OTP) private otpRepository: Repository<OTP>,
   ) {}
 
   // login organization and member
@@ -61,14 +61,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
     // generate tokens
-    const jwtPayload = this.generateJwtPayload(member);
-    const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
-    // update member state
-    await this.memberRepository.update(member.id, { state: UserState.login });
+    const { accessToken, refreshToken } = this.generateTokens(member);
+    // save token in db
+    const sessionId = await this.saveToken(refreshToken, member.id);
     return {
       message: 'Login successfully',
       accessToken,
-      refreshToken,
+      sessionId,
     };
   }
 
@@ -80,7 +79,6 @@ export class AuthService {
       .getOne();
     if (!member) return await this.getOTP(email);
     if (member && member.password) return { message: 'login', password: true };
-
     await this.getOTP(email);
     return { message: 'create_password', password: false, email };
   }
@@ -89,7 +87,6 @@ export class AuthService {
     const { name, email, firstName, lastName } = createOrganization;
     const isExisting = await this.memberRepository.findOneBy({ email });
     if (isExisting) throw new ConflictException('Email already taken');
-    await this.checkIsConfirm(email);
     const newOrg = this.organizationRepository.create({ name, email });
     const organization = await this.organizationRepository.save(newOrg);
     const password = await this.hashPassword(createOrganization.password);
@@ -101,64 +98,46 @@ export class AuthService {
       role: Roles.org,
       type: MemberType.self_employed,
       organization,
+      commissionFees: 20,
+      commissionFeesType: CommissionFeesType.percent,
     });
     const member = await this.memberRepository.save(newMember);
-    const jwtPayload = this.generateJwtPayload(member);
-    const { accessToken, refreshToken } = this.generateTokens(jwtPayload);
+    const { accessToken, refreshToken } = this.generateTokens(member);
     // event an event , to see more ==> org-schedule.service.ts
     this.eventEmitter.emit('organization.created', organization.id);
+    const sessionId = await this.saveToken(refreshToken, member.id);
     return {
       message: 'Create organization successfully',
       accessToken,
-      refreshToken,
+      sessionId,
     };
   }
 
-  generateJwtPayload(member: Member) {
-    return {
+  getTokens(member: Member) {
+    const jwtPayload = {
       id: member.id,
       role: Roles.org,
       orgId: member.orgId,
     };
+    return this.generateTokens(jwtPayload);
+  }
+  // generate accessToken and refreshToken
+  generateTokens(payload: any) {
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: '7d',
+      secret: this.configService.get('JWT_REFRESH_SECRET'),
+    });
+    return { accessToken, refreshToken };
   }
   // get OTP
   async getOTP(email: string) {
-    const otp = generateOpt();
-    const otpPayload = {
-      otp,
-      expiredAt: (Date.now() + 300000).toString(),
-      email,
-      isConfirmed: false,
-    };
-    const existingOtp = await this.otpRepository.findOneBy({
-      email,
-    });
-    const createOtp = this.otpRepository.create({
-      ...existingOtp,
-      ...otpPayload,
-    });
-    await this.otpRepository.save(createOtp);
-    // send email otp
-    this.emailService.createWithoutSave({
-      to: email,
-      text: `Your OTP for fresha is <b>${otp}</b>.Dont share it anyone!`,
-      subject: 'OTP',
-      from: process.env.SHOP_GMAIL,
-    });
-    return {
-      message: `Send OTP to ${email} successfully`,
-      email,
-    };
+    // const organization = await this.organizationRepository.findOneBy({ email });
+    return await this.emailService.sendOTPToEmail(email);
   }
 
-  async logoutMember(memberId: string) {
-    await this.memberRepository.update(
-      { id: memberId },
-      { state: UserState.logout },
-    );
-    return {
-      message: 'logout successfully',
-    };
+  async logoutMember(sessionId: string, memberId: string) {
+    await this.tokenRepository.delete({ id: sessionId, userId: memberId });
   }
 
   async forgetPassword(email: string) {
@@ -169,40 +148,12 @@ export class AuthService {
 
   // confirmOTP
   async confirmOTP(confirmOTPDto: ConfirmOTPDto) {
-    const { email, otp } = confirmOTPDto;
-    await this.checkValidOTP(email, otp);
-    await this.otpRepository.update({ email }, { isConfirmed: true });
-    return {
-      message: 'Confirm OTP successfully',
-    };
-  }
-
-  async checkValidOTP(email: string, otp: string) {
-    const storedOtp = await this.otpRepository.findOneBy({ email });
-    if (
-      !storedOtp ||
-      storedOtp.otp !== otp.toString() ||
-      parseInt(storedOtp.expiredAt) <= Date.now()
-    ) {
-      throw new UnauthorizedException('Invalid OTP or expired!');
-    }
-    return true;
-  }
-
-  async checkIsConfirm(email: string) {
-    const otp = await this.otpRepository.findOneBy({ email });
-    if (!otp || !otp.isConfirmed)
-      throw new UnauthorizedException('Confirm OTP first!');
-    if (parseInt(otp.expiredAt) <= Date.now()) {
-      throw new UnauthorizedException('OTP session ended!');
-    }
-    return true;
+    return await this.emailService.confirmOTP(confirmOTPDto);
   }
 
   // create password for new member added
   async createPassword(createPasswordDto: CreatePasswordDto) {
     const { email } = createPasswordDto;
-    await this.checkIsConfirm(email);
     const member = await this.memberRepository.findOneOrFail({
       where: { email },
       relations: { organization: true },
@@ -230,16 +181,6 @@ export class AuthService {
     }
   }
 
-  // generate accessToken and refreshToken
-  generateTokens(payload: any) {
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d',
-      secret: this.configService.get('JWT_REFRESH_SECRET'),
-    });
-    return { accessToken, refreshToken };
-  }
-
   // hash password
   async hashPassword(payload: string): Promise<string> {
     // const salt = bcrypt.genSalt()
@@ -256,24 +197,49 @@ export class AuthService {
     return await bcrypt.compare(password, password_stored);
   }
 
+  // refresh function
+  async refresh(sessionId: string) {
+    const session = await this.tokenRepository.findOneBy({ id: sessionId });
+    const expired = session.expiredAt < new Date();
+    if (!session || expired)
+      throw new UnauthorizedException('Session expired, login again!');
+    const token = decryptToken(session.token);
+    const { exp, iat, ...rest } = this.jwtService.verify(token, {
+      secret: this.configService.get('JWT_REFRESH_SECRET'),
+    });
+    const { refreshToken, accessToken } = this.generateTokens(rest);
+    const newSessionId = await this.saveToken(refreshToken, rest.id);
+    return { accessToken, sessionId: newSessionId };
+  }
+
+  // save session in db
+  async saveToken(token: string, userId: string): Promise<string> {
+    const createToken = this.tokenRepository.create({
+      token,
+      userId,
+      expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+    const session = await this.tokenRepository.save(createToken);
+    return session.id;
+  }
+
   //set refresh token cookie in response headers
-  setCookieHeaders(res: Response, refreshToken: string) {
-    const sessionId = uuidv4();
-    this.cacheService.set(sessionId, refreshToken, 7 * 24 * 60 * 60 * 1000);
-    return res.cookie('sessionId', sessionId, {
+  setCookieHeaders(res: Response, sessionId: string) {
+    return res.cookie('oid', sessionId, {
       sameSite: 'lax',
       secure: true,
       httpOnly: true,
-      expires: refreshToken
+      expires: sessionId
         ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
         : new Date(0),
     });
   }
+
   // Helper function to extract the refresh token from the cookie
   getSessionIdFromCookie(cookie: string): string | null {
     const sessionId = cookie
       .split(';')
-      .find((c) => c.trim().startsWith('sessionId='));
+      .find((c) => c.trim().startsWith(`oid=`));
     return sessionId ? sessionId.split('=')[1] : null;
   }
 }

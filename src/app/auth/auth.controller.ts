@@ -17,6 +17,8 @@ import { GetOTPDto } from './dto/get-otp.dto';
 import { RegisterOrganizationDto } from './dto/create-org.dto';
 import { CreatePasswordDto } from './dto/create-password.dto';
 import { CheckEmailDto } from './dto/check-email.dto';
+import { Role } from '@/security/role.decorator';
+import { Roles, User } from '@/security/user.decorator';
 
 @Controller('auth')
 @ApiTags('Organization Auth')
@@ -26,9 +28,9 @@ export class AuthController {
   @Post('member-login')
   @ApiOperation({ summary: 'Login as member or root user' })
   async login(@Body() loginOrgDto: loginOrganizationDto, @Res() res: Response) {
-    const { refreshToken, ...rest } =
+    const { sessionId, ...rest } =
       await this.authService.loginOrganization(loginOrgDto);
-    this.authService.setCookieHeaders(res, refreshToken);
+    this.authService.setCookieHeaders(res, sessionId);
     res.send({ ...rest }).status(200);
   }
 
@@ -55,23 +57,21 @@ export class AuthController {
     @Body() registerOrganization: RegisterOrganizationDto,
     @Res() res: Response,
   ) {
-    const { refreshToken, ...rest } =
+    const { sessionId, ...rest } =
       await this.authService.createOrganization(registerOrganization);
-    this.authService.setCookieHeaders(res, refreshToken);
+    this.authService.setCookieHeaders(res, sessionId);
     res.send({ ...rest }).status(200);
   }
 
-  @Get('refresh')
-  // @Role(Roles.member, Roles.org, Roles.user)
+  @Get('org-refresh')
   @ApiOperation({ summary: 'Get new access token when expired' })
   async getNewAccessToken(@Req() req: Request, @Res() res: Response) {
     const cookie = req.headers.cookie;
-    const accessToken = req.headers.authorization.split(' ');
-    if (!cookie || !accessToken)
-      throw new UnauthorizedException('Session expires, login again!');
     const sessionId = this.authService.getSessionIdFromCookie(cookie);
-    const tokens = await this.authService.getNewAccessToken(sessionId);
-    this.authService.setCookieHeaders(res, tokens.refreshToken);
+    if (!sessionId)
+      throw new UnauthorizedException('Session expires, login again!');
+    const tokens = await this.authService.refresh(sessionId);
+    this.authService.setCookieHeaders(res, tokens.sessionId);
     res.send({ accessToken: tokens.accessToken });
   }
 
@@ -87,12 +87,18 @@ export class AuthController {
     return this.authService.createPassword(createPassword);
   }
 
-  @Post('logout')
+  @Post('org-logout')
   @ApiOperation({ summary: 'logout member and org' })
-  handleLogout(@Req() req: Request, @Res() res: Response) {
+  @Role(Roles.org, Roles.member)
+  handleLogout(
+    @Req() req: Request,
+    @Res() res: Response,
+    @User('id') memberId: string,
+  ) {
     const cookie = req.headers.cookie;
-    if (!cookie) return res.status(200).send({ message: 'Already logged out' });
-    this.authService.setCookieHeaders(res, '');
+    const sessionId = this.authService.getSessionIdFromCookie(cookie);
+    this.authService.logoutMember(sessionId, memberId);
+    this.authService.setCookieHeaders(res, sessionId);
     res.send({ message: 'logout successfully' });
   }
 }

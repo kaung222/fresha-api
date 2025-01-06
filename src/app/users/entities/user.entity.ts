@@ -32,4 +32,7 @@ export class User extends UUIDEntity {
 
   @Column('date', { nullable: true })
   dob: Date;
+
+  @Column('boolean', { default: false })
+  email_verified: boolean;
 }

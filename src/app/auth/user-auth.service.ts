@@ -33,13 +33,9 @@ export class UserAuthService {
     );
     if (!isAuthenticated)
       throw new UnauthorizedException('Invalid email or password');
-    const jwtPayload = { id: user.id, role: Roles.user };
-    const tokens = this.authService.generateTokens(jwtPayload);
-    return {
-      message: 'Login successfully',
-      user,
-      ...tokens,
-    };
+    const { accessToken, refreshToken } = this.getTokens(user);
+    const sessionId = await this.authService.saveToken(refreshToken, user.id);
+    return { accessToken, sessionId, user, message: 'login successfully' };
   }
 
   async loginWithProvider(token: string) {
@@ -59,20 +55,14 @@ export class UserAuthService {
           email: payload?.email,
           profilePicture: payload?.picture,
         });
-      return this.getTokens(user);
+      const { accessToken, refreshToken } = this.getTokens(user);
+      const sessionId = await this.authService.saveToken(refreshToken, user.id);
+      return { accessToken, sessionId, user };
     } catch (error) {
       console.log(error);
       throw new UnauthorizedException('Invalid access token');
     }
   }
-
-  // async saveNewUser(createUserDto: CreateUserDto) {
-  //   const user = await this.userService.create(createUserDto);
-  //   return {
-  //     user,
-  //     ...this.getTokens(user),
-  //   };
-  // }
 
   private getTokens(user: User) {
     const jwtPayload = { id: user.id, role: Roles.user };
@@ -81,22 +71,37 @@ export class UserAuthService {
 
   async registerUser(registerUserDto: RegisterUserDto) {
     const { password, email } = registerUserDto;
-    const user = await this.userService.findOneByEmail(email);
-    if (user) throw new ConflictException('email already taken');
+    const existedUser = await this.userService.findOneByEmail(email);
+    if (existedUser) throw new ConflictException('email already taken');
     const hashPassword = await this.authService.hashPassword(password);
-    const newUser = await this.userService.create({
+
+    //save user to db
+    const user = await this.userService.create({
       ...registerUserDto,
       password: hashPassword,
     });
-    return this.getTokens(newUser);
+    const { accessToken, refreshToken } = this.getTokens(user);
+    const sessionId = await this.authService.saveToken(refreshToken, user.id);
+    return { accessToken, sessionId, user };
   }
 
-  //set refresh token cookie in response headers
-  setCookieHeaders(res: Response, refreshToken: string) {
-    this.authService.setCookieHeaders(res, refreshToken);
+  //set sessionId cookie in response headers
+  setCookieHeaders(res: Response, sessionId: string) {
+    res.cookie('sid', sessionId, {
+      sameSite: 'lax',
+      secure: true,
+      httpOnly: true,
+      expires: sessionId
+        ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)
+        : new Date(0),
+    });
   }
+
   // Helper function to extract the refresh token from the cookie
-  getRefreshTokenFromCookie(cookie: string): string | null {
-    return this.authService.getSessionIdFromCookie(cookie);
+  getSessionIdFromCookie(cookie: string): string | null {
+    const sessionId = cookie
+      .split(';')
+      .find((c) => c.trim().startsWith('sid='));
+    return sessionId ? sessionId.split('=')[1] : null;
   }
 }

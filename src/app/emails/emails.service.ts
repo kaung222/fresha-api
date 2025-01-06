@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateEmailBySystem } from './dto/crearte-email.dto';
 import { Email, MailTo } from './entities/email.entity';
 import { DataSource, Repository } from 'typeorm';
@@ -21,12 +25,18 @@ import {
 } from '@/utils/helpers/email-fns';
 import { Organization } from '../organizations/entities/organization.entity';
 import { Member } from '../members/entities/member.entity';
+import { User } from '../users/entities/user.entity';
+import { generateOpt } from '@/utils';
+import { OTP } from '../auth/entities/otp.entity';
+import { ConfirmOTPDto } from '../auth/dto/confirm-otp.dto';
 
 @Injectable()
 export class EmailsService {
   constructor(
     @InjectRepository(Email)
     private readonly emailRepository: Repository<Email>,
+    @InjectRepository(OTP)
+    private readonly OTPRepository: Repository<OTP>,
     @InjectQueue('emailQueue')
     private readonly emailQueue: Queue,
     private cacheService: CacheService,
@@ -193,5 +203,65 @@ export class EmailsService {
     return {
       message: 'Delete email successfully',
     };
+  }
+
+  async sendOTPToEmail(userId: string) {
+    const user = await this.dataSource
+      .getRepository(User)
+      .findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('User not found');
+    return await this.getOTP(user.email);
+  }
+
+  // get OTP
+  private async getOTP(email: string) {
+    const otp = generateOpt();
+    const otpPayload = {
+      otp,
+      expiredAt: (Date.now() + 300000).toString(),
+      email,
+      isConfirmed: false,
+    };
+    const existingOtp = await this.OTPRepository.findOneBy({
+      email,
+    });
+    const createOtp = this.OTPRepository.create({
+      ...existingOtp,
+      ...otpPayload,
+    });
+    await this.OTPRepository.save(createOtp);
+    // send email otp
+    await this.createWithoutSave({
+      to: email,
+      text: `Your OTP for Baranie is <b>${otp}</b>.Dont share it anyone!`,
+      subject: 'OTP',
+      from: process.env.SHOP_GMAIL,
+    });
+    return {
+      message: `Send OTP to ${email} successfully`,
+      email,
+    };
+  }
+
+  // confirmOTP
+  async confirmOTP(confirmOTPDto: ConfirmOTPDto) {
+    const { email, otp } = confirmOTPDto;
+    await this.checkValidOTP(email, otp);
+    await this.OTPRepository.update({ email }, { isConfirmed: true });
+    return {
+      message: 'Confirm OTP successfully',
+    };
+  }
+
+  private async checkValidOTP(email: string, otp: string) {
+    const storedOtp = await this.OTPRepository.findOneBy({ email });
+    if (
+      !storedOtp ||
+      storedOtp.otp !== otp.toString() ||
+      parseInt(storedOtp.expiredAt) <= Date.now()
+    ) {
+      throw new UnauthorizedException('Invalid OTP or expired!');
+    }
+    return true;
   }
 }

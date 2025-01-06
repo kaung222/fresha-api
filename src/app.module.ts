@@ -71,6 +71,7 @@ import { SearchModule } from './app/search/search.module';
 import { FavouritesModule } from './app/favourites/favourites.module';
 import { Favourite } from './app/favourites/entities/favourite.entity';
 import { redisStore } from 'cache-manager-redis-store';
+import { TokenSession } from './app/auth/entities/token.entity';
 
 @Module({
   imports: [
@@ -114,6 +115,7 @@ import { redisStore } from 'cache-manager-redis-store';
         Sale,
         SaleItem,
         Favourite,
+        TokenSession,
       ],
     }),
 
@@ -144,22 +146,6 @@ import { redisStore } from 'cache-manager-redis-store';
         disconnectTimeout: 10,
       },
     }),
-    // CacheModule.registerAsync({
-    //   useFactory: async () => {
-    //     const store = await redisStore({
-    //       socket: {
-    //         host: 'localhost',
-    //         port: 6379,
-
-    //       },
-    //     });
-
-    //     return {
-    //       store: store as any,
-    //       ttl: 3 * 60000, // 3 minutes (milliseconds)
-    //     };
-    //   },
-    // }),
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     MembersModule,
