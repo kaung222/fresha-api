@@ -85,7 +85,7 @@ export class AuthService {
   // register new organization
   async createOrganization(createOrganization: RegisterOrganizationDto) {
     const { name, token, firstName, lastName } = createOrganization;
-    const { email } = this.jwtService.verify(token);
+    const email = decryptToken(token);
     const isExisting = await this.memberRepository.findOneBy({ email });
     if (isExisting) throw new ConflictException('Email already taken');
     const newOrg = this.organizationRepository.create({ name, email });
