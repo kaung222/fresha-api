@@ -46,6 +46,7 @@ export class Organization extends IncrementEntity {
   @Column('enum', { enum: Currency, default: Currency.mmk })
   currency: Currency;
 
+  @Index('IsPublished')
   @Column('boolean', { default: false, select: false })
   isPublished: boolean;
 

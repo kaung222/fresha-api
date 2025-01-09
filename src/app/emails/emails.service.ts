@@ -164,7 +164,10 @@ export class EmailsService {
     this.emailQueue.add('sendEmailWithoutSaving', createEmailDto);
   }
 
-  async createAppointByUser(appointment: Appointment) {}
+  async createAppointByUser(appointment: Appointment) {
+    const memberEmail = sendBookingNotiToMember(appointment);
+    const userEmail = sendBookingNotiToUser(appointment);
+  }
 
   async createAppointByOrg(appointment: Appointment) {
     const memberEmail = sendBookingNotiToMember(appointment);

@@ -20,7 +20,7 @@ import { Roles, User } from '@/security/user.decorator';
 
 @Controller('files')
 @ApiTags('File')
-@Role(Roles.member, Roles.org)
+@Role(Roles.member, Roles.org, Roles.user)
 export class FilesController {
   constructor(private fileService: FilesService) {}
   @Post()

@@ -99,7 +99,7 @@ export class StatisticsService {
   }
 
   async getMVPOfMonth(orgId: number, getStatisticsDto: GetStatisticsDto) {
-    const { startDate, endDate } = getStatisticsDto;
+    const { startDate, endDate, status } = getStatisticsDto;
     const services = await this.dataSource
       .getRepository(BookingItem)
       .createQueryBuilder('item')
@@ -109,6 +109,7 @@ export class StatisticsService {
         startDate,
         endDate,
       })
+      .andWhere('appointment.status=:status', { status })
       .select('item.memberId', 'memberId')
       .addSelect('COUNT(item.id)', 'totalOrders')
       .addSelect('SUM(item.commissionFees)', 'totalFees')

@@ -122,6 +122,17 @@ export class OrganizationsService {
       .getOne();
   }
 
+  // async getRelatedOrgs(organization: Organization) {
+  //   const organizationType = organization.types[0];
+  //   return this.orgRepository
+  //     .createQueryBuilder('org')
+  //     .where('JSON_CONTAINS(org.types, JSON_ARRAY(:type))', { type: organizationType })
+  //     .andWhere('org.id != :id', { id: organization.id })
+  //     .andWhere('org.isPublished = true') // Explicit boolean comparison
+  //     .andWhere('org.city = :city', { city: organization.city })
+  //     .getOne();
+  // }
+
   async findSchedule(orgId: number) {
     return await this.dataSource.getRepository(OrgSchedule).findBy({ orgId });
   }

@@ -88,18 +88,19 @@ const template = (text: string) => {
                   padding: 0 20px;
               }
                   .content{
-                  font-size: 18px}
+                  font-size: 13px}
           </style>
       </head>
       <body>
           <div class="container">
               <img src="https://djiwkc53pq2w8.cloudfront.net/user_1_24a33f1a-b683-40d1-8601-d01c0a920b65_INBX_IMG.png" alt="Baranie company logo" style="max-width: 100%;">
               <h2>Baranie.com Company Ltd.</h2>
-              <p>Yangon Myanmar</p>
-              <p>Innobytex.com</p>
+              <p>Yangon, Myanmar.</p>
+              <a href="https://baranie.com">Baranie.com</a>
               <hr>
               <p>Date: ${format(new Date(), 'yyyy-MM-dd')}</p>
-              <p class="content">${text}</p>
+              <div class="content">${text}</div>
+              <footer><h5>Thank you for being part of Baranie.</h5></footer>
           </div>
       </body>
       </html>

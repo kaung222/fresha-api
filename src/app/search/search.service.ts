@@ -7,6 +7,8 @@ import { Service } from '../services/entities/service.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { Sale } from '../sales/entities/sale.entity';
 import { Client } from '../clients/entities/client.entity';
+import { Organization } from '../organizations/entities/organization.entity';
+import { OrgSearchDto } from './dto/org-search.dto';
 
 @Injectable()
 export class SearchService {
@@ -104,5 +106,50 @@ export class SearchService {
         skip: 10 * (page - 1),
       });
     return new PaginationResponse({ data, totalCount, page }).toResponse();
+  }
+
+  async searchOrg(orgSearchDto: OrgSearchDto) {
+    const { search = '', types, lat, long } = orgSearchDto;
+    const queryBuilder = this.dataSource
+      .getRepository(Organization)
+      .createQueryBuilder('org')
+      .where('org.name LIKE :search', { search: `%${search}%` })
+      .andWhere('org.isPublished = :isPublished', { isPublished: true })
+      .take(10);
+
+    if (lat && long) {
+      queryBuilder
+        .addSelect(
+          `
+          (6371 * acos(
+            cos(radians(:lat)) * cos(radians(org.latitude)) *
+            cos(radians(org.longitude) - radians(:long)) +
+            sin(radians(:lat)) * sin(radians(org.latitude))
+          ))`,
+          'distance',
+        ) // Calculate distance in kilometers
+        .having('distance <= :radius', { radius: 10 })
+        .setParameters({ lat, long })
+        .orderBy('distance', 'ASC'); // Sort by nearest
+    }
+    if (types) {
+      queryBuilder.andWhere('JSON_CONTAINS(org.types, JSON_ARRAY(:types))', {
+        types,
+      });
+    }
+
+    const result = await queryBuilder.getMany();
+    return result;
+  }
+
+  async searchServices(search = '', page = 1) {
+    return await this.dataSource
+      .getRepository(Service)
+      .createQueryBuilder('service')
+      .where('service.name LIKE :search', { search: `%${search}%` })
+      .leftJoinAndSelect('service.organization', 'organization')
+      .skip(10 * (page - 1))
+      .take(10)
+      .getMany();
   }
 }

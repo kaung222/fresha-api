@@ -113,7 +113,7 @@ export class AuthService {
     };
   }
 
-  getTokens(member: Member) {
+  private getTokens(member: Member) {
     const jwtPayload = {
       id: member.id,
       role: Roles.org,
@@ -166,20 +166,20 @@ export class AuthService {
     };
   }
 
-  async getNewAccessToken(sessionId: string) {
-    const token = await this.cacheService.get(sessionId);
-    if (!token)
-      throw new UnauthorizedException('Session expires, login again!');
-    try {
-      const { exp, iat, ...rest } = this.jwtService.verify(token, {
-        secret: this.configService.get('JWT_REFRESH_SECRET'),
-      });
-      const { accessToken, refreshToken } = this.generateTokens(rest);
-      return { accessToken, refreshToken };
-    } catch (error) {
-      throw new UnauthorizedException(error.message);
-    }
-  }
+  // async getNewAccessToken(sessionId: string) {
+  //   const token = await this.cacheService.get(sessionId);
+  //   if (!token)
+  //     throw new UnauthorizedException('Session expires, login again!');
+  //   try {
+  //     const { exp, iat, ...rest } = this.jwtService.verify(token, {
+  //       secret: this.configService.get('JWT_REFRESH_SECRET'),
+  //     });
+  //     const { accessToken, refreshToken } = this.generateTokens(rest);
+  //     return { accessToken, refreshToken };
+  //   } catch (error) {
+  //     throw new UnauthorizedException(error.message);
+  //   }
+  // }
 
   // hash password
   async hashPassword(payload: string): Promise<string> {

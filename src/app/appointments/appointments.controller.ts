@@ -18,6 +18,7 @@ import { GetAppointmentDto } from './dto/get-appointment.dto';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { ClientAppointmentDto } from './dto/create-client-booking.dto';
 import { CompleteAppointmentDto } from './dto/complete-booking.dto';
+import { RescheduleBookingDto } from './dto/reschedule-booking.dto';
 
 @Controller('appointments')
 @ApiTags('Appointment')
@@ -127,10 +128,10 @@ export class AppointmentsController {
   @ApiOperation({ summary: 'Mark as complete booking by org or member' })
   rescheduleBooking(
     @Param('id') id: string,
-    @Body() completeBooking: CompleteAppointmentDto,
+    @Body() rescheduleDto: RescheduleBookingDto,
     @User('orgId') orgId: number,
   ) {
-    return this.appointmentsService.completeBooking(id, completeBooking, orgId);
+    return this.appointmentsService.rescheduleBooking(id, rescheduleDto, orgId);
   }
 
   @Delete(':id')

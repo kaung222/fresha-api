@@ -4,5 +4,4 @@ validation for cloutfront domain
 
 
 fixed later 
-
-// Discount should not greater than the price
+// Discount should not greater than the pricep

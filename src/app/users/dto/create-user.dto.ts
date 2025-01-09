@@ -11,6 +11,7 @@ import {
   MinDate,
 } from 'class-validator';
 import { Gender } from '../entities/user.entity';
+import { Transform } from 'class-transformer';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -41,7 +42,9 @@ export class CreateUserDto {
   gender?: Gender;
 
   @IsDateString()
-  @MinDate(new Date('2010-01-01'))
+  // example value : 2000-03-02
+  // @Transform(({ value }) => new Date(value))
+  // @MinDate(new Date(12 / 22 / 2010))
   @IsOptional()
   dob?: Date;
 }

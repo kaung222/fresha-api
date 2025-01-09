@@ -6,6 +6,8 @@ import { Public } from '@/security/public.decorator';
 import { Transform } from 'class-transformer';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
+import { OrgSearchDto } from './dto/org-search.dto';
+import { SearchServiceDto } from './dto/search-service.dto';
 
 export enum SearchName {
   product = 'product',
@@ -40,5 +42,15 @@ export class SearchController {
   @Role(Roles.org, Roles.member)
   searchData(@Query() searchDto: SearchDto, @User('orgId') orgId: number) {
     return this.searchService.search(orgId, searchDto);
+  }
+
+  @Get('organizations')
+  searchOrganizations(@Query() orgSearchDto: OrgSearchDto) {
+    return this.searchService.searchOrg(orgSearchDto);
+  }
+
+  @Get('services')
+  searchServices(@Query() { search, page }: SearchServiceDto) {
+    return this.searchService.searchServices(search, page);
   }
 }
