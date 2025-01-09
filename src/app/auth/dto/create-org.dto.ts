@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -14,8 +13,7 @@ export class RegisterOrganizationDto {
   name: string;
 
   @IsNotEmpty()
-  @IsEmail()
-  email: string;
+  token: string;
 
   @IsNotEmpty()
   @IsString()

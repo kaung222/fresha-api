@@ -36,7 +36,7 @@ export class RolesGuard implements CanActivate {
         throw new UnauthorizedException('Role cannot access!');
       return true;
     } catch (error) {
-      console.log('error here');
+      console.log('Permission error');
       throw new UnauthorizedException(error.message);
     }
   }

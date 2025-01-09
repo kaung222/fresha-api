@@ -24,7 +24,7 @@ export class UsersService {
   }
 
   async getOTP(userId: string) {
-    return await this.emailService.sendOTPToEmail(userId);
+    // return await this.emailService.sendOTPToEmail(userId);
   }
 
   async verifyEmail(userId) {

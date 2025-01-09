@@ -19,7 +19,7 @@ export function encryptToken(token: string) {
 }
 
 // Function to decrypt a token
-export function decryptToken(encryptedToken: string) {
+export function decryptToken(encryptedToken: string): string {
   const decrypted = CryptoJS.AES.decrypt(
     encryptedToken,
     CryptoJS.enc.Utf8.parse(ENCRYPTION_KEY),

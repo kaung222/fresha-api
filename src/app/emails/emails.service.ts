@@ -208,16 +208,16 @@ export class EmailsService {
     };
   }
 
-  async sendOTPToEmail(userId: string) {
-    const user = await this.dataSource
-      .getRepository(User)
-      .findOneBy({ id: userId });
-    if (!user) throw new NotFoundException('User not found');
-    return await this.getOTP(user.email);
-  }
+  // async sendOTPToEmail(userId: string) {
+  //   const user = await this.dataSource
+  //     .getRepository(User)
+  //     .findOneBy({ id: userId });
+  //   if (!user) throw new NotFoundException('User not found');
+  //   return await this.getOTP(user.email);
+  // }
 
   // get OTP
-  private async getOTP(email: string) {
+  async getOTP(email: string) {
     const otp = generateOpt();
     const otpPayload = {
       otp,
@@ -247,8 +247,7 @@ export class EmailsService {
   }
 
   // confirmOTP
-  async confirmOTP(confirmOTPDto: ConfirmOTPDto) {
-    const { email, otp } = confirmOTPDto;
+  async confirmOTP({ email, otp }: { email: string; otp: string }) {
     await this.checkValidOTP(email, otp);
     await this.OTPRepository.update({ email }, { isConfirmed: true });
     return {

@@ -26,7 +26,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EmailsService } from '../emails/emails.service';
 import { CacheService } from '@/global/cache.service';
 import { TokenSession } from './entities/token.entity';
-import { decryptToken } from '@/utils/test';
+import { decryptToken, encryptToken } from '@/utils/test';
 
 @Injectable()
 export class AuthService {
@@ -84,7 +84,8 @@ export class AuthService {
   }
   // register new organization
   async createOrganization(createOrganization: RegisterOrganizationDto) {
-    const { name, email, firstName, lastName } = createOrganization;
+    const { name, token, firstName, lastName } = createOrganization;
+    const { email } = this.jwtService.verify(token);
     const isExisting = await this.memberRepository.findOneBy({ email });
     if (isExisting) throw new ConflictException('Email already taken');
     const newOrg = this.organizationRepository.create({ name, email });
@@ -121,6 +122,7 @@ export class AuthService {
     };
     return this.generateTokens(jwtPayload);
   }
+
   // generate accessToken and refreshToken
   generateTokens(payload: any) {
     const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
@@ -133,7 +135,12 @@ export class AuthService {
   // get OTP
   async getOTP(email: string) {
     // const organization = await this.organizationRepository.findOneBy({ email });
-    return await this.emailService.sendOTPToEmail(email);
+    await this.emailService.getOTP(email);
+    const token = encryptToken(email);
+    return {
+      message: 'Send OTP successfully',
+      token,
+    };
   }
 
   async logoutMember(sessionId: string, memberId: string) {
@@ -143,12 +150,18 @@ export class AuthService {
   async forgetPassword(email: string) {
     const member = await this.memberRepository.findOneBy({ email });
     if (!member) throw new NotFoundException('email not found');
-    return await this.getOTP(email);
+    return await this.emailService.getOTP(email);
   }
 
   // confirmOTP
   async confirmOTP(confirmOTPDto: ConfirmOTPDto) {
-    return await this.emailService.confirmOTP(confirmOTPDto);
+    const { otp, token } = confirmOTPDto;
+    const email = decryptToken(token);
+    await this.emailService.confirmOTP({ email, otp });
+    return {
+      token,
+      message: 'Confirm OTP successfully',
+    };
   }
 
   // create password for new member added
@@ -165,21 +178,6 @@ export class AuthService {
       message: 'Create password successfully please login',
     };
   }
-
-  // async getNewAccessToken(sessionId: string) {
-  //   const token = await this.cacheService.get(sessionId);
-  //   if (!token)
-  //     throw new UnauthorizedException('Session expires, login again!');
-  //   try {
-  //     const { exp, iat, ...rest } = this.jwtService.verify(token, {
-  //       secret: this.configService.get('JWT_REFRESH_SECRET'),
-  //     });
-  //     const { accessToken, refreshToken } = this.generateTokens(rest);
-  //     return { accessToken, refreshToken };
-  //   } catch (error) {
-  //     throw new UnauthorizedException(error.message);
-  //   }
-  // }
 
   // hash password
   async hashPassword(payload: string): Promise<string> {

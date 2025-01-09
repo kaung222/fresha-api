@@ -1,9 +1,8 @@
-import { IsEmail, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
 
 export class ConfirmOTPDto {
   @IsNotEmpty()
-  @IsEmail()
-  email: string;
+  token: string;
 
   @IsNotEmpty()
   otp: string;
