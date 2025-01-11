@@ -72,6 +72,11 @@ import { FavouritesModule } from './app/favourites/favourites.module';
 import { Favourite } from './app/favourites/entities/favourite.entity';
 import { redisStore } from 'cache-manager-redis-store';
 import { TokenSession } from './app/auth/entities/token.entity';
+import { SubscriptionsModule } from './app/subscriptions/subscriptions.module';
+import { PricingsModule } from './app/pricings/pricings.module';
+import { Pricing } from './app/pricings/entities/pricing.entity';
+import { Subscription } from './app/subscriptions/entities/subscription.entity';
+import { Admin } from './app/admins/entities/admin.entity';
 
 @Module({
   imports: [
@@ -116,6 +121,9 @@ import { TokenSession } from './app/auth/entities/token.entity';
         SaleItem,
         Favourite,
         TokenSession,
+        Admin,
+        Pricing,
+        Subscription,
       ],
     }),
 
@@ -178,6 +186,8 @@ import { TokenSession } from './app/auth/entities/token.entity';
     OrgTypesModule,
     AdminsModule,
     FavouritesModule,
+    SubscriptionsModule,
+    PricingsModule,
   ],
   controllers: [],
   providers: [

@@ -191,26 +191,7 @@ export class OrganizationsService {
     throw new ForbiddenException();
   }
 
-  async getNearBy(lat: number, lng: number, radius: number) {
-    const earthRadiusKm = 6371; // Radius of the Earth in kilometers
-    const query = `
-      SELECT *, 
-        (${earthRadiusKm} * ACOS(
-          COS(RADIANS(?)) * COS(RADIANS(latitude)) * COS(RADIANS(longitude) - RADIANS(?)) 
-          + SIN(RADIANS(?)) * SIN(RADIANS(latitude))
-        )) AS distance
-      FROM organization
-      HAVING distance <= ?
-      ORDER BY distance
-      LIMIT 10;
-    `;
-
-    const results = await this.orgRepository.query(query, [
-      lat,
-      lng,
-      lat,
-      radius,
-    ]);
-    return results;
+  removeOrg(orgId: number) {
+    return this.orgRepository.delete({ id: orgId });
   }
 }

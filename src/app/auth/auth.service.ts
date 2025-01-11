@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { loginOrganizationDto } from './dto/login-org.dto';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { Organization } from '../organizations/entities/organization.entity';
 import {
   CommissionFeesType,
@@ -27,6 +27,7 @@ import { EmailsService } from '../emails/emails.service';
 import { CacheService } from '@/global/cache.service';
 import { TokenSession } from './entities/token.entity';
 import { decryptToken, encryptToken } from '@/utils/test';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class AuthService {
@@ -143,8 +144,8 @@ export class AuthService {
     };
   }
 
-  async logoutMember(sessionId: string, memberId: string) {
-    await this.tokenRepository.delete({ id: sessionId, userId: memberId });
+  async logout(sessionId: string, userId: string) {
+    await this.tokenRepository.delete({ id: sessionId, userId });
   }
 
   async forgetPassword(email: string) {
@@ -208,6 +209,11 @@ export class AuthService {
     const { refreshToken, accessToken } = this.generateTokens(rest);
     const newSessionId = await this.saveToken(refreshToken, rest.id);
     return { accessToken, sessionId: newSessionId };
+  }
+
+  @Cron(CronExpression.EVERY_10_HOURS)
+  removeExpiredSessions() {
+    this.tokenRepository.delete({ expiredAt: LessThan(new Date()) });
   }
 
   // save session in db

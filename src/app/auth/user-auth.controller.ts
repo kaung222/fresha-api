@@ -78,8 +78,8 @@ export class UserAuthController {
     const cookie = req.headers.cookie;
     const sessionId = this.userAuthService.getSessionIdFromCookie(cookie);
     if (!sessionId)
-      return res.status(200).send({ message: 'Already logged out' });
-    this.authService.logoutMember(sessionId, userId);
+      return res.status(200).send({ message: 'Session expires, login again!' });
+    this.authService.logout(sessionId, userId);
     this.userAuthService.setCookieHeaders(res, '');
     res.send({ message: 'logout successfully' });
   }

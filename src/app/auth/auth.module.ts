@@ -9,12 +9,22 @@ import { Organization } from '../organizations/entities/organization.entity';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { TokenSession } from './entities/token.entity';
+import { AdminAuthController } from './admin-auth.controller';
+import { AdminAuthService } from './admin-auth.service';
+import { Admin } from '../admins/entities/admin.entity';
+import { AdminsService } from '../admins/admins.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Member, Organization, User, TokenSession]),
+    TypeOrmModule.forFeature([Member, Organization, User, TokenSession, Admin]),
   ],
-  controllers: [AuthController, UserAuthController],
-  providers: [AuthService, UserAuthService, UsersService],
+  controllers: [AuthController, UserAuthController, AdminAuthController],
+  providers: [
+    AuthService,
+    UserAuthService,
+    UsersService,
+    AdminAuthService,
+    AdminsService,
+  ],
 })
 export class AuthModule {}

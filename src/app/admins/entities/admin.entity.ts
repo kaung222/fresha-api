@@ -9,5 +9,8 @@ export class Admin {
   email: string;
 
   @Column()
-  name: string;
+  username: string;
+
+  @Column({ default: 'admin' })
+  role: string;
 }

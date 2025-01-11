@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   Query,
+  UnauthorizedException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
@@ -93,7 +95,9 @@ export class OrganizationsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    // return this.organizationsService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number, @User('orgId') orgId: number) {
+    if (id != orgId)
+      throw new UnauthorizedException('this org cannot be deleted');
+    return this.organizationsService.removeOrg(+id);
   }
 }

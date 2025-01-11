@@ -12,6 +12,7 @@ export enum Roles {
   org = 'organization',
   member = 'member',
   admin = 'admin',
+  sysadmin = 'sysadmin',
 }
 
 export const User = createParamDecorator(

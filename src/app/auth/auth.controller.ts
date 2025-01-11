@@ -97,7 +97,7 @@ export class AuthController {
   ) {
     const cookie = req.headers.cookie;
     const sessionId = this.authService.getSessionIdFromCookie(cookie);
-    this.authService.logoutMember(sessionId, memberId);
+    this.authService.logout(sessionId, memberId);
     this.authService.setCookieHeaders(res, sessionId);
     res.send({ message: 'logout successfully' });
   }
