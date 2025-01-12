@@ -145,8 +145,9 @@ export class AppointmentsService {
     items: BookingItemDto[],
     appointment: Appointment,
   ) {
-    const memberIds = items.map((item) => item.memberId);
-    const serviceIds = items.map((item) => item.serviceId);
+    const serviceIds = [...new Set([...items.map((item) => item?.serviceId)])];
+    const memberIds = [...new Set([...items.map((item) => item?.memberId)])];
+    console.log(serviceIds, memberIds);
     const [services, members] = await Promise.all([
       this.getServicesByIds(serviceIds, appointment.orgId),
       this.getMemberByIds(memberIds, appointment.orgId),
@@ -215,11 +216,10 @@ export class AppointmentsService {
   }
 
   private async getMemberByIds(memberIds: string[], orgId: number) {
-    const ids = [...new Set([...memberIds])];
     const members = await this.dataSource
       .getRepository(Member)
-      .findBy({ id: In(ids), orgId });
-    if (ids.length !== members.length)
+      .findBy({ id: In(memberIds), orgId });
+    if (memberIds.length !== members.length)
       throw new NotFoundException('some members are missing');
     return members;
   }

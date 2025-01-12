@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsPositive, IsString } from 'class-validator';
+import { IsNotEmpty, IsPositive, IsString, IsUUID } from 'class-validator';
 
 export class CreateOrgReviewDto {
   @IsNotEmpty()
@@ -11,4 +11,8 @@ export class CreateOrgReviewDto {
 
   @IsNotEmpty()
   orgId: number;
+
+  @IsNotEmpty()
+  @IsUUID()
+  appointmentId: string;
 }

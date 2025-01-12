@@ -3,8 +3,10 @@ import { OrgTypesService } from './org-types.service';
 import { CreateOrgTypeDto } from './dto/create-org-type.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('org-types')
+@ApiTags('Org Types')
 export class OrgTypesController {
   constructor(private readonly orgTypesService: OrgTypesService) {}
 

@@ -94,10 +94,9 @@ export class OrganizationsController {
     return this.organizationsService.updateCurrencyDto(+id, updateCurrencyDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number, @User('orgId') orgId: number) {
-    if (id != orgId)
-      throw new UnauthorizedException('this org cannot be deleted');
-    return this.organizationsService.removeOrg(+id);
+  @Delete('my-organization')
+  @Role(Roles.org)
+  remove(@User('orgId') orgId: number) {
+    return this.organizationsService.removeOrg(orgId);
   }
 }

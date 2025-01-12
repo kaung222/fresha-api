@@ -12,8 +12,10 @@ import { CreatePricingDto } from './dto/create-pricing.dto';
 import { UpdatePricingDto } from './dto/update-pricing.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles } from '@/security/user.decorator';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('pricings')
+@ApiTags('Pricing')
 export class PricingsController {
   constructor(private readonly pricingsService: PricingsService) {}
 

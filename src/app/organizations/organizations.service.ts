@@ -170,7 +170,7 @@ export class OrganizationsService {
       .findAndCount({
         skip: 10 * (page - 1),
         take: 10,
-        where: { organization: { id: orgId } },
+        where: { orgId },
         order: {
           rating: 'desc',
         },
