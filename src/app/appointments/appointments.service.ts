@@ -42,13 +42,18 @@ export class AppointmentsService {
   async create(createAppointmentDto: CreateAppointmentDto, userId: string) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
-    await queryRunner.startTransaction();
     try {
+      await queryRunner.startTransaction();
       const { bookingItems, orgId, ...rest } = createAppointmentDto;
       const [user, organization] = await Promise.all([
         this.getUserById(userId),
         this.getOrgById(orgId),
       ]);
+
+      if (!user || !organization) {
+        throw new NotFoundException('User or organization not found');
+      }
+
       const createAppointment = this.appointmentRepository.create({
         ...rest,
         organization,
@@ -103,7 +108,6 @@ export class AppointmentsService {
       // save appointment
       const createAppointment = this.appointmentRepository.create({
         ...rest,
-
         startTime,
         orgId,
         orgEmail: organization.email,
@@ -145,46 +149,71 @@ export class AppointmentsService {
     items: BookingItemDto[],
     appointment: Appointment,
   ) {
-    const serviceIds = [...new Set([...items.map((item) => item?.serviceId)])];
-    const memberIds = [...new Set([...items.map((item) => item?.memberId)])];
-    console.log(serviceIds, memberIds);
+    // Extract unique service and member IDs
+    const serviceIds = Array.from(new Set(items.map((item) => item.serviceId)));
+    const memberIds = Array.from(new Set(items.map((item) => item.memberId)));
+
+    // Fetch services and members in parallel
     const [services, members] = await Promise.all([
       this.getServicesByIds(serviceIds, appointment.orgId),
       this.getMemberByIds(memberIds, appointment.orgId),
     ]);
-    // to override use the endtime of previous booking item
+
+    if (!services.length || !members.length) {
+      throw new NotFoundException(
+        'Services or members not found for booking items',
+      );
+    }
+
+    // Initialize startTime based on the appointment
     let startTime = appointment.startTime;
-    const createBookingItems = this.itemRepository.create(
-      items.map(({ serviceId, memberId }) => {
-        const service = services.find((service) => service.id === serviceId);
-        const member = members.find((member) => member.id === memberId);
-        const commissionFees = this.calculateCommissionFees(
-          service.discountPrice,
-          member.commissionFees,
-          member.commissionFeesType,
+
+    // Map booking items and calculate details
+    const createBookingItems = items.map(({ serviceId, memberId }) => {
+      const service = services.find((svc) => svc.id === serviceId);
+      const member = members.find((mem) => mem.id === memberId);
+
+      if (!service || !member) {
+        throw new NotFoundException(
+          `Service or member not found for serviceId: ${serviceId}, memberId: ${memberId}`,
         );
-        const endTime = startTime + service.duration;
-        const res = {
-          appointmentId: appointment.id,
-          member,
-          service,
-          memberName: member.firstName,
-          serviceName: service.name,
-          startTime,
-          endTime,
-          // date: appointment.date,
-          discountPrice: service.discountPrice,
-          duration: service.duration,
-          price: service.price,
-          commissionFees,
-        };
-        // the end time will be the start time of next booking items
-        startTime = endTime;
-        return res;
-      }),
+      }
+
+      // Calculate commission fees and endTime
+      const commissionFees = this.calculateCommissionFees(
+        service.discountPrice,
+        member.commissionFees,
+        member.commissionFeesType,
+      );
+      const endTime = startTime + service.duration;
+
+      // Create booking item
+      const bookingItem = {
+        appointmentId: appointment.id,
+        member,
+        service,
+        memberName: member.firstName,
+        serviceName: service.name,
+        startTime,
+        endTime,
+        discountPrice: service.discountPrice,
+        duration: service.duration,
+        price: service.price,
+        commissionFees,
+      };
+
+      // Update startTime for the next booking item
+      startTime = endTime;
+
+      return bookingItem;
+    });
+
+    // Save booking items and return
+    return this.itemRepository.save(
+      this.itemRepository.create(createBookingItems),
     );
-    return await this.itemRepository.save(createBookingItems);
   }
+
   // calcuate the commissionfees of appointment for a selected member
   private calculateCommissionFees(
     price: number,
@@ -216,6 +245,7 @@ export class AppointmentsService {
   }
 
   private async getMemberByIds(memberIds: string[], orgId: number) {
+    if (memberIds.length === 0) return [];
     const members = await this.dataSource
       .getRepository(Member)
       .findBy({ id: In(memberIds), orgId });

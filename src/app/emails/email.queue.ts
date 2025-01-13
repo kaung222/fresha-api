@@ -36,7 +36,7 @@ export class EmailQueue {
   @Process('sendEmailToAdmin')
   async sendEmailToAdmin({ data }: Job<SendEmailToAdmin>) {
     await this.mailerService.sendMail({
-      from: data.from,
+      from: data?.from || 'anonyemail121@gmail.com',
       to: 'thirdgodiswinning@gmail.com',
       subject: data.subject,
       text: template(data.text),
