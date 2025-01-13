@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateOrgReviewDto } from './dto/create-org-review.dto';
 import { UpdateOrgReviewDto } from './dto/update-org-review.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,10 +25,27 @@ export class OrgReviewsService {
   // create review by user to an org
   async create(createOrgReviewDto: CreateOrgReviewDto, userId: string) {
     const { orgId, rating, notes, appointmentId } = createOrgReviewDto;
+
+    // Check if a review already exists for the appointment and user
+    const existingReview = await this.orgReviewRepository.findOneBy({
+      appointmentId,
+      userId,
+    });
+    if (existingReview) {
+      throw new BadRequestException(
+        'Review for this appointment already exists',
+      );
+    }
+
+    // Verify the appointment exists and belongs to the user
     const appointment = await this.dataSource
       .getRepository(Appointment)
-      .findOneBy({ userId, id: appointmentId });
-    if (!appointment) throw new NotFoundException('Appointment not found');
+      .findOneBy({ id: appointmentId, userId });
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    // Create a new review
     const newReview = this.orgReviewRepository.create({
       organization: { id: orgId },
       userId,
@@ -32,10 +53,21 @@ export class OrgReviewsService {
       notes,
       appointment,
     });
-    await this.orgReviewRepository.save(newReview);
+
+    // Save the review and update the appointment rating simultaneously
+    await Promise.all([
+      this.orgReviewRepository.save(newReview),
+      this.dataSource
+        .getRepository(Appointment)
+        .update(appointmentId, { rating }),
+    ]);
+
+    // Update the organization's overall rating
     await this.updateOrgRating(orgId);
+
+    // Return success message
     return {
-      message: 'Submit a review successfully',
+      message: 'Review submitted successfully',
     };
   }
 

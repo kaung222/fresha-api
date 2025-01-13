@@ -66,6 +66,9 @@ export class Appointment extends UUIDEntity {
   @DecimalColumn()
   totalCommissionFees: number;
 
+  @DecimalColumn({ default: 0 })
+  rating: number;
+
   @Column('boolean', { default: false })
   isOnlineBooking: boolean;
 
