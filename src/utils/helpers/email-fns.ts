@@ -20,7 +20,7 @@ export function sendBookingNotiToMember(
   appointment: Appointment,
 ): CreateEmailBySystem {
   const emails = [
-    ...new Set(appointment.bookingItems.map((item) => item.member.email)),
+    ...new Set(appointment.bookingItems.map((item) => item?.member?.email)),
   ];
   return {
     orgId: appointment.orgId,

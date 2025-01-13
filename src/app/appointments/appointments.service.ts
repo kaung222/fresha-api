@@ -151,15 +151,20 @@ export class AppointmentsService {
   ) {
     // Extract unique service and member IDs
     const serviceIds = Array.from(new Set(items.map((item) => item.serviceId)));
-    const memberIds = Array.from(new Set(items.map((item) => item.memberId)));
+    const memberIds = Array.from(
+      new Set(
+        items.map((item) => item.memberId).filter((id) => id !== undefined),
+      ),
+    );
 
+    console.log(serviceIds, memberIds);
     // Fetch services and members in parallel
     const [services, members] = await Promise.all([
       this.getServicesByIds(serviceIds, appointment.orgId),
       this.getMemberByIds(memberIds, appointment.orgId),
     ]);
 
-    if (!services.length || !members.length) {
+    if (!services.length) {
       throw new NotFoundException(
         'Services or members not found for booking items',
       );
@@ -173,18 +178,20 @@ export class AppointmentsService {
       const service = services.find((svc) => svc.id === serviceId);
       const member = members.find((mem) => mem.id === memberId);
 
-      if (!service || !member) {
+      if (!service) {
         throw new NotFoundException(
           `Service or member not found for serviceId: ${serviceId}, memberId: ${memberId}`,
         );
       }
 
       // Calculate commission fees and endTime
-      const commissionFees = this.calculateCommissionFees(
-        service.discountPrice,
-        member.commissionFees,
-        member.commissionFeesType,
-      );
+      const commissionFees = member
+        ? this.calculateCommissionFees(
+            service.discountPrice,
+            member.commissionFees,
+            member.commissionFeesType,
+          )
+        : 0;
       const endTime = startTime + service.duration;
 
       // Create booking item
@@ -192,7 +199,7 @@ export class AppointmentsService {
         appointmentId: appointment.id,
         member,
         service,
-        memberName: member.firstName,
+        memberName: member?.firstName,
         serviceName: service.name,
         startTime,
         endTime,

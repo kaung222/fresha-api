@@ -18,7 +18,7 @@ export class BookingItem {
   @Column()
   serviceName: string;
 
-  @Column()
+  @Column({ nullable: true })
   memberName: string;
 
   @Column({ nullable: true })
