@@ -32,7 +32,7 @@ export class Email extends UUIDEntity {
   @Column()
   orgId: number;
 
-  @ManyToOne(() => Organization)
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orgId' })
   organization: Organization;
 }

@@ -31,7 +31,7 @@ export class Category {
   @Column()
   orgId: number;
 
-  @ManyToOne(() => Organization)
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orgId' })
   organization: Organization;
 

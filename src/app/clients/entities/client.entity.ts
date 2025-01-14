@@ -30,7 +30,7 @@ export class Client extends IncrementEntity {
   @Column()
   orgId: number;
 
-  @ManyToOne(() => Organization)
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orgId' })
   organization: Organization;
 }

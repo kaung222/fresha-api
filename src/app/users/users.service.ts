@@ -7,7 +7,7 @@ import { DataSource, Repository } from 'typeorm';
 import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { PaginationResponse } from '@/utils/paginate-res.dto';
 import { Appointment } from '../appointments/entities/appointment.entity';
-import { CacheService } from '@/global/cache.service';
+import { CacheService, CacheTTL } from '@/global/cache.service';
 import { EmailsService } from '../emails/emails.service';
 
 @Injectable()
@@ -63,10 +63,27 @@ export class UsersService {
   }
 
   async getProfile(id: string) {
-    return await this.getUserById(id);
+    const cacheKey = this.getUserCacheKey(id);
+    const dataInCache = await this.cacheService.get(cacheKey);
+    if (dataInCache) return dataInCache;
+
+    const user = await this.getUserById(id);
+    await this.cacheService.set(cacheKey, user, CacheTTL.veryLong);
+    return user;
   }
 
+  private getCacheKey(userId: string, page = 1) {
+    return `appointment:user:${userId}:${page}`;
+  }
+
+  private getUserCacheKey(userId: string) {
+    return `user: ${userId}`;
+  }
   async getMyAppointments(userId: string, page = 1) {
+    const cacheKey = this.getCacheKey(userId, page);
+    const dataInCache = await this.cacheService.get(cacheKey);
+
+    if (dataInCache) return dataInCache;
     const [data, totalCount] = await this.dataSource
       .getRepository(Appointment)
       .findAndCount({
@@ -77,7 +94,13 @@ export class UsersService {
         order: { createdAt: 'DESC' },
       });
 
-    return new PaginationResponse({ data, totalCount, page }).toResponse();
+    const response = new PaginationResponse({
+      data,
+      totalCount,
+      page,
+    }).toResponse();
+    await this.cacheService.set(cacheKey, response, CacheTTL.veryLong);
+    return response;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
@@ -85,6 +108,7 @@ export class UsersService {
     const { password, email, ...rest } = updateUserDto;
     const createUser = this.userRepository.create({ ...user, ...rest });
     const newUser = await this.userRepository.save(createUser);
+    this.cacheService.del(this.getUserCacheKey(id));
     return {
       message: 'Update profile successfully',
       user: newUser,

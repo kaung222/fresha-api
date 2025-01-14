@@ -35,6 +35,7 @@ export enum ServiceType {
 export enum DiscountType {
   fixed = 'fixed',
   percent = 'percent',
+  noDiscount = 'noDiscount',
 }
 
 @Entity()
