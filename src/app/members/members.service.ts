@@ -17,6 +17,7 @@ import {
   updateObjectAsUsed,
   updateTagOfObject,
 } from '@/utils/store-obj-s3';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class MembersService {
@@ -25,6 +26,7 @@ export class MembersService {
     private readonly memberRepository: Repository<Member>,
     private dataSource: DataSource,
     private readonly cacheService: CacheService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   // create new member
@@ -43,6 +45,7 @@ export class MembersService {
 
     const member = await this.memberRepository.save(createMember);
     await updateObjectAsUsed(member?.profilePictureUrl);
+    this.eventEmitter.emit('member.created', { memberId: member.id, orgId });
     this.clearCache(orgId);
     return {
       message: 'Create member successfully',
