@@ -24,6 +24,7 @@ import { UpdateCurrency } from './dto/update-currency';
 import { Product } from '../products/entities/product.entity';
 import { OrgSchedule } from '../org-schedule/entities/org-schedule.entity';
 import { CacheService, CacheTTL } from '@/global/cache.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 @Injectable()
 export class OrganizationsService {
   constructor(
@@ -31,6 +32,7 @@ export class OrganizationsService {
     private orgRepository: Repository<Organization>,
     private dataSource: DataSource,
     private readonly cacheService: CacheService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   // create new org
@@ -65,6 +67,10 @@ export class OrganizationsService {
       .skip(10 * (page - 1))
       .getMany();
     return members;
+  }
+
+  generate() {
+    this.eventEmitter.emit('organization.createdd', { orgId: 2 });
   }
 
   findOneById(id: number) {

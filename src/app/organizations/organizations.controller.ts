@@ -17,6 +17,7 @@ import { PaginateQuery } from '@/utils/paginate-query.dto';
 import { Role } from '@/security/role.decorator';
 import { Roles, User } from '@/security/user.decorator';
 import { UpdateCurrency } from './dto/update-currency';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Controller('organizations')
 @ApiTags('Organization')
@@ -44,6 +45,10 @@ export class OrganizationsController {
     return this.organizationsService.findInCity(city);
   }
 
+  @Get('generate/sample')
+  generateSample() {
+    return this.organizationsService.generate();
+  }
   @Get('info/profile')
   @Role(Roles.org)
   @ApiOperation({ summary: 'Get profile with access token' })

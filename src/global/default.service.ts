@@ -14,26 +14,26 @@ import {
 } from '@/app/services/entities/service.entity';
 import { Gender } from '@/app/users/entities/user.entity';
 import { Roles } from '@/security/user.decorator';
+import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { DataSource } from 'typeorm';
 
+@Injectable()
 export class DefaultService {
   constructor(private readonly dataSource: DataSource) {}
 
   @OnEvent('organization.created')
-  async generateSampleData(orgId: number) {
+  async generateSampleData({ orgId }: { orgId: number }) {
     try {
       // Create sample data concurrently
+     const category = await this.createSampleCategory(orgId)
       await Promise.all([
         this.createSampleBrand(orgId),
-        this.createSampleMember(orgId),
-        this.createSampleCategory(orgId),
         this.createSampleProduct(orgId),
         this.createSampleProductCategory(orgId),
       ]);
-
       // Create sample service after category to ensure dependencies are resolved
-      await this.createSampleService(orgId);
+      await this.createSampleService(orgId,category);
     } catch (error) {
       console.error(
         `Failed to generate sample data for organization ${orgId}:`,
@@ -44,40 +44,16 @@ export class DefaultService {
   }
 
   // Create a sample service
-  private async createSampleService(orgId: number) {
-    const category = await this.dataSource
-      .getRepository(Category)
-      .findOneBy({ orgId });
-
-    if (!category) {
-      throw new Error(`Category not found for organization ${orgId}`);
-    }
-
+  private async createSampleService(orgId: number,category: Category) {
     const sampleService = this.dataSource.getRepository(Service).create({
       name: 'Hair Cut',
       price: 10000,
       category,
       duration: 1800,
-    });
-
-    return await this.dataSource.getRepository(Service).save(sampleService);
-  }
-
-  // Create a sample member
-  private async createSampleMember(orgId: number) {
-    const sampleMember = this.dataSource.getRepository(Member).create({
-      firstName: 'Kyaw Kyaw',
-      role: Roles.member,
-      type: MemberType.employee,
-      commissionFees: 20,
-      commissionFeesType: CommissionFeesType.percent,
-      gender: Gender.male,
-      jobTitle: 'Assistant Manager',
-      experience: 5,
       orgId,
     });
 
-    return await this.dataSource.getRepository(Member).save(sampleMember);
+    return await this.dataSource.getRepository(Service).save(sampleService);
   }
 
   // Create a sample category
@@ -87,7 +63,7 @@ export class DefaultService {
       name: 'Hair coloring',
     });
 
-    return await this.dataSource.getRepository(Category).save(sampleCategory);
+    return await this.dataSource.getRepository(Category).save(sampleCategory)
   }
 
   // Create a sample brand
@@ -96,7 +72,7 @@ export class DefaultService {
       orgId,
       name: 'SunSilk',
     });
-
+    console.log(orgId);
     return await this.dataSource.getRepository(Brand).save(sampleBrand);
   }
 
