@@ -9,8 +9,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Appointment, BookingStatus } from './entities/appointment.entity';
 import { Between, DataSource, In, Repository } from 'typeorm';
 import { GetAppointmentDto } from './dto/get-appointment.dto';
-import { Service } from '../services/entities/service.entity';
-import { CommissionFeesType, Member } from '../members/entities/member.entity';
+import {
+  CommissionFeesType,
+  Service,
+} from '../services/entities/service.entity';
+import { Member } from '../members/entities/member.entity';
 import { CancelBookingDto } from './dto/cancel-booking.dto';
 import { PaymentsService } from '../payments/payments.service';
 import {
@@ -164,12 +167,6 @@ export class AppointmentsService {
       this.getMemberByIds(memberIds, appointment.orgId),
     ]);
 
-    if (!services.length) {
-      throw new NotFoundException(
-        'Services or members not found for booking items',
-      );
-    }
-
     // Initialize startTime based on the appointment
     let startTime = appointment.startTime;
 
@@ -188,8 +185,8 @@ export class AppointmentsService {
       const commissionFees = member
         ? this.calculateCommissionFees(
             service.discountPrice,
-            member.commissionFees,
-            member.commissionFeesType,
+            service.commissionFees,
+            service.commissionFeesType,
           )
         : 0;
       const endTime = startTime + service.duration;

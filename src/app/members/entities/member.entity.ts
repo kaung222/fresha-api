@@ -20,10 +20,10 @@ export enum MemberType {
   self_employed = 'self-employed',
 }
 
-export enum CommissionFeesType {
-  fixed = 'fixed',
-  percent = 'percent',
-}
+// export enum CommissionFeesType {
+//   fixed = 'fixed',
+//   percent = 'percent',
+// }
 
 @Entity()
 export class Member extends UUIDEntity {
@@ -85,14 +85,14 @@ export class Member extends UUIDEntity {
   @Column('int', { default: 0 })
   ratingCount: number;
 
-  @Column('int', { default: 0 })
-  commissionFees: number;
+  // @Column('int', { default: 0 })
+  // commissionFees: number;
 
-  @Column('enum', {
-    enum: CommissionFeesType,
-    default: CommissionFeesType.percent,
-  })
-  commissionFeesType: CommissionFeesType;
+  // @Column('enum', {
+  //   enum: CommissionFeesType,
+  //   default: CommissionFeesType.percent,
+  // })
+  // commissionFeesType: CommissionFeesType;
 
   @Column({ nullable: true, select: false })
   password: string;

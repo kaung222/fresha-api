@@ -1,19 +1,8 @@
 import { Brand } from '@/app/brands/entities/brand.entity';
 import { Category } from '@/app/categories/entities/category.entity';
-import {
-  CommissionFeesType,
-  Member,
-  MemberType,
-} from '@/app/members/entities/member.entity';
 import { ProductCategory } from '@/app/product-category/entities/product-category.entity';
 import { Product } from '@/app/products/entities/product.entity';
-import {
-  DiscountType,
-  Service,
-  ServiceType,
-} from '@/app/services/entities/service.entity';
-import { Gender } from '@/app/users/entities/user.entity';
-import { Roles } from '@/security/user.decorator';
+import { DiscountType, Service } from '@/app/services/entities/service.entity';
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { DataSource } from 'typeorm';
@@ -26,14 +15,13 @@ export class DefaultService {
   async generateSampleData({ orgId }: { orgId: number }) {
     try {
       // Create sample data concurrently
-     const category = await this.createSampleCategory(orgId)
       await Promise.all([
         this.createSampleBrand(orgId),
         this.createSampleProduct(orgId),
         this.createSampleProductCategory(orgId),
+        // Create sample service after category to ensure dependencies are resolved
+        await this.createSampleService(orgId),
       ]);
-      // Create sample service after category to ensure dependencies are resolved
-      await this.createSampleService(orgId,category);
     } catch (error) {
       console.error(
         `Failed to generate sample data for organization ${orgId}:`,
@@ -44,11 +32,11 @@ export class DefaultService {
   }
 
   // Create a sample service
-  private async createSampleService(orgId: number,category: Category) {
+  private async createSampleService(orgId: number) {
     const sampleService = this.dataSource.getRepository(Service).create({
       name: 'Hair Cut',
       price: 10000,
-      category,
+      category: { name: 'Hair Styling' },
       duration: 1800,
       orgId,
     });
@@ -63,7 +51,7 @@ export class DefaultService {
       name: 'Hair coloring',
     });
 
-    return await this.dataSource.getRepository(Category).save(sampleCategory)
+    return await this.dataSource.getRepository(Category).save(sampleCategory);
   }
 
   // Create a sample brand

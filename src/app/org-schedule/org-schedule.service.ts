@@ -16,7 +16,7 @@ export class OrgScheduleService {
   ) {}
   // create schedule for an org
   @OnEvent('organization.created')
-  createMany(orgId: number) {
+  createMany({ orgId }: { orgId: number }) {
     const createSchedule = this.orgScheduleRepository.create(
       defaultScheduleData.map(({ startTime, endTime, dayOfWeek }) => ({
         organization: { id: orgId },

@@ -1,4 +1,3 @@
-import { Appointment } from '@/app/appointments/entities/appointment.entity';
 import { Category } from '@/app/categories/entities/category.entity';
 import { Member } from '@/app/members/entities/member.entity';
 import { Organization } from '@/app/organizations/entities/organization.entity';
@@ -36,6 +35,11 @@ export enum DiscountType {
   fixed = 'fixed',
   percent = 'percent',
   noDiscount = 'noDiscount',
+}
+
+export enum CommissionFeesType {
+  percent = 'percent',
+  fixed = 'fixed',
 }
 
 @Entity()
@@ -77,6 +81,16 @@ export class Service extends UUIDEntity {
   @Column('int', { default: 0 })
   serviceCount: number;
 
+  @Column('int')
+  commissionFees: number;
+
+  @Column({
+    type: 'enum',
+    enum: CommissionFeesType,
+    default: CommissionFeesType.percent,
+  })
+  commissionFeesType: CommissionFeesType;
+
   // in package , name of services included
   @Column('simple-array', { nullable: true })
   serviceNames: string[];
@@ -85,7 +99,7 @@ export class Service extends UUIDEntity {
   @Column()
   orgId: number;
 
-  @ManyToOne(() => Category, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => Category, { onDelete: 'RESTRICT', cascade: true })
   @JoinColumn({ name: 'categoryId' })
   category: Category;
 

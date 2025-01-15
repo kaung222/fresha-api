@@ -45,10 +45,6 @@ export class OrganizationsController {
     return this.organizationsService.findInCity(city);
   }
 
-  @Get('generate/sample')
-  generateSample() {
-    return this.organizationsService.generate();
-  }
   @Get('info/profile')
   @Role(Roles.org)
   @ApiOperation({ summary: 'Get profile with access token' })

@@ -8,11 +8,7 @@ import {
 import { loginOrganizationDto } from './dto/login-org.dto';
 import { LessThan, Repository } from 'typeorm';
 import { Organization } from '../organizations/entities/organization.entity';
-import {
-  CommissionFeesType,
-  Member,
-  MemberType,
-} from '../members/entities/member.entity';
+import { Member, MemberType } from '../members/entities/member.entity';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -100,13 +96,13 @@ export class AuthService {
       role: Roles.org,
       type: MemberType.self_employed,
       organization,
-      commissionFees: 20,
-      commissionFeesType: CommissionFeesType.percent,
+      // commissionFees: 20,
+      // commissionFeesType: CommissionFeesType.percent,
     });
     const member = await this.memberRepository.save(newMember);
     const { accessToken, refreshToken } = this.getTokens(member);
     // event an event , to see more ==> org-schedule.service.ts
-    this.eventEmitter.emit('organization.created', organization.id);
+    this.eventEmitter.emit('organization.created', { orgId: organization.id });
     const sessionId = await this.saveToken(refreshToken, member.id);
     return {
       message: 'Create organization successfully',

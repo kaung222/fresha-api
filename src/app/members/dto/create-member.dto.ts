@@ -11,7 +11,8 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Gender } from '@/app/users/entities/user.entity';
-import { CommissionFeesType, MemberType } from '../entities/member.entity';
+import { MemberType } from '../entities/member.entity';
+import { CommissionFeesType } from '@/app/services/entities/service.entity';
 
 export class CreateMemberDto {
   @IsNotEmpty()

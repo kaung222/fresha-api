@@ -69,10 +69,6 @@ export class OrganizationsService {
     return members;
   }
 
-  generate() {
-    this.eventEmitter.emit('organization.createdd', { orgId: 2 });
-  }
-
   findOneById(id: number) {
     return this.orgRepository.findOneBy({ id });
   }
