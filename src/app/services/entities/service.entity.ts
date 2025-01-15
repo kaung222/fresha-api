@@ -92,7 +92,9 @@ export class Service extends UUIDEntity {
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orgId' })
   organization: Organization;
-  @ManyToMany(() => Member, (member) => member.services)
+  @ManyToMany(() => Member, (member) => member.services, {
+    onDelete: 'SET NULL',
+  })
   members: Member[];
 
   @ManyToMany(() => Service, (service) => service.services)
