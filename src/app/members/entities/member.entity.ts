@@ -67,7 +67,7 @@ export class Member extends UUIDEntity {
   languageProficiency: string[];
 
   @ManyToMany(() => Service, (service) => service.members, {
-    onDelete: 'SET NULL',
+    onDelete: 'CASCADE',
   })
   @JoinTable()
   services: Service[];
