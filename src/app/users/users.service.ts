@@ -68,7 +68,7 @@ export class UsersService {
     if (dataInCache) return dataInCache;
 
     const user = await this.getUserById(id);
-    await this.cacheService.set(cacheKey, user, CacheTTL.veryLong);
+    await this.cacheService.set(cacheKey, user, 5 * 60);
     return user;
   }
 
@@ -99,7 +99,7 @@ export class UsersService {
       totalCount,
       page,
     }).toResponse();
-    await this.cacheService.set(cacheKey, response, CacheTTL.veryLong);
+    await this.cacheService.set(cacheKey, response, 5 * 60);
     return response;
   }
 
@@ -108,7 +108,7 @@ export class UsersService {
     const { password, email, ...rest } = updateUserDto;
     const createUser = this.userRepository.create({ ...user, ...rest });
     const newUser = await this.userRepository.save(createUser);
-    this.cacheService.del(this.getUserCacheKey(id));
+    await this.cacheService.del(this.getUserCacheKey(id));
     return {
       message: 'Update profile successfully',
       user: newUser,
