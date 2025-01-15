@@ -10,6 +10,7 @@ import { FilesService } from '@/app/files/files.service';
 import { CacheModule, CacheStore } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-store';
 import { OTP } from '@/app/auth/entities/otp.entity';
+import { DefaultService } from './default.service';
 
 @Global()
 @Module({
@@ -34,7 +35,7 @@ import { OTP } from '@/app/auth/entities/otp.entity';
     //   },
     // }),
   ],
-  providers: [CacheService, EmailsService, FilesService],
-  exports: [CacheService, EmailsService, FilesService],
+  providers: [CacheService, EmailsService, FilesService, DefaultService],
+  exports: [CacheService, EmailsService, FilesService, DefaultService],
 })
 export class GlobalModule {}

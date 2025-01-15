@@ -19,32 +19,53 @@ import { DataSource } from 'typeorm';
 
 export class DefaultService {
   constructor(private readonly dataSource: DataSource) {}
+
   @OnEvent('organization.created')
   async generateSampleData(orgId: number) {
-    await Promise.all([
-      this.createSampleBrand(orgId),
-      this.createSampleMember(orgId),
-      this.createSampleCategory(orgId),
-      this.createSampleProduct(orgId),
-      this.createSampleProductCategory(orgId),
-    ]);
-    await this.createSampleService(orgId);
+    try {
+      // Create sample data concurrently
+      await Promise.all([
+        this.createSampleBrand(orgId),
+        this.createSampleMember(orgId),
+        this.createSampleCategory(orgId),
+        this.createSampleProduct(orgId),
+        this.createSampleProductCategory(orgId),
+      ]);
+
+      // Create sample service after category to ensure dependencies are resolved
+      await this.createSampleService(orgId);
+    } catch (error) {
+      console.error(
+        `Failed to generate sample data for organization ${orgId}:`,
+        error,
+      );
+      throw new Error('Failed to generate sample data. Please try again.');
+    }
   }
 
-  // service
+  // Create a sample service
   private async createSampleService(orgId: number) {
     const category = await this.dataSource
       .getRepository(Category)
       .findOneBy({ orgId });
-    const createService = this.dataSource
-      .getRepository(Service)
-      .create({ name: 'Hair Cut', price: 10000, category, duration: 1800 });
-    this.dataSource.getRepository(Service).save(createService);
+
+    if (!category) {
+      throw new Error(`Category not found for organization ${orgId}`);
+    }
+
+    const sampleService = this.dataSource.getRepository(Service).create({
+      name: 'Hair Cut',
+      price: 10000,
+      category,
+      duration: 1800,
+    });
+
+    return await this.dataSource.getRepository(Service).save(sampleService);
   }
 
-  // member
-  private createSampleMember(orgId: number) {
-    const createMember = this.dataSource.getRepository(Member).create({
+  // Create a sample member
+  private async createSampleMember(orgId: number) {
+    const sampleMember = this.dataSource.getRepository(Member).create({
       firstName: 'Kyaw Kyaw',
       role: Roles.member,
       type: MemberType.employee,
@@ -55,28 +76,33 @@ export class DefaultService {
       experience: 5,
       orgId,
     });
-    return this.dataSource.getRepository(Member).save(createMember);
+
+    return await this.dataSource.getRepository(Member).save(sampleMember);
   }
 
-  // service category
-  private createSampleCategory(orgId: number) {
-    const createCategory = this.dataSource
-      .getRepository(Category)
-      .create({ orgId, name: 'Hair coloring' });
-    return this.dataSource.getRepository(Category).save(createCategory);
+  // Create a sample category
+  private async createSampleCategory(orgId: number) {
+    const sampleCategory = this.dataSource.getRepository(Category).create({
+      orgId,
+      name: 'Hair coloring',
+    });
+
+    return await this.dataSource.getRepository(Category).save(sampleCategory);
   }
 
-  // product brand
-  private createSampleBrand(orgId: number) {
-    const createBrand = this.dataSource
-      .getRepository(Brand)
-      .create({ orgId, name: 'SunSilk' });
-    return this.dataSource.getRepository(Brand).save(createBrand);
+  // Create a sample brand
+  private async createSampleBrand(orgId: number) {
+    const sampleBrand = this.dataSource.getRepository(Brand).create({
+      orgId,
+      name: 'SunSilk',
+    });
+
+    return await this.dataSource.getRepository(Brand).save(sampleBrand);
   }
 
-  // product
-  private createSampleProduct(orgId: number) {
-    const createProduct = this.dataSource.getRepository(Product).create({
+  // Create a sample product
+  private async createSampleProduct(orgId: number) {
+    const sampleProduct = this.dataSource.getRepository(Product).create({
       name: 'SunSilk Shampoo',
       brand: 'SunSilk',
       category: 'Shampoo',
@@ -88,14 +114,18 @@ export class DefaultService {
       discountType: DiscountType.percent,
       discountPrice: 4500,
     });
-    return this.dataSource.getRepository(Product).save(createProduct);
+
+    return await this.dataSource.getRepository(Product).save(sampleProduct);
   }
 
-  // product category
-  private createSampleProductCategory(orgId: number) {
-    const createCategory = this.dataSource
+  // Create a sample product category
+  private async createSampleProductCategory(orgId: number) {
+    const sampleProductCategory = this.dataSource
       .getRepository(ProductCategory)
       .create({ orgId, name: 'Shampoo' });
-    return this.dataSource.getRepository(ProductCategory).save(createCategory);
+
+    return await this.dataSource
+      .getRepository(ProductCategory)
+      .save(sampleProductCategory);
   }
 }
