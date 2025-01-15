@@ -12,6 +12,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import {
+  CommissionFeesType,
   DiscountType,
   PriceType,
   TargetGender,
@@ -73,4 +74,14 @@ export class CreateServiceDto {
 
   @IsEnum(DiscountType)
   discountType: DiscountType;
+
+  @IsNotEmpty()
+  @Min(0)
+  @ValidateIf((obj) => obj.commissionFeesType === CommissionFeesType.percent)
+  @Max(100)
+  commissionFees: number;
+
+  @IsOptional()
+  @IsEnum(CommissionFeesType)
+  commissionFeesType: CommissionFeesType;
 }
