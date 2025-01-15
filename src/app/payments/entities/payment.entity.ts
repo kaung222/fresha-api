@@ -46,7 +46,7 @@ export class Payment extends UUIDEntity {
   @Column({ nullable: true })
   saleId: string;
 
-  @OneToOne(() => Sale, { onDelete: 'RESTRICT' })
+  @OneToOne(() => Sale, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'saleId' })
   sale: Sale;
 
